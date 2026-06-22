@@ -76,20 +76,27 @@ class ExtractionIndex:
             unit=None,
             sheet=self.sheet,
             cell_ref=a1,
+            is_computed=False,
         )
 
     def query_range(self, a1) -> list[ExtractedValue]:
         min_row, min_col, max_row, max_col = range_box(a1)
         out = []
-        for r in range(min_row, max_row + 1):
-            for c in range(min_col, max_col + 1):
-                out.append(ExtractedValue(
-                    value=self._read(r, c),
-                    dtype="number",
-                    unit=None,
-                    sheet=self.sheet,
-                    cell_ref=f"{get_column_letter(c)}{r}",
-                ))
+        wb = openpyxl.load_workbook(self.path, data_only=True, read_only=True)
+        try:
+            ws = wb[self.sheet]
+            for r in range(min_row, max_row + 1):
+                for c in range(min_col, max_col + 1):
+                    out.append(ExtractedValue(
+                        value=ws.cell(row=r, column=c).value,
+                        dtype="number",
+                        unit=None,
+                        sheet=self.sheet,
+                        cell_ref=f"{get_column_letter(c)}{r}",
+                        is_computed=False,
+                    ))
+        finally:
+            wb.close()
         return out
 
     def row_keys(self) -> list:
