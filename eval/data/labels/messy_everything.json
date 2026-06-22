@@ -1,0 +1,688 @@
+{
+  "workbook": "messy_everything.xlsx",
+  "rel_path": "workbooks/messy_everything.xlsx",
+  "difficulty": "hard",
+  "domain": "ops",
+  "traps": [
+    "two_level_header",
+    "cross_sheet_refs",
+    "sumif",
+    "percentage_formula",
+    "display_paren_negatives",
+    "offset_anchor"
+  ],
+  "sheets": [
+    "Data",
+    "Dashboard"
+  ],
+  "business_logic": "Gross = units x price; Net = gross + returns (returns are negative); margin % = net / gross x 100; ledger total = SUMIF of the transaction ledger by product. Dashboard cells reference the Data sheet.",
+  "tables": [
+    {
+      "table_id": "inputs",
+      "name": "Product Inputs",
+      "sheet": "Data",
+      "region": "A1:D4",
+      "header_region": "A1:D1",
+      "data_region": "A2:D4",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Units",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "Price",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "ReturnsValue",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Product A",
+          "row_index": 2
+        },
+        {
+          "label": "Product B",
+          "row_index": 3
+        },
+        {
+          "label": "Product C",
+          "row_index": 4
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Product A",
+          "col_label": "Units",
+          "cell_ref": "B2",
+          "value": 100,
+          "raw": 100,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product A",
+          "col_label": "Price",
+          "cell_ref": "C2",
+          "value": 10,
+          "raw": 10,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product A",
+          "col_label": "ReturnsValue",
+          "cell_ref": "D2",
+          "value": -150,
+          "raw": -150,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "Units",
+          "cell_ref": "B3",
+          "value": 200,
+          "raw": 200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "Price",
+          "cell_ref": "C3",
+          "value": 5,
+          "raw": 5,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "ReturnsValue",
+          "cell_ref": "D3",
+          "value": -250,
+          "raw": -250,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "Units",
+          "cell_ref": "B4",
+          "value": 150,
+          "raw": 150,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "Price",
+          "cell_ref": "C4",
+          "value": 8,
+          "raw": 8,
+          "is_formula": false
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "ReturnsValue",
+          "cell_ref": "D4",
+          "value": 0,
+          "raw": 0,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "display_paren_negatives"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "metrics",
+      "name": "Product Metrics",
+      "sheet": "Dashboard",
+      "region": "B3:F7",
+      "header_region": "B3:F4",
+      "data_region": "B5:F7",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Gross",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Net",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "MarginPct",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "%"
+        },
+        {
+          "label": "LedgerTotal",
+          "col_index": 6,
+          "col_letter": "F",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Product A",
+          "row_index": 5
+        },
+        {
+          "label": "Product B",
+          "row_index": 6
+        },
+        {
+          "label": "Product C",
+          "row_index": 7
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Product A",
+          "col_label": "Gross",
+          "cell_ref": "C5",
+          "value": 1000,
+          "raw": "='Data'!B2*'Data'!C2",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product A",
+          "col_label": "Net",
+          "cell_ref": "D5",
+          "value": 850,
+          "raw": "=C5+'Data'!D2",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product A",
+          "col_label": "MarginPct",
+          "cell_ref": "E5",
+          "value": 85.0,
+          "raw": "=D5/C5*100",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product A",
+          "col_label": "LedgerTotal",
+          "cell_ref": "F5",
+          "value": 225,
+          "raw": "=SUMIF(Data!$A$8:$A$17,B5,Data!$B$8:$B$17)",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "Gross",
+          "cell_ref": "C6",
+          "value": 1000,
+          "raw": "='Data'!B3*'Data'!C3",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "Net",
+          "cell_ref": "D6",
+          "value": 750,
+          "raw": "=C6+'Data'!D3",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "MarginPct",
+          "cell_ref": "E6",
+          "value": 75.0,
+          "raw": "=D6/C6*100",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product B",
+          "col_label": "LedgerTotal",
+          "cell_ref": "F6",
+          "value": 210,
+          "raw": "=SUMIF(Data!$A$8:$A$17,B6,Data!$B$8:$B$17)",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "Gross",
+          "cell_ref": "C7",
+          "value": 1200,
+          "raw": "='Data'!B4*'Data'!C4",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "Net",
+          "cell_ref": "D7",
+          "value": 1200,
+          "raw": "=C7+'Data'!D4",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "MarginPct",
+          "cell_ref": "E7",
+          "value": 100.0,
+          "raw": "=D7/C7*100",
+          "is_formula": true
+        },
+        {
+          "row_label": "Product C",
+          "col_label": "LedgerTotal",
+          "cell_ref": "F7",
+          "value": 240,
+          "raw": "=SUMIF(Data!$A$8:$A$17,B7,Data!$B$8:$B$17)",
+          "is_formula": true
+        }
+      ],
+      "traps": [
+        "two_level_header",
+        "merged_cells",
+        "cross_sheet_refs",
+        "sumif",
+        "percentage_formula",
+        "offset_anchor",
+        "display_paren_negatives"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "gross_a",
+      "aliases": [],
+      "table_id": "metrics",
+      "row_label": "Product A",
+      "col_label": "Gross",
+      "unit": "USD",
+      "value": 1000
+    },
+    {
+      "semantic_name": "net_a",
+      "aliases": [],
+      "table_id": "metrics",
+      "row_label": "Product A",
+      "col_label": "Net",
+      "unit": "USD",
+      "value": 850
+    },
+    {
+      "semantic_name": "marginpct_a",
+      "aliases": [],
+      "table_id": "metrics",
+      "row_label": "Product A",
+      "col_label": "MarginPct",
+      "unit": "%",
+      "value": 85.0
+    },
+    {
+      "semantic_name": "ledgertotal_a",
+      "aliases": [],
+      "table_id": "metrics",
+      "row_label": "Product A",
+      "col_label": "LedgerTotal",
+      "unit": "USD",
+      "value": 225
+    },
+    {
+      "semantic_name": "net_b",
+      "aliases": [],
+      "table_id": "metrics",
+      "row_label": "Product B",
+      "col_label": "Net",
+      "unit": "USD",
+      "value": 750
+    },
+    {
+      "semantic_name": "net_c",
+      "aliases": [],
+      "table_id": "metrics",
+      "row_label": "Product C",
+      "col_label": "Net",
+      "unit": "USD",
+      "value": 1200
+    }
+  ],
+  "samples": [
+    {
+      "id": "messy_everything.xlsx:bnd:inputs",
+      "type": "boundary",
+      "sheet": "Data",
+      "table_id": "inputs",
+      "table_name": "Product Inputs",
+      "expected_region": "A1:D4",
+      "min_iou": 0.999
+    },
+    {
+      "id": "messy_everything.xlsx:bnd:metrics",
+      "type": "boundary",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table_name": "Product Metrics",
+      "expected_region": "B3:F7",
+      "min_iou": 0.999
+    },
+    {
+      "id": "messy_everything.xlsx:fml:0",
+      "type": "formula",
+      "description": "Product A net margin (%)",
+      "business_logic": "Gross = units x price; Net = gross + returns (returns are negative); margin % = net / gross x 100; ledger total = SUMIF of the transaction ledger by product. Dashboard cells reference the Data sheet.",
+      "expression": "N / G * 100",
+      "operands": {
+        "N": "net_a",
+        "G": "gross_a"
+      },
+      "inputs": {
+        "N": 850.0,
+        "G": 1000.0
+      },
+      "expected_value": 85.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "messy_everything.xlsx:fml:1",
+      "type": "formula",
+      "description": "Total net revenue across products",
+      "business_logic": "Gross = units x price; Net = gross + returns (returns are negative); margin % = net / gross x 100; ledger total = SUMIF of the transaction ledger by product. Dashboard cells reference the Data sheet.",
+      "expression": "A + B + C",
+      "operands": {
+        "A": "net_a",
+        "B": "net_b",
+        "C": "net_c"
+      },
+      "inputs": {
+        "A": 850.0,
+        "B": 750.0,
+        "C": 1200.0
+      },
+      "expected_value": 2800.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "messy_everything.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product C",
+      "col_label": "Net",
+      "expected_value": 1200,
+      "expected_cell_ref": "D7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product A",
+      "col_label": "LedgerTotal",
+      "expected_value": 225,
+      "expected_cell_ref": "F5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product B",
+      "col_label": "Net",
+      "expected_value": 750,
+      "expected_cell_ref": "D6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product C",
+      "col_label": "LedgerTotal",
+      "expected_value": 240,
+      "expected_cell_ref": "F7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product A",
+      "col_label": "MarginPct",
+      "expected_value": 85.0,
+      "expected_cell_ref": "E5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product B",
+      "col_label": "MarginPct",
+      "expected_value": 75.0,
+      "expected_cell_ref": "E6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product B",
+      "col_label": "LedgerTotal",
+      "expected_value": 210,
+      "expected_cell_ref": "F6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product A",
+      "col_label": "Gross",
+      "expected_value": 1000,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product A",
+      "col_label": "Net",
+      "expected_value": 850,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product B",
+      "col_label": "Gross",
+      "expected_value": 1000,
+      "expected_cell_ref": "C6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product C",
+      "col_label": "MarginPct",
+      "expected_value": 100.0,
+      "expected_cell_ref": "E7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Dashboard",
+      "table_id": "metrics",
+      "table": "Product Metrics",
+      "row_label": "Product C",
+      "col_label": "Gross",
+      "expected_value": 1200,
+      "expected_cell_ref": "C7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Data",
+      "table_id": "inputs",
+      "table": "Product Inputs",
+      "row_label": "Product A",
+      "col_label": "Units",
+      "expected_value": 100,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Data",
+      "table_id": "inputs",
+      "table": "Product Inputs",
+      "row_label": "Product A",
+      "col_label": "Price",
+      "expected_value": 10,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:0",
+      "type": "semantic",
+      "query": "Find the LedgerTotal of Product A in the Product Metrics table.",
+      "expected_value": 225,
+      "expected_table_id": "metrics",
+      "expected_row_label": "Product A",
+      "expected_col_label": "LedgerTotal",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:1",
+      "type": "semantic",
+      "query": "Find the MarginPct of Product A in the Product Metrics table.",
+      "expected_value": 85.0,
+      "expected_table_id": "metrics",
+      "expected_row_label": "Product A",
+      "expected_col_label": "MarginPct",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:2",
+      "type": "semantic",
+      "query": "Give me Product A's Gross.",
+      "expected_value": 1000,
+      "expected_table_id": "metrics",
+      "expected_row_label": "Product A",
+      "expected_col_label": "Gross",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:3",
+      "type": "semantic",
+      "query": "What is the MarginPct percentage for Product C?",
+      "expected_value": 100.0,
+      "expected_table_id": "metrics",
+      "expected_row_label": "Product C",
+      "expected_col_label": "MarginPct",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:4",
+      "type": "semantic",
+      "query": "Product A Price",
+      "expected_value": 10,
+      "expected_table_id": "inputs",
+      "expected_row_label": "Product A",
+      "expected_col_label": "Price",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:5",
+      "type": "semantic",
+      "query": "Product C Units",
+      "expected_value": 150,
+      "expected_table_id": "inputs",
+      "expected_row_label": "Product C",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:6",
+      "type": "semantic",
+      "query": "What is Product A's ReturnsValue in dollars?",
+      "expected_value": -150,
+      "expected_table_id": "inputs",
+      "expected_row_label": "Product A",
+      "expected_col_label": "ReturnsValue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "messy_everything.xlsx:sem:7",
+      "type": "semantic",
+      "query": "How much LedgerTotal did Product A have?",
+      "expected_value": 225,
+      "expected_table_id": "metrics",
+      "expected_row_label": "Product A",
+      "expected_col_label": "LedgerTotal",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

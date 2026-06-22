@@ -1,0 +1,932 @@
+{
+  "workbook": "store_ops.xlsx",
+  "rel_path": "workbooks/store_ops.xlsx",
+  "difficulty": "medium",
+  "domain": "ops",
+  "traps": [
+    "multi_sheet",
+    "multi_table_sheet",
+    "units_in_header"
+  ],
+  "sheets": [
+    "Store 1",
+    "Store 2"
+  ],
+  "business_logic": "Labor percentage = labor cost divided by revenue, as a percent.",
+  "tables": [
+    {
+      "table_id": "sales_store1",
+      "name": "Store 1 Sales",
+      "sheet": "Store 1",
+      "region": "A1:C6",
+      "header_region": "A1:C1",
+      "data_region": "A2:C6",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Transactions",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "Revenue",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Mon",
+          "row_index": 2
+        },
+        {
+          "label": "Tue",
+          "row_index": 3
+        },
+        {
+          "label": "Wed",
+          "row_index": 4
+        },
+        {
+          "label": "Thu",
+          "row_index": 5
+        },
+        {
+          "label": "Fri",
+          "row_index": 6
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Mon",
+          "col_label": "Transactions",
+          "cell_ref": "B2",
+          "value": 109,
+          "raw": 109,
+          "is_formula": false
+        },
+        {
+          "row_label": "Mon",
+          "col_label": "Revenue",
+          "cell_ref": "C2",
+          "value": 4886,
+          "raw": 4886,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "Transactions",
+          "cell_ref": "B3",
+          "value": 127,
+          "raw": 127,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "Revenue",
+          "cell_ref": "C3",
+          "value": 2179,
+          "raw": 2179,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "Transactions",
+          "cell_ref": "B4",
+          "value": 128,
+          "raw": 128,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "Revenue",
+          "cell_ref": "C4",
+          "value": 2348,
+          "raw": 2348,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "Transactions",
+          "cell_ref": "B5",
+          "value": 96,
+          "raw": 96,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "Revenue",
+          "cell_ref": "C5",
+          "value": 2560,
+          "raw": 2560,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "Transactions",
+          "cell_ref": "B6",
+          "value": 104,
+          "raw": 104,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "Revenue",
+          "cell_ref": "C6",
+          "value": 3013,
+          "raw": 3013,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "units_in_header"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "labor_store1",
+      "name": "Store 1 Labor",
+      "sheet": "Store 1",
+      "region": "A9:C14",
+      "header_region": "A9:C9",
+      "data_region": "A10:C14",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Hours",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "LaborCost",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Mon",
+          "row_index": 10
+        },
+        {
+          "label": "Tue",
+          "row_index": 11
+        },
+        {
+          "label": "Wed",
+          "row_index": 12
+        },
+        {
+          "label": "Thu",
+          "row_index": 13
+        },
+        {
+          "label": "Fri",
+          "row_index": 14
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Mon",
+          "col_label": "Hours",
+          "cell_ref": "B10",
+          "value": 55,
+          "raw": 55,
+          "is_formula": false
+        },
+        {
+          "row_label": "Mon",
+          "col_label": "LaborCost",
+          "cell_ref": "C10",
+          "value": 631,
+          "raw": 631,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "Hours",
+          "cell_ref": "B11",
+          "value": 46,
+          "raw": 46,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "LaborCost",
+          "cell_ref": "C11",
+          "value": 1070,
+          "raw": 1070,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "Hours",
+          "cell_ref": "B12",
+          "value": 36,
+          "raw": 36,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "LaborCost",
+          "cell_ref": "C12",
+          "value": 1099,
+          "raw": 1099,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "Hours",
+          "cell_ref": "B13",
+          "value": 42,
+          "raw": 42,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "LaborCost",
+          "cell_ref": "C13",
+          "value": 1064,
+          "raw": 1064,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "Hours",
+          "cell_ref": "B14",
+          "value": 50,
+          "raw": 50,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "LaborCost",
+          "cell_ref": "C14",
+          "value": 999,
+          "raw": 999,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "units_in_header",
+        "multi_table_sheet"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "sales_store2",
+      "name": "Store 2 Sales",
+      "sheet": "Store 2",
+      "region": "A1:C6",
+      "header_region": "A1:C1",
+      "data_region": "A2:C6",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Transactions",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "Revenue",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Mon",
+          "row_index": 2
+        },
+        {
+          "label": "Tue",
+          "row_index": 3
+        },
+        {
+          "label": "Wed",
+          "row_index": 4
+        },
+        {
+          "label": "Thu",
+          "row_index": 5
+        },
+        {
+          "label": "Fri",
+          "row_index": 6
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Mon",
+          "col_label": "Transactions",
+          "cell_ref": "B2",
+          "value": 143,
+          "raw": 143,
+          "is_formula": false
+        },
+        {
+          "row_label": "Mon",
+          "col_label": "Revenue",
+          "cell_ref": "C2",
+          "value": 3649,
+          "raw": 3649,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "Transactions",
+          "cell_ref": "B3",
+          "value": 153,
+          "raw": 153,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "Revenue",
+          "cell_ref": "C3",
+          "value": 2366,
+          "raw": 2366,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "Transactions",
+          "cell_ref": "B4",
+          "value": 104,
+          "raw": 104,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "Revenue",
+          "cell_ref": "C4",
+          "value": 3986,
+          "raw": 3986,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "Transactions",
+          "cell_ref": "B5",
+          "value": 194,
+          "raw": 194,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "Revenue",
+          "cell_ref": "C5",
+          "value": 2959,
+          "raw": 2959,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "Transactions",
+          "cell_ref": "B6",
+          "value": 186,
+          "raw": 186,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "Revenue",
+          "cell_ref": "C6",
+          "value": 5108,
+          "raw": 5108,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "units_in_header"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "labor_store2",
+      "name": "Store 2 Labor",
+      "sheet": "Store 2",
+      "region": "A9:C14",
+      "header_region": "A9:C9",
+      "data_region": "A10:C14",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Hours",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "LaborCost",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Mon",
+          "row_index": 10
+        },
+        {
+          "label": "Tue",
+          "row_index": 11
+        },
+        {
+          "label": "Wed",
+          "row_index": 12
+        },
+        {
+          "label": "Thu",
+          "row_index": 13
+        },
+        {
+          "label": "Fri",
+          "row_index": 14
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Mon",
+          "col_label": "Hours",
+          "cell_ref": "B10",
+          "value": 30,
+          "raw": 30,
+          "is_formula": false
+        },
+        {
+          "row_label": "Mon",
+          "col_label": "LaborCost",
+          "cell_ref": "C10",
+          "value": 1085,
+          "raw": 1085,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "Hours",
+          "cell_ref": "B11",
+          "value": 52,
+          "raw": 52,
+          "is_formula": false
+        },
+        {
+          "row_label": "Tue",
+          "col_label": "LaborCost",
+          "cell_ref": "C11",
+          "value": 988,
+          "raw": 988,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "Hours",
+          "cell_ref": "B12",
+          "value": 38,
+          "raw": 38,
+          "is_formula": false
+        },
+        {
+          "row_label": "Wed",
+          "col_label": "LaborCost",
+          "cell_ref": "C12",
+          "value": 1343,
+          "raw": 1343,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "Hours",
+          "cell_ref": "B13",
+          "value": 46,
+          "raw": 46,
+          "is_formula": false
+        },
+        {
+          "row_label": "Thu",
+          "col_label": "LaborCost",
+          "cell_ref": "C13",
+          "value": 716,
+          "raw": 716,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "Hours",
+          "cell_ref": "B14",
+          "value": 43,
+          "raw": 43,
+          "is_formula": false
+        },
+        {
+          "row_label": "Fri",
+          "col_label": "LaborCost",
+          "cell_ref": "C14",
+          "value": 1278,
+          "raw": 1278,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "units_in_header",
+        "multi_table_sheet"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "revenue_mon_store1",
+      "aliases": [],
+      "table_id": "sales_store1",
+      "row_label": "Mon",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 4886
+    },
+    {
+      "semantic_name": "laborcost_mon_store1",
+      "aliases": [],
+      "table_id": "labor_store1",
+      "row_label": "Mon",
+      "col_label": "LaborCost",
+      "unit": "USD",
+      "value": 631
+    },
+    {
+      "semantic_name": "revenue_mon_store2",
+      "aliases": [],
+      "table_id": "sales_store2",
+      "row_label": "Mon",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 3649
+    },
+    {
+      "semantic_name": "laborcost_mon_store2",
+      "aliases": [],
+      "table_id": "labor_store2",
+      "row_label": "Mon",
+      "col_label": "LaborCost",
+      "unit": "USD",
+      "value": 1085
+    }
+  ],
+  "samples": [
+    {
+      "id": "store_ops.xlsx:bnd:sales_store1",
+      "type": "boundary",
+      "sheet": "Store 1",
+      "table_id": "sales_store1",
+      "table_name": "Store 1 Sales",
+      "expected_region": "A1:C6",
+      "min_iou": 0.999
+    },
+    {
+      "id": "store_ops.xlsx:bnd:labor_store1",
+      "type": "boundary",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table_name": "Store 1 Labor",
+      "expected_region": "A9:C14",
+      "min_iou": 0.999
+    },
+    {
+      "id": "store_ops.xlsx:bnd:sales_store2",
+      "type": "boundary",
+      "sheet": "Store 2",
+      "table_id": "sales_store2",
+      "table_name": "Store 2 Sales",
+      "expected_region": "A1:C6",
+      "min_iou": 0.999
+    },
+    {
+      "id": "store_ops.xlsx:bnd:labor_store2",
+      "type": "boundary",
+      "sheet": "Store 2",
+      "table_id": "labor_store2",
+      "table_name": "Store 2 Labor",
+      "expected_region": "A9:C14",
+      "min_iou": 0.999
+    },
+    {
+      "id": "store_ops.xlsx:fml:0",
+      "type": "formula",
+      "description": "Store 1 Monday labor pct",
+      "business_logic": "Labor percentage = labor cost divided by revenue, as a percent.",
+      "expression": "L / R * 100",
+      "operands": {
+        "L": "laborcost_mon_store1",
+        "R": "revenue_mon_store1"
+      },
+      "inputs": {
+        "L": 631.0,
+        "R": 4886.0
+      },
+      "expected_value": 12.914449447400736,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "store_ops.xlsx:fml:1",
+      "type": "formula",
+      "description": "Store 2 Monday labor pct",
+      "business_logic": "Labor percentage = labor cost divided by revenue, as a percent.",
+      "expression": "L / R * 100",
+      "operands": {
+        "L": "laborcost_mon_store2",
+        "R": "revenue_mon_store2"
+      },
+      "inputs": {
+        "L": 1085.0,
+        "R": 3649.0
+      },
+      "expected_value": 29.734173746231846,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "store_ops.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table": "Store 1 Labor",
+      "row_label": "Tue",
+      "col_label": "Hours",
+      "expected_value": 46,
+      "expected_cell_ref": "B11",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Store 2",
+      "table_id": "sales_store2",
+      "table": "Store 2 Sales",
+      "row_label": "Tue",
+      "col_label": "Transactions",
+      "expected_value": 153,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Store 2",
+      "table_id": "labor_store2",
+      "table": "Store 2 Labor",
+      "row_label": "Tue",
+      "col_label": "LaborCost",
+      "expected_value": 988,
+      "expected_cell_ref": "C11",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table": "Store 1 Labor",
+      "row_label": "Tue",
+      "col_label": "LaborCost",
+      "expected_value": 1070,
+      "expected_cell_ref": "C11",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Store 2",
+      "table_id": "labor_store2",
+      "table": "Store 2 Labor",
+      "row_label": "Mon",
+      "col_label": "Hours",
+      "expected_value": 30,
+      "expected_cell_ref": "B10",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table": "Store 1 Labor",
+      "row_label": "Mon",
+      "col_label": "Hours",
+      "expected_value": 55,
+      "expected_cell_ref": "B10",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Store 2",
+      "table_id": "labor_store2",
+      "table": "Store 2 Labor",
+      "row_label": "Thu",
+      "col_label": "LaborCost",
+      "expected_value": 716,
+      "expected_cell_ref": "C13",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table": "Store 1 Labor",
+      "row_label": "Thu",
+      "col_label": "LaborCost",
+      "expected_value": 1064,
+      "expected_cell_ref": "C13",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Store 2",
+      "table_id": "labor_store2",
+      "table": "Store 2 Labor",
+      "row_label": "Fri",
+      "col_label": "Hours",
+      "expected_value": 43,
+      "expected_cell_ref": "B14",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "sales_store1",
+      "table": "Store 1 Sales",
+      "row_label": "Wed",
+      "col_label": "Transactions",
+      "expected_value": 128,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "sales_store1",
+      "table": "Store 1 Sales",
+      "row_label": "Fri",
+      "col_label": "Transactions",
+      "expected_value": 104,
+      "expected_cell_ref": "B6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Store 2",
+      "table_id": "sales_store2",
+      "table": "Store 2 Sales",
+      "row_label": "Fri",
+      "col_label": "Transactions",
+      "expected_value": 186,
+      "expected_cell_ref": "B6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table": "Store 1 Labor",
+      "row_label": "Fri",
+      "col_label": "LaborCost",
+      "expected_value": 999,
+      "expected_cell_ref": "C14",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Store 1",
+      "table_id": "labor_store1",
+      "table": "Store 1 Labor",
+      "row_label": "Thu",
+      "col_label": "Hours",
+      "expected_value": 42,
+      "expected_cell_ref": "B13",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:0",
+      "type": "semantic",
+      "query": "In Store 2 Sales (Store 2), what is Tue's Transactions?",
+      "expected_value": 153,
+      "expected_table_id": "sales_store2",
+      "expected_row_label": "Tue",
+      "expected_col_label": "Transactions",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:1",
+      "type": "semantic",
+      "query": "What is the Hours for Mon in Store 2 Labor?",
+      "expected_value": 30,
+      "expected_table_id": "labor_store2",
+      "expected_row_label": "Mon",
+      "expected_col_label": "Hours",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:2",
+      "type": "semantic",
+      "query": "In Store 1 Labor (Store 1), what is Thu's LaborCost?",
+      "expected_value": 1064,
+      "expected_table_id": "labor_store1",
+      "expected_row_label": "Thu",
+      "expected_col_label": "LaborCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:3",
+      "type": "semantic",
+      "query": "What is the Transactions for Fri in Store 1 Sales?",
+      "expected_value": 104,
+      "expected_table_id": "sales_store1",
+      "expected_row_label": "Fri",
+      "expected_col_label": "Transactions",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:4",
+      "type": "semantic",
+      "query": "What is the Hours for Thu in Store 1 Labor?",
+      "expected_value": 42,
+      "expected_table_id": "labor_store1",
+      "expected_row_label": "Thu",
+      "expected_col_label": "Hours",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:5",
+      "type": "semantic",
+      "query": "What is the Hours for Tue in Store 2 Labor?",
+      "expected_value": 52,
+      "expected_table_id": "labor_store2",
+      "expected_row_label": "Tue",
+      "expected_col_label": "Hours",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:6",
+      "type": "semantic",
+      "query": "What is the Revenue for Tue in Store 1 Sales?",
+      "expected_value": 2179,
+      "expected_table_id": "sales_store1",
+      "expected_row_label": "Tue",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "store_ops.xlsx:sem:7",
+      "type": "semantic",
+      "query": "Find the Hours of Thu in the Store 2 Labor table.",
+      "expected_value": 46,
+      "expected_table_id": "labor_store2",
+      "expected_row_label": "Thu",
+      "expected_col_label": "Hours",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

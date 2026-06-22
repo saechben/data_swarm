@@ -1,0 +1,709 @@
+{
+  "workbook": "cross_sheet_model.xlsx",
+  "rel_path": "workbooks/cross_sheet_model.xlsx",
+  "difficulty": "hard",
+  "domain": "finance",
+  "traps": [
+    "cross_sheet_refs",
+    "named_range",
+    "multi_sheet",
+    "ratio_formula"
+  ],
+  "sheets": [
+    "Inputs",
+    "Calc",
+    "Summary"
+  ],
+  "business_logic": "Revenue (local) = units x ASP; margin = (ASP - unit cost) / ASP; revenue (USD) = revenue (local) x FX rate; company total = sum across regions. Drivers live on Inputs; Calc and Summary reference them.",
+  "tables": [
+    {
+      "table_id": "inputs",
+      "name": "Regional Drivers",
+      "sheet": "Inputs",
+      "region": "A1:D4",
+      "header_region": "A1:D1",
+      "data_region": "A2:D4",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Units",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "ASP",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "UnitCost",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "EMEA",
+          "row_index": 2
+        },
+        {
+          "label": "APAC",
+          "row_index": 3
+        },
+        {
+          "label": "NorthAm",
+          "row_index": 4
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "EMEA",
+          "col_label": "Units",
+          "cell_ref": "B2",
+          "value": 200,
+          "raw": 200,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "ASP",
+          "cell_ref": "C2",
+          "value": 100,
+          "raw": 100,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "UnitCost",
+          "cell_ref": "D2",
+          "value": 60,
+          "raw": 60,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "Units",
+          "cell_ref": "B3",
+          "value": 150,
+          "raw": 150,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "ASP",
+          "cell_ref": "C3",
+          "value": 120,
+          "raw": 120,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "UnitCost",
+          "cell_ref": "D3",
+          "value": 90,
+          "raw": 90,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "Units",
+          "cell_ref": "B4",
+          "value": 300,
+          "raw": 300,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "ASP",
+          "cell_ref": "C4",
+          "value": 90,
+          "raw": 90,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "UnitCost",
+          "cell_ref": "D4",
+          "value": 54,
+          "raw": 54,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "named_range"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "calc",
+      "name": "Regional Calc",
+      "sheet": "Calc",
+      "region": "A1:D4",
+      "header_region": "A1:D1",
+      "data_region": "A2:D4",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "RevenueLocal",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "local"
+        },
+        {
+          "label": "Margin",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "ratio"
+        },
+        {
+          "label": "RevenueUSD",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "EMEA",
+          "row_index": 2
+        },
+        {
+          "label": "APAC",
+          "row_index": 3
+        },
+        {
+          "label": "NorthAm",
+          "row_index": 4
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "EMEA",
+          "col_label": "RevenueLocal",
+          "cell_ref": "B2",
+          "value": 20000,
+          "raw": "='Inputs'!B2*'Inputs'!C2",
+          "is_formula": true
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "Margin",
+          "cell_ref": "C2",
+          "value": 0.4,
+          "raw": "=('Inputs'!C2-'Inputs'!D2)/'Inputs'!C2",
+          "is_formula": true
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "RevenueUSD",
+          "cell_ref": "D2",
+          "value": 22000.0,
+          "raw": "=B2*FXRate",
+          "is_formula": true
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "RevenueLocal",
+          "cell_ref": "B3",
+          "value": 18000,
+          "raw": "='Inputs'!B3*'Inputs'!C3",
+          "is_formula": true
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "Margin",
+          "cell_ref": "C3",
+          "value": 0.25,
+          "raw": "=('Inputs'!C3-'Inputs'!D3)/'Inputs'!C3",
+          "is_formula": true
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "RevenueUSD",
+          "cell_ref": "D3",
+          "value": 19800.0,
+          "raw": "=B3*FXRate",
+          "is_formula": true
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "RevenueLocal",
+          "cell_ref": "B4",
+          "value": 27000,
+          "raw": "='Inputs'!B4*'Inputs'!C4",
+          "is_formula": true
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "Margin",
+          "cell_ref": "C4",
+          "value": 0.4,
+          "raw": "=('Inputs'!C4-'Inputs'!D4)/'Inputs'!C4",
+          "is_formula": true
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "RevenueUSD",
+          "cell_ref": "D4",
+          "value": 29700.000000000004,
+          "raw": "=B4*FXRate",
+          "is_formula": true
+        }
+      ],
+      "traps": [
+        "cross_sheet_refs",
+        "named_range",
+        "ratio_formula"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "summary",
+      "name": "Company Summary",
+      "sheet": "Summary",
+      "region": "A1:B2",
+      "header_region": "A1:B1",
+      "data_region": "A2:B2",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "TotalRevenueUSD",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Company",
+          "row_index": 2
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Company",
+          "col_label": "TotalRevenueUSD",
+          "cell_ref": "B2",
+          "value": 71500.0,
+          "raw": "=SUM('Calc'!D2:D4)",
+          "is_formula": true
+        }
+      ],
+      "traps": [
+        "cross_sheet_refs",
+        "sum_range"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "revenue_local_emea",
+      "aliases": [],
+      "table_id": "calc",
+      "row_label": "EMEA",
+      "col_label": "RevenueLocal",
+      "unit": "local",
+      "value": 20000
+    },
+    {
+      "semantic_name": "revenue_usd_emea",
+      "aliases": [],
+      "table_id": "calc",
+      "row_label": "EMEA",
+      "col_label": "RevenueUSD",
+      "unit": "USD",
+      "value": 22000.0
+    },
+    {
+      "semantic_name": "revenue_usd_apac",
+      "aliases": [],
+      "table_id": "calc",
+      "row_label": "APAC",
+      "col_label": "RevenueUSD",
+      "unit": "USD",
+      "value": 19800.0
+    },
+    {
+      "semantic_name": "revenue_usd_northam",
+      "aliases": [],
+      "table_id": "calc",
+      "row_label": "NorthAm",
+      "col_label": "RevenueUSD",
+      "unit": "USD",
+      "value": 29700.000000000004
+    },
+    {
+      "semantic_name": "total_revenue_usd",
+      "aliases": [],
+      "table_id": "summary",
+      "row_label": "Company",
+      "col_label": "TotalRevenueUSD",
+      "unit": "USD",
+      "value": 71500.0
+    },
+    {
+      "semantic_name": "asp_emea",
+      "aliases": [],
+      "table_id": "inputs",
+      "row_label": "EMEA",
+      "col_label": "ASP",
+      "unit": "USD",
+      "value": 100
+    },
+    {
+      "semantic_name": "cost_emea",
+      "aliases": [],
+      "table_id": "inputs",
+      "row_label": "EMEA",
+      "col_label": "UnitCost",
+      "unit": "USD",
+      "value": 60
+    }
+  ],
+  "samples": [
+    {
+      "id": "cross_sheet_model.xlsx:bnd:inputs",
+      "type": "boundary",
+      "sheet": "Inputs",
+      "table_id": "inputs",
+      "table_name": "Regional Drivers",
+      "expected_region": "A1:D4",
+      "min_iou": 0.999
+    },
+    {
+      "id": "cross_sheet_model.xlsx:bnd:calc",
+      "type": "boundary",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table_name": "Regional Calc",
+      "expected_region": "A1:D4",
+      "min_iou": 0.999
+    },
+    {
+      "id": "cross_sheet_model.xlsx:bnd:summary",
+      "type": "boundary",
+      "sheet": "Summary",
+      "table_id": "summary",
+      "table_name": "Company Summary",
+      "expected_region": "A1:B2",
+      "min_iou": 0.999
+    },
+    {
+      "id": "cross_sheet_model.xlsx:fml:0",
+      "type": "formula",
+      "description": "Company revenue USD = sum of regional USD revenue",
+      "business_logic": "Revenue (local) = units x ASP; margin = (ASP - unit cost) / ASP; revenue (USD) = revenue (local) x FX rate; company total = sum across regions. Drivers live on Inputs; Calc and Summary reference them.",
+      "expression": "E + A + N",
+      "operands": {
+        "E": "revenue_usd_emea",
+        "A": "revenue_usd_apac",
+        "N": "revenue_usd_northam"
+      },
+      "inputs": {
+        "E": 22000.0,
+        "A": 19800.0,
+        "N": 29700.000000000004
+      },
+      "expected_value": 71500.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "cross_sheet_model.xlsx:fml:1",
+      "type": "formula",
+      "description": "EMEA margin (%)",
+      "business_logic": "Revenue (local) = units x ASP; margin = (ASP - unit cost) / ASP; revenue (USD) = revenue (local) x FX rate; company total = sum across regions. Drivers live on Inputs; Calc and Summary reference them.",
+      "expression": "(A - C) / A * 100",
+      "operands": {
+        "A": "asp_emea",
+        "C": "cost_emea"
+      },
+      "inputs": {
+        "A": 100.0,
+        "C": 60.0
+      },
+      "expected_value": 40.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "APAC",
+      "col_label": "RevenueLocal",
+      "expected_value": 18000,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "NorthAm",
+      "col_label": "RevenueLocal",
+      "expected_value": 27000,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "summary",
+      "table": "Company Summary",
+      "row_label": "Company",
+      "col_label": "TotalRevenueUSD",
+      "expected_value": 71500.0,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "NorthAm",
+      "col_label": "RevenueUSD",
+      "expected_value": 29700.000000000004,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "APAC",
+      "col_label": "Margin",
+      "expected_value": 0.25,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "EMEA",
+      "col_label": "RevenueLocal",
+      "expected_value": 20000,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "APAC",
+      "col_label": "RevenueUSD",
+      "expected_value": 19800.0,
+      "expected_cell_ref": "D3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "EMEA",
+      "col_label": "Margin",
+      "expected_value": 0.4,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "EMEA",
+      "col_label": "RevenueUSD",
+      "expected_value": 22000.0,
+      "expected_cell_ref": "D2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Calc",
+      "table_id": "calc",
+      "table": "Regional Calc",
+      "row_label": "NorthAm",
+      "col_label": "Margin",
+      "expected_value": 0.4,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Inputs",
+      "table_id": "inputs",
+      "table": "Regional Drivers",
+      "row_label": "EMEA",
+      "col_label": "ASP",
+      "expected_value": 100,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Inputs",
+      "table_id": "inputs",
+      "table": "Regional Drivers",
+      "row_label": "APAC",
+      "col_label": "Units",
+      "expected_value": 150,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Inputs",
+      "table_id": "inputs",
+      "table": "Regional Drivers",
+      "row_label": "NorthAm",
+      "col_label": "ASP",
+      "expected_value": 90,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Inputs",
+      "table_id": "inputs",
+      "table": "Regional Drivers",
+      "row_label": "NorthAm",
+      "col_label": "UnitCost",
+      "expected_value": 54,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:0",
+      "type": "semantic",
+      "query": "How much RevenueLocal did NorthAm have?",
+      "expected_value": 27000,
+      "expected_table_id": "calc",
+      "expected_row_label": "NorthAm",
+      "expected_col_label": "RevenueLocal",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:1",
+      "type": "semantic",
+      "query": "What is the Margin for APAC in Regional Calc?",
+      "expected_value": 0.25,
+      "expected_table_id": "calc",
+      "expected_row_label": "APAC",
+      "expected_col_label": "Margin",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:2",
+      "type": "semantic",
+      "query": "What is the Margin for EMEA in Regional Calc?",
+      "expected_value": 0.4,
+      "expected_table_id": "calc",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "Margin",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:3",
+      "type": "semantic",
+      "query": "How much ASP did EMEA have?",
+      "expected_value": 100,
+      "expected_table_id": "inputs",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "ASP",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:4",
+      "type": "semantic",
+      "query": "Give me NorthAm's UnitCost.",
+      "expected_value": 54,
+      "expected_table_id": "inputs",
+      "expected_row_label": "NorthAm",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:5",
+      "type": "semantic",
+      "query": "Find the UnitCost of APAC in the Regional Drivers table.",
+      "expected_value": 90,
+      "expected_table_id": "inputs",
+      "expected_row_label": "APAC",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:6",
+      "type": "semantic",
+      "query": "Give me APAC's RevenueLocal.",
+      "expected_value": 18000,
+      "expected_table_id": "calc",
+      "expected_row_label": "APAC",
+      "expected_col_label": "RevenueLocal",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cross_sheet_model.xlsx:sem:7",
+      "type": "semantic",
+      "query": "What is the RevenueUSD for NorthAm in Regional Calc?",
+      "expected_value": 29700.000000000004,
+      "expected_table_id": "calc",
+      "expected_row_label": "NorthAm",
+      "expected_col_label": "RevenueUSD",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

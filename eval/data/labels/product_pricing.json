@@ -1,0 +1,545 @@
+{
+  "workbook": "product_pricing.xlsx",
+  "rel_path": "workbooks/product_pricing.xlsx",
+  "difficulty": "easy",
+  "domain": "pricing",
+  "traps": [],
+  "sheets": [
+    "Price List"
+  ],
+  "business_logic": "Gross profit = (list price minus unit cost) times quantity sold.",
+  "tables": [
+    {
+      "table_id": "pricing",
+      "name": "Product Price List",
+      "sheet": "Price List",
+      "region": "A1:D5",
+      "header_region": "A1:D1",
+      "data_region": "A2:D5",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "ListPrice",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "UnitCost",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Qty",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "count"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Widget",
+          "row_index": 2
+        },
+        {
+          "label": "Gadget",
+          "row_index": 3
+        },
+        {
+          "label": "Gizmo",
+          "row_index": 4
+        },
+        {
+          "label": "Sprocket",
+          "row_index": 5
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Widget",
+          "col_label": "ListPrice",
+          "cell_ref": "B2",
+          "value": 49,
+          "raw": 49,
+          "is_formula": false
+        },
+        {
+          "row_label": "Widget",
+          "col_label": "UnitCost",
+          "cell_ref": "C2",
+          "value": 18,
+          "raw": 18,
+          "is_formula": false
+        },
+        {
+          "row_label": "Widget",
+          "col_label": "Qty",
+          "cell_ref": "D2",
+          "value": 1200,
+          "raw": 1200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadget",
+          "col_label": "ListPrice",
+          "cell_ref": "B3",
+          "value": 99,
+          "raw": 99,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadget",
+          "col_label": "UnitCost",
+          "cell_ref": "C3",
+          "value": 40,
+          "raw": 40,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadget",
+          "col_label": "Qty",
+          "cell_ref": "D3",
+          "value": 800,
+          "raw": 800,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmo",
+          "col_label": "ListPrice",
+          "cell_ref": "B4",
+          "value": 149,
+          "raw": 149,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmo",
+          "col_label": "UnitCost",
+          "cell_ref": "C4",
+          "value": 60,
+          "raw": 60,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmo",
+          "col_label": "Qty",
+          "cell_ref": "D4",
+          "value": 300,
+          "raw": 300,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprocket",
+          "col_label": "ListPrice",
+          "cell_ref": "B5",
+          "value": 29,
+          "raw": 29,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprocket",
+          "col_label": "UnitCost",
+          "cell_ref": "C5",
+          "value": 11,
+          "raw": 11,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprocket",
+          "col_label": "Qty",
+          "cell_ref": "D5",
+          "value": 2500,
+          "raw": 2500,
+          "is_formula": false
+        }
+      ],
+      "traps": [],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "list_price_widget",
+      "aliases": [],
+      "table_id": "pricing",
+      "row_label": "Widget",
+      "col_label": "ListPrice",
+      "unit": "USD",
+      "value": 49
+    },
+    {
+      "semantic_name": "unit_cost_widget",
+      "aliases": [],
+      "table_id": "pricing",
+      "row_label": "Widget",
+      "col_label": "UnitCost",
+      "unit": "USD",
+      "value": 18
+    },
+    {
+      "semantic_name": "qty_widget",
+      "aliases": [],
+      "table_id": "pricing",
+      "row_label": "Widget",
+      "col_label": "Qty",
+      "unit": "count",
+      "value": 1200
+    },
+    {
+      "semantic_name": "list_price_gadget",
+      "aliases": [],
+      "table_id": "pricing",
+      "row_label": "Gadget",
+      "col_label": "ListPrice",
+      "unit": "USD",
+      "value": 99
+    },
+    {
+      "semantic_name": "unit_cost_gadget",
+      "aliases": [],
+      "table_id": "pricing",
+      "row_label": "Gadget",
+      "col_label": "UnitCost",
+      "unit": "USD",
+      "value": 40
+    },
+    {
+      "semantic_name": "qty_gadget",
+      "aliases": [],
+      "table_id": "pricing",
+      "row_label": "Gadget",
+      "col_label": "Qty",
+      "unit": "count",
+      "value": 800
+    }
+  ],
+  "samples": [
+    {
+      "id": "product_pricing.xlsx:bnd:pricing",
+      "type": "boundary",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table_name": "Product Price List",
+      "expected_region": "A1:D5",
+      "min_iou": 0.999
+    },
+    {
+      "id": "product_pricing.xlsx:fml:0",
+      "type": "formula",
+      "description": "Gross profit Widget",
+      "business_logic": "Gross profit = (list price minus unit cost) times quantity sold.",
+      "expression": "(L - C) * Q",
+      "operands": {
+        "L": "list_price_widget",
+        "C": "unit_cost_widget",
+        "Q": "qty_widget"
+      },
+      "inputs": {
+        "L": 49.0,
+        "C": 18.0,
+        "Q": 1200.0
+      },
+      "expected_value": 37200.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "product_pricing.xlsx:fml:1",
+      "type": "formula",
+      "description": "Gross profit Gadget",
+      "business_logic": "Gross profit = (list price minus unit cost) times quantity sold.",
+      "expression": "(L - C) * Q",
+      "operands": {
+        "L": "list_price_gadget",
+        "C": "unit_cost_gadget",
+        "Q": "qty_gadget"
+      },
+      "inputs": {
+        "L": 99.0,
+        "C": 40.0,
+        "Q": 800.0
+      },
+      "expected_value": 47200.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "product_pricing.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Widget",
+      "col_label": "ListPrice",
+      "expected_value": 49,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Gizmo",
+      "col_label": "UnitCost",
+      "expected_value": 60,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Sprocket",
+      "col_label": "Qty",
+      "expected_value": 2500,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Gizmo",
+      "col_label": "Qty",
+      "expected_value": 300,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Gadget",
+      "col_label": "UnitCost",
+      "expected_value": 40,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Widget",
+      "col_label": "UnitCost",
+      "expected_value": 18,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Gizmo",
+      "col_label": "ListPrice",
+      "expected_value": 149,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Gadget",
+      "col_label": "ListPrice",
+      "expected_value": 99,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Gadget",
+      "col_label": "Qty",
+      "expected_value": 800,
+      "expected_cell_ref": "D3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Sprocket",
+      "col_label": "UnitCost",
+      "expected_value": 11,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Sprocket",
+      "col_label": "ListPrice",
+      "expected_value": 29,
+      "expected_cell_ref": "B5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Price List",
+      "table_id": "pricing",
+      "table": "Product Price List",
+      "row_label": "Widget",
+      "col_label": "Qty",
+      "expected_value": 1200,
+      "expected_cell_ref": "D2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:0",
+      "type": "semantic",
+      "query": "Gizmo UnitCost",
+      "expected_value": 60,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gizmo",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:1",
+      "type": "semantic",
+      "query": "Find the UnitCost of Gadget in the Product Price List table.",
+      "expected_value": 40,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gadget",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:2",
+      "type": "semantic",
+      "query": "Find the ListPrice of Gadget in the Product Price List table.",
+      "expected_value": 99,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gadget",
+      "expected_col_label": "ListPrice",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:3",
+      "type": "semantic",
+      "query": "What is Sprocket's ListPrice in dollars?",
+      "expected_value": 29,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Sprocket",
+      "expected_col_label": "ListPrice",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:4",
+      "type": "semantic",
+      "query": "Gizmo UnitCost",
+      "expected_value": 60,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gizmo",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:5",
+      "type": "semantic",
+      "query": "What is Gadget's UnitCost in dollars?",
+      "expected_value": 40,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gadget",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:6",
+      "type": "semantic",
+      "query": "Give me Gadget's ListPrice.",
+      "expected_value": 99,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gadget",
+      "expected_col_label": "ListPrice",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:7",
+      "type": "semantic",
+      "query": "How much ListPrice did Sprocket have?",
+      "expected_value": 29,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Sprocket",
+      "expected_col_label": "ListPrice",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:8",
+      "type": "semantic",
+      "query": "What is Gizmo's UnitCost in dollars?",
+      "expected_value": 60,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gizmo",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:9",
+      "type": "semantic",
+      "query": "Gadget UnitCost",
+      "expected_value": 40,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gadget",
+      "expected_col_label": "UnitCost",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "product_pricing.xlsx:sem:10",
+      "type": "semantic",
+      "query": "What is Gadget's ListPrice in dollars?",
+      "expected_value": 99,
+      "expected_table_id": "pricing",
+      "expected_row_label": "Gadget",
+      "expected_col_label": "ListPrice",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

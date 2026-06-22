@@ -1,0 +1,587 @@
+{
+  "workbook": "dup_tables.xlsx",
+  "rel_path": "workbooks/dup_tables.xlsx",
+  "difficulty": "hard",
+  "domain": "sales",
+  "traps": [
+    "duplicate_table",
+    "canonicalisation",
+    "multi_sheet"
+  ],
+  "sheets": [
+    "Summary",
+    "Detail"
+  ],
+  "business_logic": "Gross margin = revenue minus units times unit cost; the same Regional Sales table appears on two sheets and must be canonicalised.",
+  "tables": [
+    {
+      "table_id": "regional_sales_summary",
+      "name": "Regional Sales",
+      "sheet": "Summary",
+      "region": "A1:C4",
+      "header_region": "A1:C1",
+      "data_region": "A2:C4",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Revenue",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Units",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "count"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "EMEA",
+          "row_index": 2
+        },
+        {
+          "label": "APAC",
+          "row_index": 3
+        },
+        {
+          "label": "NorthAm",
+          "row_index": 4
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "EMEA",
+          "col_label": "Revenue",
+          "cell_ref": "B2",
+          "value": 1000,
+          "raw": 1000,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "Units",
+          "cell_ref": "C2",
+          "value": 50,
+          "raw": 50,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "Revenue",
+          "cell_ref": "B3",
+          "value": 800,
+          "raw": 800,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "Units",
+          "cell_ref": "C3",
+          "value": 40,
+          "raw": 40,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "Revenue",
+          "cell_ref": "B4",
+          "value": 1500,
+          "raw": 1500,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "Units",
+          "cell_ref": "C4",
+          "value": 75,
+          "raw": 75,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "duplicate_table"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "regional_sales_detail",
+      "name": "Regional Sales",
+      "sheet": "Detail",
+      "region": "A1:D4",
+      "header_region": "A1:D1",
+      "data_region": "A2:D4",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Revenue",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Units",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "CostPerUnit",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "EMEA",
+          "row_index": 2
+        },
+        {
+          "label": "APAC",
+          "row_index": 3
+        },
+        {
+          "label": "NorthAm",
+          "row_index": 4
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "EMEA",
+          "col_label": "Revenue",
+          "cell_ref": "B2",
+          "value": 1000,
+          "raw": 1000,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "Units",
+          "cell_ref": "C2",
+          "value": 50,
+          "raw": 50,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "CostPerUnit",
+          "cell_ref": "D2",
+          "value": 12,
+          "raw": 12,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "Revenue",
+          "cell_ref": "B3",
+          "value": 800,
+          "raw": 800,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "Units",
+          "cell_ref": "C3",
+          "value": 40,
+          "raw": 40,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "CostPerUnit",
+          "cell_ref": "D3",
+          "value": 14,
+          "raw": 14,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "Revenue",
+          "cell_ref": "B4",
+          "value": 1500,
+          "raw": 1500,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "Units",
+          "cell_ref": "C4",
+          "value": 75,
+          "raw": 75,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "CostPerUnit",
+          "cell_ref": "D4",
+          "value": 11,
+          "raw": 11,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "duplicate_table",
+        "canonicalisation"
+      ],
+      "is_duplicate_of": "regional_sales_summary"
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "revenue_emea",
+      "aliases": [
+        "EMEA revenue"
+      ],
+      "table_id": "regional_sales_summary",
+      "row_label": "EMEA",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 1000
+    },
+    {
+      "semantic_name": "units_emea",
+      "aliases": [],
+      "table_id": "regional_sales_summary",
+      "row_label": "EMEA",
+      "col_label": "Units",
+      "unit": "count",
+      "value": 50
+    },
+    {
+      "semantic_name": "cost_per_unit_emea",
+      "aliases": [],
+      "table_id": "regional_sales_detail",
+      "row_label": "EMEA",
+      "col_label": "CostPerUnit",
+      "unit": "USD",
+      "value": 12
+    }
+  ],
+  "samples": [
+    {
+      "id": "dup_tables.xlsx:bnd:regional_sales_summary",
+      "type": "boundary",
+      "sheet": "Summary",
+      "table_id": "regional_sales_summary",
+      "table_name": "Regional Sales",
+      "expected_region": "A1:C4",
+      "min_iou": 0.999
+    },
+    {
+      "id": "dup_tables.xlsx:bnd:regional_sales_detail",
+      "type": "boundary",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table_name": "Regional Sales",
+      "expected_region": "A1:D4",
+      "min_iou": 0.999
+    },
+    {
+      "id": "dup_tables.xlsx:fml:0",
+      "type": "formula",
+      "description": "EMEA gross margin",
+      "business_logic": "Gross margin = revenue minus units times unit cost; the same Regional Sales table appears on two sheets and must be canonicalised.",
+      "expression": "R - U * C",
+      "operands": {
+        "R": "revenue_emea",
+        "U": "units_emea",
+        "C": "cost_per_unit_emea"
+      },
+      "inputs": {
+        "R": 1000.0,
+        "U": 50.0,
+        "C": 12.0
+      },
+      "expected_value": 400.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "dup_tables.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "regional_sales_summary",
+      "table": "Regional Sales",
+      "row_label": "EMEA",
+      "col_label": "Revenue",
+      "expected_value": 1000,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "APAC",
+      "col_label": "CostPerUnit",
+      "expected_value": 14,
+      "expected_cell_ref": "D3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "EMEA",
+      "col_label": "CostPerUnit",
+      "expected_value": 12,
+      "expected_cell_ref": "D2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "APAC",
+      "col_label": "Units",
+      "expected_value": 40,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "EMEA",
+      "col_label": "Units",
+      "expected_value": 50,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "NorthAm",
+      "col_label": "CostPerUnit",
+      "expected_value": 11,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "regional_sales_summary",
+      "table": "Regional Sales",
+      "row_label": "APAC",
+      "col_label": "Revenue",
+      "expected_value": 800,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "regional_sales_summary",
+      "table": "Regional Sales",
+      "row_label": "EMEA",
+      "col_label": "Units",
+      "expected_value": 50,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "regional_sales_summary",
+      "table": "Regional Sales",
+      "row_label": "APAC",
+      "col_label": "Units",
+      "expected_value": 40,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "regional_sales_summary",
+      "table": "Regional Sales",
+      "row_label": "NorthAm",
+      "col_label": "Units",
+      "expected_value": 75,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "NorthAm",
+      "col_label": "Units",
+      "expected_value": 75,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "NorthAm",
+      "col_label": "Revenue",
+      "expected_value": 1500,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "APAC",
+      "col_label": "Revenue",
+      "expected_value": 800,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Detail",
+      "table_id": "regional_sales_detail",
+      "table": "Regional Sales",
+      "row_label": "EMEA",
+      "col_label": "Revenue",
+      "expected_value": 1000,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:0",
+      "type": "semantic",
+      "query": "APAC CostPerUnit",
+      "expected_value": 14,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "APAC",
+      "expected_col_label": "CostPerUnit",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:1",
+      "type": "semantic",
+      "query": "Find the Units of EMEA in the Regional Sales table.",
+      "expected_value": 50,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:2",
+      "type": "semantic",
+      "query": "Find the Units of EMEA in the Regional Sales table. [Summary/regional_sales_summary]",
+      "expected_value": 50,
+      "expected_table_id": "regional_sales_summary",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:3",
+      "type": "semantic",
+      "query": "In Regional Sales (Detail), what is NorthAm's Units?",
+      "expected_value": 75,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "NorthAm",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:4",
+      "type": "semantic",
+      "query": "What is the Revenue for EMEA in Regional Sales?",
+      "expected_value": 1000,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:5",
+      "type": "semantic",
+      "query": "What is the CostPerUnit for APAC in Regional Sales?",
+      "expected_value": 14,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "APAC",
+      "expected_col_label": "CostPerUnit",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:6",
+      "type": "semantic",
+      "query": "In Regional Sales (Detail), what is EMEA's Units?",
+      "expected_value": 50,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:7",
+      "type": "semantic",
+      "query": "In Regional Sales (Summary), what is EMEA's Units?",
+      "expected_value": 50,
+      "expected_table_id": "regional_sales_summary",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "dup_tables.xlsx:sem:8",
+      "type": "semantic",
+      "query": "Find the Units of NorthAm in the Regional Sales table.",
+      "expected_value": 75,
+      "expected_table_id": "regional_sales_detail",
+      "expected_row_label": "NorthAm",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

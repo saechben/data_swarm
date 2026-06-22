@@ -1,0 +1,530 @@
+{
+  "workbook": "segment_report.xlsx",
+  "rel_path": "workbooks/segment_report.xlsx",
+  "difficulty": "hard",
+  "domain": "finance",
+  "traps": [
+    "thousands_text",
+    "footnote_markers",
+    "numbers_as_text",
+    "footnote_table"
+  ],
+  "sheets": [
+    "Segments"
+  ],
+  "business_logic": "Operating margin = operating income divided by revenue, as a percent.",
+  "tables": [
+    {
+      "table_id": "segments",
+      "name": "Segment Report",
+      "sheet": "Segments",
+      "region": "A1:D5",
+      "header_region": "A2:D2",
+      "data_region": "A3:D5",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Revenue",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "OperatingIncome",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Assets",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Cloud",
+          "row_index": 3
+        },
+        {
+          "label": "Hardware",
+          "row_index": 4
+        },
+        {
+          "label": "Services",
+          "row_index": 5
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Cloud",
+          "col_label": "Revenue",
+          "cell_ref": "B3",
+          "value": 124500,
+          "raw": "124,500 (a)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Cloud",
+          "col_label": "OperatingIncome",
+          "cell_ref": "C3",
+          "value": 31200,
+          "raw": "31,200",
+          "is_formula": false
+        },
+        {
+          "row_label": "Cloud",
+          "col_label": "Assets",
+          "cell_ref": "D3",
+          "value": 210000,
+          "raw": "210,000",
+          "is_formula": false
+        },
+        {
+          "row_label": "Hardware",
+          "col_label": "Revenue",
+          "cell_ref": "B4",
+          "value": 88200,
+          "raw": "88,200",
+          "is_formula": false
+        },
+        {
+          "row_label": "Hardware",
+          "col_label": "OperatingIncome",
+          "cell_ref": "C4",
+          "value": 9800,
+          "raw": "9,800 (a)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Hardware",
+          "col_label": "Assets",
+          "cell_ref": "D4",
+          "value": 156000,
+          "raw": "156,000",
+          "is_formula": false
+        },
+        {
+          "row_label": "Services",
+          "col_label": "Revenue",
+          "cell_ref": "B5",
+          "value": 45300,
+          "raw": "45,300",
+          "is_formula": false
+        },
+        {
+          "row_label": "Services",
+          "col_label": "OperatingIncome",
+          "cell_ref": "C5",
+          "value": 12100,
+          "raw": "12,100",
+          "is_formula": false
+        },
+        {
+          "row_label": "Services",
+          "col_label": "Assets",
+          "cell_ref": "D5",
+          "value": 64000,
+          "raw": "64,000",
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "thousands_text",
+        "footnote_markers",
+        "numbers_as_text"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "footnotes",
+      "name": "Footnotes",
+      "sheet": "Segments",
+      "region": "A8:B9",
+      "header_region": "A8:B8",
+      "data_region": "A9:B9",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Note",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "string",
+          "unit": null
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "(a)",
+          "row_index": 9
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "(a)",
+          "col_label": "Note",
+          "cell_ref": "B9",
+          "value": "Restated for FX",
+          "raw": "Restated for FX",
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "footnote_table"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "revenue_cloud",
+      "aliases": [],
+      "table_id": "segments",
+      "row_label": "Cloud",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 124500
+    },
+    {
+      "semantic_name": "opinc_cloud",
+      "aliases": [],
+      "table_id": "segments",
+      "row_label": "Cloud",
+      "col_label": "OperatingIncome",
+      "unit": "USD",
+      "value": 31200
+    },
+    {
+      "semantic_name": "revenue_hardware",
+      "aliases": [],
+      "table_id": "segments",
+      "row_label": "Hardware",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 88200
+    },
+    {
+      "semantic_name": "opinc_hardware",
+      "aliases": [],
+      "table_id": "segments",
+      "row_label": "Hardware",
+      "col_label": "OperatingIncome",
+      "unit": "USD",
+      "value": 9800
+    }
+  ],
+  "samples": [
+    {
+      "id": "segment_report.xlsx:bnd:segments",
+      "type": "boundary",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table_name": "Segment Report",
+      "expected_region": "A1:D5",
+      "min_iou": 0.999
+    },
+    {
+      "id": "segment_report.xlsx:bnd:footnotes",
+      "type": "boundary",
+      "sheet": "Segments",
+      "table_id": "footnotes",
+      "table_name": "Footnotes",
+      "expected_region": "A8:B9",
+      "min_iou": 0.999
+    },
+    {
+      "id": "segment_report.xlsx:fml:0",
+      "type": "formula",
+      "description": "Cloud operating margin pct",
+      "business_logic": "Operating margin = operating income divided by revenue, as a percent.",
+      "expression": "I / R * 100",
+      "operands": {
+        "I": "opinc_cloud",
+        "R": "revenue_cloud"
+      },
+      "inputs": {
+        "I": 31200.0,
+        "R": 124500.0
+      },
+      "expected_value": 25.060240963855424,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "segment_report.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Hardware",
+      "col_label": "Revenue",
+      "expected_value": 88200,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Cloud",
+      "col_label": "OperatingIncome",
+      "expected_value": 31200,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Hardware",
+      "col_label": "OperatingIncome",
+      "expected_value": 9800,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Cloud",
+      "col_label": "Assets",
+      "expected_value": 210000,
+      "expected_cell_ref": "D3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Services",
+      "col_label": "OperatingIncome",
+      "expected_value": 12100,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Hardware",
+      "col_label": "Assets",
+      "expected_value": 156000,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Services",
+      "col_label": "Revenue",
+      "expected_value": 45300,
+      "expected_cell_ref": "B5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Cloud",
+      "col_label": "Revenue",
+      "expected_value": 124500,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "segments",
+      "table": "Segment Report",
+      "row_label": "Services",
+      "col_label": "Assets",
+      "expected_value": 64000,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Segments",
+      "table_id": "footnotes",
+      "table": "Footnotes",
+      "row_label": "(a)",
+      "col_label": "Note",
+      "expected_value": "Restated for FX",
+      "expected_cell_ref": "B9",
+      "dtype": "string",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:0",
+      "type": "semantic",
+      "query": "How much OperatingIncome did Cloud have?",
+      "expected_value": 31200,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:1",
+      "type": "semantic",
+      "query": "What is Services's OperatingIncome in dollars?",
+      "expected_value": 12100,
+      "expected_table_id": "segments",
+      "expected_row_label": "Services",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:2",
+      "type": "semantic",
+      "query": "What is Cloud's Revenue in dollars?",
+      "expected_value": 124500,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:3",
+      "type": "semantic",
+      "query": "Give me Cloud's OperatingIncome.",
+      "expected_value": 31200,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:4",
+      "type": "semantic",
+      "query": "How much OperatingIncome did Services have?",
+      "expected_value": 12100,
+      "expected_table_id": "segments",
+      "expected_row_label": "Services",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:5",
+      "type": "semantic",
+      "query": "What is Cloud's Revenue in dollars?",
+      "expected_value": 124500,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:6",
+      "type": "semantic",
+      "query": "What is Cloud's OperatingIncome in dollars?",
+      "expected_value": 31200,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:7",
+      "type": "semantic",
+      "query": "Services OperatingIncome",
+      "expected_value": 12100,
+      "expected_table_id": "segments",
+      "expected_row_label": "Services",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:8",
+      "type": "semantic",
+      "query": "Cloud Revenue",
+      "expected_value": 124500,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:9",
+      "type": "semantic",
+      "query": "What is Cloud's OperatingIncome in dollars?",
+      "expected_value": 31200,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:10",
+      "type": "semantic",
+      "query": "What is the OperatingIncome for Services in Segment Report?",
+      "expected_value": 12100,
+      "expected_table_id": "segments",
+      "expected_row_label": "Services",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:11",
+      "type": "semantic",
+      "query": "What is the Revenue for Cloud in Segment Report?",
+      "expected_value": 124500,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "segment_report.xlsx:sem:12",
+      "type": "semantic",
+      "query": "What is the OperatingIncome for Cloud in Segment Report?",
+      "expected_value": 31200,
+      "expected_table_id": "segments",
+      "expected_row_label": "Cloud",
+      "expected_col_label": "OperatingIncome",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

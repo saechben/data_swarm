@@ -1,0 +1,528 @@
+{
+  "workbook": "consolidated_pnl_multiheader.xlsx",
+  "rel_path": "workbooks/consolidated_pnl_multiheader.xlsx",
+  "difficulty": "hard",
+  "domain": "finance",
+  "traps": [
+    "two_level_header",
+    "merged_cells",
+    "title_banner"
+  ],
+  "sheets": [
+    "Consolidated"
+  ],
+  "business_logic": "Variance = actual minus budget, per region and line item.",
+  "tables": [
+    {
+      "table_id": "consolidated",
+      "name": "Consolidated P&L",
+      "sheet": "Consolidated",
+      "region": "A1:E6",
+      "header_region": "A2:E3",
+      "data_region": "A4:E6",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "EMEA Actual",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "EMEA Budget",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "APAC Actual",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "APAC Budget",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Revenue",
+          "row_index": 4
+        },
+        {
+          "label": "COGS",
+          "row_index": 5
+        },
+        {
+          "label": "OpEx",
+          "row_index": 6
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Revenue",
+          "col_label": "EMEA Actual",
+          "cell_ref": "B4",
+          "value": 4200,
+          "raw": 4200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Revenue",
+          "col_label": "EMEA Budget",
+          "cell_ref": "C4",
+          "value": 4000,
+          "raw": 4000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Revenue",
+          "col_label": "APAC Actual",
+          "cell_ref": "D4",
+          "value": 3100,
+          "raw": 3100,
+          "is_formula": false
+        },
+        {
+          "row_label": "Revenue",
+          "col_label": "APAC Budget",
+          "cell_ref": "E4",
+          "value": 3300,
+          "raw": 3300,
+          "is_formula": false
+        },
+        {
+          "row_label": "COGS",
+          "col_label": "EMEA Actual",
+          "cell_ref": "B5",
+          "value": 1800,
+          "raw": 1800,
+          "is_formula": false
+        },
+        {
+          "row_label": "COGS",
+          "col_label": "EMEA Budget",
+          "cell_ref": "C5",
+          "value": 1750,
+          "raw": 1750,
+          "is_formula": false
+        },
+        {
+          "row_label": "COGS",
+          "col_label": "APAC Actual",
+          "cell_ref": "D5",
+          "value": 1400,
+          "raw": 1400,
+          "is_formula": false
+        },
+        {
+          "row_label": "COGS",
+          "col_label": "APAC Budget",
+          "cell_ref": "E5",
+          "value": 1350,
+          "raw": 1350,
+          "is_formula": false
+        },
+        {
+          "row_label": "OpEx",
+          "col_label": "EMEA Actual",
+          "cell_ref": "B6",
+          "value": 900,
+          "raw": 900,
+          "is_formula": false
+        },
+        {
+          "row_label": "OpEx",
+          "col_label": "EMEA Budget",
+          "cell_ref": "C6",
+          "value": 950,
+          "raw": 950,
+          "is_formula": false
+        },
+        {
+          "row_label": "OpEx",
+          "col_label": "APAC Actual",
+          "cell_ref": "D6",
+          "value": 700,
+          "raw": 700,
+          "is_formula": false
+        },
+        {
+          "row_label": "OpEx",
+          "col_label": "APAC Budget",
+          "cell_ref": "E6",
+          "value": 720,
+          "raw": 720,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "two_level_header",
+        "merged_cells",
+        "title_banner"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "revenue_emea_actual",
+      "aliases": [],
+      "table_id": "consolidated",
+      "row_label": "Revenue",
+      "col_label": "EMEA Actual",
+      "unit": "USD",
+      "value": 4200
+    },
+    {
+      "semantic_name": "revenue_emea_budget",
+      "aliases": [],
+      "table_id": "consolidated",
+      "row_label": "Revenue",
+      "col_label": "EMEA Budget",
+      "unit": "USD",
+      "value": 4000
+    },
+    {
+      "semantic_name": "revenue_apac_actual",
+      "aliases": [],
+      "table_id": "consolidated",
+      "row_label": "Revenue",
+      "col_label": "APAC Actual",
+      "unit": "USD",
+      "value": 3100
+    },
+    {
+      "semantic_name": "cogs_emea_actual",
+      "aliases": [],
+      "table_id": "consolidated",
+      "row_label": "COGS",
+      "col_label": "EMEA Actual",
+      "unit": "USD",
+      "value": 1800
+    }
+  ],
+  "samples": [
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:bnd:consolidated",
+      "type": "boundary",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table_name": "Consolidated P&L",
+      "expected_region": "A1:E6",
+      "min_iou": 0.999
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:fml:0",
+      "type": "formula",
+      "description": "EMEA revenue variance (actual - budget)",
+      "business_logic": "Variance = actual minus budget, per region and line item.",
+      "expression": "A - B",
+      "operands": {
+        "A": "revenue_emea_actual",
+        "B": "revenue_emea_budget"
+      },
+      "inputs": {
+        "A": 4200.0,
+        "B": 4000.0
+      },
+      "expected_value": 200.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "COGS",
+      "col_label": "APAC Actual",
+      "expected_value": 1400,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "OpEx",
+      "col_label": "APAC Budget",
+      "expected_value": 720,
+      "expected_cell_ref": "E6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "Revenue",
+      "col_label": "APAC Actual",
+      "expected_value": 3100,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "Revenue",
+      "col_label": "EMEA Actual",
+      "expected_value": 4200,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "Revenue",
+      "col_label": "APAC Budget",
+      "expected_value": 3300,
+      "expected_cell_ref": "E4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "COGS",
+      "col_label": "EMEA Budget",
+      "expected_value": 1750,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "COGS",
+      "col_label": "APAC Budget",
+      "expected_value": 1350,
+      "expected_cell_ref": "E5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "Revenue",
+      "col_label": "EMEA Budget",
+      "expected_value": 4000,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "COGS",
+      "col_label": "EMEA Actual",
+      "expected_value": 1800,
+      "expected_cell_ref": "B5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "OpEx",
+      "col_label": "EMEA Actual",
+      "expected_value": 900,
+      "expected_cell_ref": "B6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "OpEx",
+      "col_label": "EMEA Budget",
+      "expected_value": 950,
+      "expected_cell_ref": "C6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Consolidated",
+      "table_id": "consolidated",
+      "table": "Consolidated P&L",
+      "row_label": "OpEx",
+      "col_label": "APAC Actual",
+      "expected_value": 700,
+      "expected_cell_ref": "D6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:0",
+      "type": "semantic",
+      "query": "What is OpEx's APAC Budget in dollars?",
+      "expected_value": 720,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "OpEx",
+      "expected_col_label": "APAC Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:1",
+      "type": "semantic",
+      "query": "How much APAC Budget did Revenue have?",
+      "expected_value": 3300,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "Revenue",
+      "expected_col_label": "APAC Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:2",
+      "type": "semantic",
+      "query": "Revenue EMEA Budget",
+      "expected_value": 4000,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "Revenue",
+      "expected_col_label": "EMEA Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:3",
+      "type": "semantic",
+      "query": "What is the EMEA Budget for OpEx in Consolidated P&L?",
+      "expected_value": 950,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "OpEx",
+      "expected_col_label": "EMEA Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:4",
+      "type": "semantic",
+      "query": "What is OpEx's APAC Budget in dollars?",
+      "expected_value": 720,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "OpEx",
+      "expected_col_label": "APAC Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:5",
+      "type": "semantic",
+      "query": "Give me Revenue's APAC Budget.",
+      "expected_value": 3300,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "Revenue",
+      "expected_col_label": "APAC Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:6",
+      "type": "semantic",
+      "query": "How much EMEA Budget did Revenue have?",
+      "expected_value": 4000,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "Revenue",
+      "expected_col_label": "EMEA Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:7",
+      "type": "semantic",
+      "query": "Find the EMEA Budget of OpEx in the Consolidated P&L table.",
+      "expected_value": 950,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "OpEx",
+      "expected_col_label": "EMEA Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:8",
+      "type": "semantic",
+      "query": "OpEx APAC Budget",
+      "expected_value": 720,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "OpEx",
+      "expected_col_label": "APAC Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:9",
+      "type": "semantic",
+      "query": "What is the APAC Budget for Revenue in Consolidated P&L?",
+      "expected_value": 3300,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "Revenue",
+      "expected_col_label": "APAC Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:10",
+      "type": "semantic",
+      "query": "Revenue EMEA Budget",
+      "expected_value": 4000,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "Revenue",
+      "expected_col_label": "EMEA Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "consolidated_pnl_multiheader.xlsx:sem:11",
+      "type": "semantic",
+      "query": "How much EMEA Budget did OpEx have?",
+      "expected_value": 950,
+      "expected_table_id": "consolidated",
+      "expected_row_label": "OpEx",
+      "expected_col_label": "EMEA Budget",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

@@ -1,0 +1,600 @@
+{
+  "workbook": "cashflow_signs.xlsx",
+  "rel_path": "workbooks/cashflow_signs.xlsx",
+  "difficulty": "hard",
+  "domain": "finance",
+  "traps": [
+    "paren_negatives",
+    "sign_convention",
+    "transposed",
+    "totals_row"
+  ],
+  "sheets": [
+    "Cash Flow",
+    "Summary"
+  ],
+  "business_logic": "Net cash flow = operating + investing + financing (outflows are negative).",
+  "tables": [
+    {
+      "table_id": "cashflow",
+      "name": "Cash Flow Statement",
+      "sheet": "Cash Flow",
+      "region": "A1:D6",
+      "header_region": "A2:D2",
+      "data_region": "A3:D6",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Jan",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Feb",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Mar",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Operating",
+          "row_index": 3
+        },
+        {
+          "label": "Investing",
+          "row_index": 4
+        },
+        {
+          "label": "Financing",
+          "row_index": 5
+        },
+        {
+          "label": "Net Change",
+          "row_index": 6
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Operating",
+          "col_label": "Jan",
+          "cell_ref": "B3",
+          "value": 5000,
+          "raw": 5000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Operating",
+          "col_label": "Feb",
+          "cell_ref": "C3",
+          "value": 5200,
+          "raw": 5200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Operating",
+          "col_label": "Mar",
+          "cell_ref": "D3",
+          "value": 4800,
+          "raw": 4800,
+          "is_formula": false
+        },
+        {
+          "row_label": "Investing",
+          "col_label": "Jan",
+          "cell_ref": "B4",
+          "value": -3000,
+          "raw": "(3000)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Investing",
+          "col_label": "Feb",
+          "cell_ref": "C4",
+          "value": -800,
+          "raw": "(800)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Investing",
+          "col_label": "Mar",
+          "cell_ref": "D4",
+          "value": -6000,
+          "raw": "(6000)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Financing",
+          "col_label": "Jan",
+          "cell_ref": "B5",
+          "value": -1000,
+          "raw": "(1000)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Financing",
+          "col_label": "Feb",
+          "cell_ref": "C5",
+          "value": -1000,
+          "raw": "(1000)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Financing",
+          "col_label": "Mar",
+          "cell_ref": "D5",
+          "value": 2000,
+          "raw": 2000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Net Change",
+          "col_label": "Jan",
+          "cell_ref": "B6",
+          "value": 1000,
+          "raw": 1000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Net Change",
+          "col_label": "Feb",
+          "cell_ref": "C6",
+          "value": 3400,
+          "raw": 3400,
+          "is_formula": false
+        },
+        {
+          "row_label": "Net Change",
+          "col_label": "Mar",
+          "cell_ref": "D6",
+          "value": 800,
+          "raw": 800,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "paren_negatives",
+        "sign_convention",
+        "totals_row"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "cashflow_summary",
+      "name": "Cash Flow Summary",
+      "sheet": "Summary",
+      "region": "A1:D2",
+      "header_region": "A1:D1",
+      "data_region": "A2:D2",
+      "orientation": "transposed",
+      "columns": [
+        {
+          "label": "Operating",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Investing",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Financing",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Q1 Total",
+          "row_index": 2
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Q1 Total",
+          "col_label": "Operating",
+          "cell_ref": "B2",
+          "value": 15000,
+          "raw": 15000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Q1 Total",
+          "col_label": "Investing",
+          "cell_ref": "C2",
+          "value": -9800,
+          "raw": "(9800)",
+          "is_formula": false
+        },
+        {
+          "row_label": "Q1 Total",
+          "col_label": "Financing",
+          "cell_ref": "D2",
+          "value": 0,
+          "raw": 0,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "transposed",
+        "paren_negatives"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "operating_jan",
+      "aliases": [],
+      "table_id": "cashflow",
+      "row_label": "Operating",
+      "col_label": "Jan",
+      "unit": "USD",
+      "value": 5000
+    },
+    {
+      "semantic_name": "investing_jan",
+      "aliases": [],
+      "table_id": "cashflow",
+      "row_label": "Investing",
+      "col_label": "Jan",
+      "unit": "USD",
+      "value": -3000
+    },
+    {
+      "semantic_name": "financing_jan",
+      "aliases": [],
+      "table_id": "cashflow",
+      "row_label": "Financing",
+      "col_label": "Jan",
+      "unit": "USD",
+      "value": -1000
+    },
+    {
+      "semantic_name": "net_change_jan",
+      "aliases": [],
+      "table_id": "cashflow",
+      "row_label": "Net Change",
+      "col_label": "Jan",
+      "unit": "USD",
+      "value": 1000
+    }
+  ],
+  "samples": [
+    {
+      "id": "cashflow_signs.xlsx:bnd:cashflow",
+      "type": "boundary",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table_name": "Cash Flow Statement",
+      "expected_region": "A1:D6",
+      "min_iou": 0.999
+    },
+    {
+      "id": "cashflow_signs.xlsx:bnd:cashflow_summary",
+      "type": "boundary",
+      "sheet": "Summary",
+      "table_id": "cashflow_summary",
+      "table_name": "Cash Flow Summary",
+      "expected_region": "A1:D2",
+      "min_iou": 0.999
+    },
+    {
+      "id": "cashflow_signs.xlsx:fml:0",
+      "type": "formula",
+      "description": "Net cash flow January",
+      "business_logic": "Net cash flow = operating + investing + financing (outflows are negative).",
+      "expression": "O + I + F",
+      "operands": {
+        "O": "operating_jan",
+        "I": "investing_jan",
+        "F": "financing_jan"
+      },
+      "inputs": {
+        "O": 5000.0,
+        "I": -3000.0,
+        "F": -1000.0
+      },
+      "expected_value": 1000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Operating",
+      "col_label": "Feb",
+      "expected_value": 5200,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Net Change",
+      "col_label": "Jan",
+      "expected_value": 1000,
+      "expected_cell_ref": "B6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Financing",
+      "col_label": "Feb",
+      "expected_value": -1000,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Financing",
+      "col_label": "Mar",
+      "expected_value": 2000,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Investing",
+      "col_label": "Feb",
+      "expected_value": -800,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Net Change",
+      "col_label": "Mar",
+      "expected_value": 800,
+      "expected_cell_ref": "D6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Financing",
+      "col_label": "Jan",
+      "expected_value": -1000,
+      "expected_cell_ref": "B5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Net Change",
+      "col_label": "Feb",
+      "expected_value": 3400,
+      "expected_cell_ref": "C6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "cashflow_summary",
+      "table": "Cash Flow Summary",
+      "row_label": "Q1 Total",
+      "col_label": "Financing",
+      "expected_value": 0,
+      "expected_cell_ref": "D2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Investing",
+      "col_label": "Jan",
+      "expected_value": -3000,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Investing",
+      "col_label": "Mar",
+      "expected_value": -6000,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Cash Flow",
+      "table_id": "cashflow",
+      "table": "Cash Flow Statement",
+      "row_label": "Operating",
+      "col_label": "Jan",
+      "expected_value": 5000,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "cashflow_summary",
+      "table": "Cash Flow Summary",
+      "row_label": "Q1 Total",
+      "col_label": "Investing",
+      "expected_value": -9800,
+      "expected_cell_ref": "C2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Summary",
+      "table_id": "cashflow_summary",
+      "table": "Cash Flow Summary",
+      "row_label": "Q1 Total",
+      "col_label": "Operating",
+      "expected_value": 15000,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:0",
+      "type": "semantic",
+      "query": "How much Jan did Net Change have?",
+      "expected_value": 1000,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Net Change",
+      "expected_col_label": "Jan",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:1",
+      "type": "semantic",
+      "query": "Find the Feb of Investing in the Cash Flow Statement table.",
+      "expected_value": -800,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Investing",
+      "expected_col_label": "Feb",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:2",
+      "type": "semantic",
+      "query": "Find the Feb of Net Change in the Cash Flow Statement table.",
+      "expected_value": 3400,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Net Change",
+      "expected_col_label": "Feb",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:3",
+      "type": "semantic",
+      "query": "Investing Mar",
+      "expected_value": -6000,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Investing",
+      "expected_col_label": "Mar",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:4",
+      "type": "semantic",
+      "query": "What is the Operating for Q1 Total in Cash Flow Summary?",
+      "expected_value": 15000,
+      "expected_table_id": "cashflow_summary",
+      "expected_row_label": "Q1 Total",
+      "expected_col_label": "Operating",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:5",
+      "type": "semantic",
+      "query": "How much Jan did Net Change have?",
+      "expected_value": 1000,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Net Change",
+      "expected_col_label": "Jan",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:6",
+      "type": "semantic",
+      "query": "What is Investing's Feb in dollars?",
+      "expected_value": -800,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Investing",
+      "expected_col_label": "Feb",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:7",
+      "type": "semantic",
+      "query": "How much Feb did Net Change have?",
+      "expected_value": 3400,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Net Change",
+      "expected_col_label": "Feb",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "cashflow_signs.xlsx:sem:8",
+      "type": "semantic",
+      "query": "Find the Mar of Investing in the Cash Flow Statement table.",
+      "expected_value": -6000,
+      "expected_table_id": "cashflow",
+      "expected_row_label": "Investing",
+      "expected_col_label": "Mar",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

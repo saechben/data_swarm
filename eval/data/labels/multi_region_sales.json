@@ -1,0 +1,563 @@
+{
+  "workbook": "multi_region_sales.xlsx",
+  "rel_path": "workbooks/multi_region_sales.xlsx",
+  "difficulty": "medium",
+  "domain": "sales",
+  "traps": [
+    "offset_anchor",
+    "stacked_tables",
+    "blank_row_gap"
+  ],
+  "sheets": [
+    "Sales"
+  ],
+  "business_logic": "Average selling price = revenue divided by units sold.",
+  "tables": [
+    {
+      "table_id": "na_sales",
+      "name": "North America Sales",
+      "sheet": "Sales",
+      "region": "C4:E7",
+      "header_region": "C4:E4",
+      "data_region": "C5:E7",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Revenue",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Units",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "count"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "US",
+          "row_index": 5
+        },
+        {
+          "label": "Canada",
+          "row_index": 6
+        },
+        {
+          "label": "Mexico",
+          "row_index": 7
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "US",
+          "col_label": "Revenue",
+          "cell_ref": "D5",
+          "value": 9000,
+          "raw": 9000,
+          "is_formula": false
+        },
+        {
+          "row_label": "US",
+          "col_label": "Units",
+          "cell_ref": "E5",
+          "value": 450,
+          "raw": 450,
+          "is_formula": false
+        },
+        {
+          "row_label": "Canada",
+          "col_label": "Revenue",
+          "cell_ref": "D6",
+          "value": 1800,
+          "raw": 1800,
+          "is_formula": false
+        },
+        {
+          "row_label": "Canada",
+          "col_label": "Units",
+          "cell_ref": "E6",
+          "value": 90,
+          "raw": 90,
+          "is_formula": false
+        },
+        {
+          "row_label": "Mexico",
+          "col_label": "Revenue",
+          "cell_ref": "D7",
+          "value": 1200,
+          "raw": 1200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Mexico",
+          "col_label": "Units",
+          "cell_ref": "E7",
+          "value": 60,
+          "raw": 60,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "offset_anchor",
+        "stacked_tables"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "eu_sales",
+      "name": "Europe Sales",
+      "sheet": "Sales",
+      "region": "C10:E13",
+      "header_region": "C10:E10",
+      "data_region": "C11:E13",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Revenue",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Units",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "count"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "UK",
+          "row_index": 11
+        },
+        {
+          "label": "Germany",
+          "row_index": 12
+        },
+        {
+          "label": "France",
+          "row_index": 13
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "UK",
+          "col_label": "Revenue",
+          "cell_ref": "D11",
+          "value": 3000,
+          "raw": 3000,
+          "is_formula": false
+        },
+        {
+          "row_label": "UK",
+          "col_label": "Units",
+          "cell_ref": "E11",
+          "value": 150,
+          "raw": 150,
+          "is_formula": false
+        },
+        {
+          "row_label": "Germany",
+          "col_label": "Revenue",
+          "cell_ref": "D12",
+          "value": 4200,
+          "raw": 4200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Germany",
+          "col_label": "Units",
+          "cell_ref": "E12",
+          "value": 210,
+          "raw": 210,
+          "is_formula": false
+        },
+        {
+          "row_label": "France",
+          "col_label": "Revenue",
+          "cell_ref": "D13",
+          "value": 2600,
+          "raw": 2600,
+          "is_formula": false
+        },
+        {
+          "row_label": "France",
+          "col_label": "Units",
+          "cell_ref": "E13",
+          "value": 130,
+          "raw": 130,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "offset_anchor",
+        "stacked_tables"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "revenue_us",
+      "aliases": [],
+      "table_id": "na_sales",
+      "row_label": "US",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 9000
+    },
+    {
+      "semantic_name": "units_us",
+      "aliases": [],
+      "table_id": "na_sales",
+      "row_label": "US",
+      "col_label": "Units",
+      "unit": "count",
+      "value": 450
+    },
+    {
+      "semantic_name": "revenue_germany",
+      "aliases": [],
+      "table_id": "eu_sales",
+      "row_label": "Germany",
+      "col_label": "Revenue",
+      "unit": "USD",
+      "value": 4200
+    },
+    {
+      "semantic_name": "units_germany",
+      "aliases": [],
+      "table_id": "eu_sales",
+      "row_label": "Germany",
+      "col_label": "Units",
+      "unit": "count",
+      "value": 210
+    }
+  ],
+  "samples": [
+    {
+      "id": "multi_region_sales.xlsx:bnd:na_sales",
+      "type": "boundary",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table_name": "North America Sales",
+      "expected_region": "C4:E7",
+      "min_iou": 0.999
+    },
+    {
+      "id": "multi_region_sales.xlsx:bnd:eu_sales",
+      "type": "boundary",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table_name": "Europe Sales",
+      "expected_region": "C10:E13",
+      "min_iou": 0.999
+    },
+    {
+      "id": "multi_region_sales.xlsx:fml:0",
+      "type": "formula",
+      "description": "US average selling price",
+      "business_logic": "Average selling price = revenue divided by units sold.",
+      "expression": "R / U",
+      "operands": {
+        "R": "revenue_us",
+        "U": "units_us"
+      },
+      "inputs": {
+        "R": 9000.0,
+        "U": 450.0
+      },
+      "expected_value": 20.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "multi_region_sales.xlsx:fml:1",
+      "type": "formula",
+      "description": "Germany average selling price",
+      "business_logic": "Average selling price = revenue divided by units sold.",
+      "expression": "R / U",
+      "operands": {
+        "R": "revenue_germany",
+        "U": "units_germany"
+      },
+      "inputs": {
+        "R": 4200.0,
+        "U": 210.0
+      },
+      "expected_value": 20.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table": "Europe Sales",
+      "row_label": "France",
+      "col_label": "Revenue",
+      "expected_value": 2600,
+      "expected_cell_ref": "D13",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table": "North America Sales",
+      "row_label": "Mexico",
+      "col_label": "Units",
+      "expected_value": 60,
+      "expected_cell_ref": "E7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table": "Europe Sales",
+      "row_label": "UK",
+      "col_label": "Units",
+      "expected_value": 150,
+      "expected_cell_ref": "E11",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table": "Europe Sales",
+      "row_label": "France",
+      "col_label": "Units",
+      "expected_value": 130,
+      "expected_cell_ref": "E13",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table": "North America Sales",
+      "row_label": "Canada",
+      "col_label": "Revenue",
+      "expected_value": 1800,
+      "expected_cell_ref": "D6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table": "North America Sales",
+      "row_label": "US",
+      "col_label": "Units",
+      "expected_value": 450,
+      "expected_cell_ref": "E5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table": "North America Sales",
+      "row_label": "Mexico",
+      "col_label": "Revenue",
+      "expected_value": 1200,
+      "expected_cell_ref": "D7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table": "North America Sales",
+      "row_label": "Canada",
+      "col_label": "Units",
+      "expected_value": 90,
+      "expected_cell_ref": "E6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table": "Europe Sales",
+      "row_label": "Germany",
+      "col_label": "Units",
+      "expected_value": 210,
+      "expected_cell_ref": "E12",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "na_sales",
+      "table": "North America Sales",
+      "row_label": "US",
+      "col_label": "Revenue",
+      "expected_value": 9000,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table": "Europe Sales",
+      "row_label": "Germany",
+      "col_label": "Revenue",
+      "expected_value": 4200,
+      "expected_cell_ref": "D12",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Sales",
+      "table_id": "eu_sales",
+      "table": "Europe Sales",
+      "row_label": "UK",
+      "col_label": "Revenue",
+      "expected_value": 3000,
+      "expected_cell_ref": "D11",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:0",
+      "type": "semantic",
+      "query": "What is the Units for Mexico in North America Sales?",
+      "expected_value": 60,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Mexico",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:1",
+      "type": "semantic",
+      "query": "Canada Revenue",
+      "expected_value": 1800,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Canada",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:2",
+      "type": "semantic",
+      "query": "How much Units did Canada have?",
+      "expected_value": 90,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Canada",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:3",
+      "type": "semantic",
+      "query": "What is the Revenue for Germany in Europe Sales?",
+      "expected_value": 4200,
+      "expected_table_id": "eu_sales",
+      "expected_row_label": "Germany",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:4",
+      "type": "semantic",
+      "query": "Mexico Units",
+      "expected_value": 60,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Mexico",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:5",
+      "type": "semantic",
+      "query": "What is Canada's Revenue in dollars?",
+      "expected_value": 1800,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Canada",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:6",
+      "type": "semantic",
+      "query": "What is the Units for Canada in North America Sales?",
+      "expected_value": 90,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Canada",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:7",
+      "type": "semantic",
+      "query": "What is Germany's Revenue in dollars?",
+      "expected_value": 4200,
+      "expected_table_id": "eu_sales",
+      "expected_row_label": "Germany",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:8",
+      "type": "semantic",
+      "query": "Find the Units of Mexico in the North America Sales table.",
+      "expected_value": 60,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Mexico",
+      "expected_col_label": "Units",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "multi_region_sales.xlsx:sem:9",
+      "type": "semantic",
+      "query": "How much Revenue did Canada have?",
+      "expected_value": 1800,
+      "expected_table_id": "na_sales",
+      "expected_row_label": "Canada",
+      "expected_col_label": "Revenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

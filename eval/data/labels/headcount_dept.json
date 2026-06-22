@@ -1,0 +1,555 @@
+{
+  "workbook": "headcount_dept.xlsx",
+  "rel_path": "workbooks/headcount_dept.xlsx",
+  "difficulty": "easy",
+  "domain": "hr",
+  "traps": [],
+  "sheets": [
+    "Headcount"
+  ],
+  "business_logic": "Annual payroll = headcount times average salary.",
+  "tables": [
+    {
+      "table_id": "headcount",
+      "name": "Headcount by Department",
+      "sheet": "Headcount",
+      "region": "A1:D6",
+      "header_region": "A1:D1",
+      "data_region": "A2:D6",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Headcount",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "AvgSalary",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "OpenReqs",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "count"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Engineering",
+          "row_index": 2
+        },
+        {
+          "label": "Sales",
+          "row_index": 3
+        },
+        {
+          "label": "Marketing",
+          "row_index": 4
+        },
+        {
+          "label": "Ops",
+          "row_index": 5
+        },
+        {
+          "label": "Finance",
+          "row_index": 6
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Engineering",
+          "col_label": "Headcount",
+          "cell_ref": "B2",
+          "value": 120,
+          "raw": 120,
+          "is_formula": false
+        },
+        {
+          "row_label": "Engineering",
+          "col_label": "AvgSalary",
+          "cell_ref": "C2",
+          "value": 145000,
+          "raw": 145000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Engineering",
+          "col_label": "OpenReqs",
+          "cell_ref": "D2",
+          "value": 12,
+          "raw": 12,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sales",
+          "col_label": "Headcount",
+          "cell_ref": "B3",
+          "value": 80,
+          "raw": 80,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sales",
+          "col_label": "AvgSalary",
+          "cell_ref": "C3",
+          "value": 110000,
+          "raw": 110000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sales",
+          "col_label": "OpenReqs",
+          "cell_ref": "D3",
+          "value": 6,
+          "raw": 6,
+          "is_formula": false
+        },
+        {
+          "row_label": "Marketing",
+          "col_label": "Headcount",
+          "cell_ref": "B4",
+          "value": 35,
+          "raw": 35,
+          "is_formula": false
+        },
+        {
+          "row_label": "Marketing",
+          "col_label": "AvgSalary",
+          "cell_ref": "C4",
+          "value": 95000,
+          "raw": 95000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Marketing",
+          "col_label": "OpenReqs",
+          "cell_ref": "D4",
+          "value": 3,
+          "raw": 3,
+          "is_formula": false
+        },
+        {
+          "row_label": "Ops",
+          "col_label": "Headcount",
+          "cell_ref": "B5",
+          "value": 50,
+          "raw": 50,
+          "is_formula": false
+        },
+        {
+          "row_label": "Ops",
+          "col_label": "AvgSalary",
+          "cell_ref": "C5",
+          "value": 85000,
+          "raw": 85000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Ops",
+          "col_label": "OpenReqs",
+          "cell_ref": "D5",
+          "value": 4,
+          "raw": 4,
+          "is_formula": false
+        },
+        {
+          "row_label": "Finance",
+          "col_label": "Headcount",
+          "cell_ref": "B6",
+          "value": 25,
+          "raw": 25,
+          "is_formula": false
+        },
+        {
+          "row_label": "Finance",
+          "col_label": "AvgSalary",
+          "cell_ref": "C6",
+          "value": 130000,
+          "raw": 130000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Finance",
+          "col_label": "OpenReqs",
+          "cell_ref": "D6",
+          "value": 2,
+          "raw": 2,
+          "is_formula": false
+        }
+      ],
+      "traps": [],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "headcount_eng",
+      "aliases": [],
+      "table_id": "headcount",
+      "row_label": "Engineering",
+      "col_label": "Headcount",
+      "unit": "count",
+      "value": 120
+    },
+    {
+      "semantic_name": "avg_salary_eng",
+      "aliases": [],
+      "table_id": "headcount",
+      "row_label": "Engineering",
+      "col_label": "AvgSalary",
+      "unit": "USD",
+      "value": 145000
+    },
+    {
+      "semantic_name": "headcount_sales",
+      "aliases": [],
+      "table_id": "headcount",
+      "row_label": "Sales",
+      "col_label": "Headcount",
+      "unit": "count",
+      "value": 80
+    },
+    {
+      "semantic_name": "avg_salary_sales",
+      "aliases": [],
+      "table_id": "headcount",
+      "row_label": "Sales",
+      "col_label": "AvgSalary",
+      "unit": "USD",
+      "value": 110000
+    }
+  ],
+  "samples": [
+    {
+      "id": "headcount_dept.xlsx:bnd:headcount",
+      "type": "boundary",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table_name": "Headcount by Department",
+      "expected_region": "A1:D6",
+      "min_iou": 0.999
+    },
+    {
+      "id": "headcount_dept.xlsx:fml:0",
+      "type": "formula",
+      "description": "Engineering annual payroll",
+      "business_logic": "Annual payroll = headcount times average salary.",
+      "expression": "H * S",
+      "operands": {
+        "H": "headcount_eng",
+        "S": "avg_salary_eng"
+      },
+      "inputs": {
+        "H": 120.0,
+        "S": 145000.0
+      },
+      "expected_value": 17400000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "headcount_dept.xlsx:fml:1",
+      "type": "formula",
+      "description": "Sales annual payroll",
+      "business_logic": "Annual payroll = headcount times average salary.",
+      "expression": "H * S",
+      "operands": {
+        "H": "headcount_sales",
+        "S": "avg_salary_sales"
+      },
+      "inputs": {
+        "H": 80.0,
+        "S": 110000.0
+      },
+      "expected_value": 8800000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Ops",
+      "col_label": "OpenReqs",
+      "expected_value": 4,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Finance",
+      "col_label": "AvgSalary",
+      "expected_value": 130000,
+      "expected_cell_ref": "C6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Engineering",
+      "col_label": "OpenReqs",
+      "expected_value": 12,
+      "expected_cell_ref": "D2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Sales",
+      "col_label": "AvgSalary",
+      "expected_value": 110000,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Finance",
+      "col_label": "OpenReqs",
+      "expected_value": 2,
+      "expected_cell_ref": "D6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Marketing",
+      "col_label": "AvgSalary",
+      "expected_value": 95000,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Sales",
+      "col_label": "OpenReqs",
+      "expected_value": 6,
+      "expected_cell_ref": "D3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Engineering",
+      "col_label": "Headcount",
+      "expected_value": 120,
+      "expected_cell_ref": "B2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Sales",
+      "col_label": "Headcount",
+      "expected_value": 80,
+      "expected_cell_ref": "B3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Marketing",
+      "col_label": "OpenReqs",
+      "expected_value": 3,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Ops",
+      "col_label": "Headcount",
+      "expected_value": 50,
+      "expected_cell_ref": "B5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Ops",
+      "col_label": "AvgSalary",
+      "expected_value": 85000,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Finance",
+      "col_label": "Headcount",
+      "expected_value": 25,
+      "expected_cell_ref": "B6",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Headcount",
+      "table_id": "headcount",
+      "table": "Headcount by Department",
+      "row_label": "Marketing",
+      "col_label": "Headcount",
+      "expected_value": 35,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:0",
+      "type": "semantic",
+      "query": "What is the AvgSalary for Finance in Headcount by Department?",
+      "expected_value": 130000,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Finance",
+      "expected_col_label": "AvgSalary",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:1",
+      "type": "semantic",
+      "query": "Find the OpenReqs of Finance in the Headcount by Department table.",
+      "expected_value": 2,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Finance",
+      "expected_col_label": "OpenReqs",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:2",
+      "type": "semantic",
+      "query": "Find the Headcount of Engineering in the Headcount by Department table.",
+      "expected_value": 120,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Engineering",
+      "expected_col_label": "Headcount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:3",
+      "type": "semantic",
+      "query": "Ops Headcount",
+      "expected_value": 50,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Ops",
+      "expected_col_label": "Headcount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:4",
+      "type": "semantic",
+      "query": "Find the Headcount of Marketing in the Headcount by Department table.",
+      "expected_value": 35,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Marketing",
+      "expected_col_label": "Headcount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:5",
+      "type": "semantic",
+      "query": "What is the AvgSalary for Finance in Headcount by Department?",
+      "expected_value": 130000,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Finance",
+      "expected_col_label": "AvgSalary",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:6",
+      "type": "semantic",
+      "query": "Finance OpenReqs",
+      "expected_value": 2,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Finance",
+      "expected_col_label": "OpenReqs",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:7",
+      "type": "semantic",
+      "query": "How much Headcount did Engineering have?",
+      "expected_value": 120,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Engineering",
+      "expected_col_label": "Headcount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "headcount_dept.xlsx:sem:8",
+      "type": "semantic",
+      "query": "What is the Headcount for Ops in Headcount by Department?",
+      "expected_value": 50,
+      "expected_table_id": "headcount",
+      "expected_row_label": "Ops",
+      "expected_col_label": "Headcount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

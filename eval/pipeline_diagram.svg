@@ -1,0 +1,143 @@
+<svg viewBox="0 0 1000 740" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <title>MCG swarm eval pipeline: synthetic data, evaluation, and insights</title>
+  <desc>Three stages. Stage 1 generates synthetic Excel workbooks and ground-truth labels from one source and verifies them. Stage 2 runs the system under test through an adapter and scores five capabilities. Stage 3 reports per-capability, per-tier and per-workbook insights showing where the swarm breaks.</desc>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#0F6E56"/>
+    </marker>
+    <style>
+      .band{fill:#F1EFE8;}
+      .bl{fill:#0F6E56;font-size:15px;font-weight:700;}
+      .box{fill:#fff;stroke:#D3D1C7;stroke-width:1.5;}
+      .accent{fill:#E1F5EE;stroke:#1D9E75;stroke-width:1.5;}
+      .t{fill:#23221d;font-size:13.5px;font-weight:600;}
+      .s{fill:#6b6a62;font-size:11px;}
+      .chip{fill:#fff;stroke:#D3D1C7;stroke-width:1.2;}
+      .ct{fill:#23221d;font-size:11.5px;font-weight:600;}
+      .cs{fill:#6b6a62;font-size:10px;}
+      .note{fill:#6b6a62;font-size:11px;}
+      .pill{fill:#E1F5EE;stroke:#1D9E75;stroke-width:1.2;}
+      .pt{fill:#0F6E56;font-size:11.5px;font-weight:600;}
+      .edge{stroke:#0F6E56;stroke-width:1.6;fill:none;}
+    </style>
+  </defs>
+
+  <text x="28" y="30" fill="#23221d" font-size="19" font-weight="700">DIM MCG swarm — evaluation pipeline</text>
+  <text x="28" y="50" class="note">Synthetic Excel with known ground truth → score the swarm through an adapter → see exactly where it breaks.</text>
+
+  <!-- ============ STAGE 1 ============ -->
+  <rect class="band" x="20" y="64" width="960" height="196" rx="12"/>
+  <text x="36" y="88" class="bl">1 · Synthetic data — ground truth by construction</text>
+
+  <g>
+    <rect class="box" x="40" y="112" width="150" height="68" rx="9"/>
+    <text x="115" y="142" text-anchor="middle" class="t">WorkbookSpec</text>
+    <text x="115" y="160" text-anchor="middle" class="s">data + layout + traps</text>
+  </g>
+  <line x1="192" y1="146" x2="236" y2="146" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="accent" x="238" y="112" width="150" height="68" rx="9"/>
+    <text x="313" y="138" text-anchor="middle" class="t">render()</text>
+    <text x="313" y="156" text-anchor="middle" class="s">one source of truth</text>
+    <text x="313" y="170" text-anchor="middle" class="s">+ LibreOffice recalc</text>
+  </g>
+  <line x1="390" y1="146" x2="434" y2="146" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="box" x="436" y="112" width="186" height="32" rx="7"/>
+    <text x="529" y="132" text-anchor="middle" class="t">.xlsx workbook</text>
+    <rect class="accent" x="436" y="150" width="186" height="32" rx="7"/>
+    <text x="529" y="170" text-anchor="middle" class="t">labels JSON · ground truth</text>
+  </g>
+  <line x1="624" y1="146" x2="668" y2="146" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="box" x="670" y="112" width="160" height="68" rx="9"/>
+    <text x="750" y="138" text-anchor="middle" class="t">verify.py</text>
+    <text x="750" y="156" text-anchor="middle" class="s">read xlsx back</text>
+    <text x="750" y="170" text-anchor="middle" class="s">2,498 checks ✓</text>
+  </g>
+  <text x="846" y="150" class="pt" font-size="22">✓</text>
+
+  <text x="40" y="240" class="note">18 workbooks across easy → medium → hard → <tspan font-weight="700" fill="#0F6E56">extreme</tspan> (live formulas, cross-sheet refs, named ranges, SUMIF). 472 validation samples.</text>
+
+  <!-- ============ STAGE 2 ============ -->
+  <rect class="band" x="20" y="276" width="960" height="210" rx="12"/>
+  <text x="36" y="300" class="bl">2 · Evaluation — the adapter boundary</text>
+
+  <g>
+    <rect class="box" x="40" y="330" width="150" height="32" rx="7"/>
+    <text x="115" y="350" text-anchor="middle" class="t">labels JSON</text>
+    <rect class="box" x="40" y="372" width="150" height="32" rx="7"/>
+    <text x="115" y="392" text-anchor="middle" class="t">.xlsx workbook</text>
+  </g>
+  <line x1="192" y1="388" x2="228" y2="388" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="accent" x="232" y="346" width="156" height="74" rx="9"/>
+    <text x="310" y="376" text-anchor="middle" class="t">EvalAdapter</text>
+    <text x="310" y="394" text-anchor="middle" class="s">oracle · noisy</text>
+    <text x="310" y="408" text-anchor="middle" class="s">· your swarm</text>
+  </g>
+  <line x1="390" y1="383" x2="426" y2="383" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="box" x="430" y="346" width="150" height="74" rx="9"/>
+    <text x="505" y="378" text-anchor="middle" class="t">Harness</text>
+    <text x="505" y="396" text-anchor="middle" class="s">compare to labels</text>
+  </g>
+  <line x1="582" y1="383" x2="618" y2="383" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="box" x="622" y="320" width="338" height="150" rx="9"/>
+    <text x="640" y="342" class="ct" fill="#0F6E56">5 capabilities scored</text>
+    <text x="640" y="364" class="ct">• Table boundaries <tspan class="cs">— cell-range IoU</tspan></text>
+    <text x="640" y="386" class="ct">• Value extraction <tspan class="cs">— query(row, column)</tspan></text>
+    <text x="640" y="408" class="ct">• Semantic extraction <tspan class="cs">— natural-language query</tspan></text>
+    <text x="640" y="430" class="ct">• Formula (intra-table) <tspan class="cs">— canonical-table compute</tspan></text>
+    <text x="640" y="452" class="ct">• Measure detection <tspan class="cs">— precision / recall / F1</tspan></text>
+  </g>
+
+  <!-- ============ STAGE 3 ============ -->
+  <rect class="band" x="20" y="502" width="960" height="218" rx="12"/>
+  <text x="36" y="526" class="bl">3 · Insights — what the output tells you</text>
+
+  <g>
+    <rect class="box" x="40" y="552" width="180" height="140" rx="9"/>
+    <text x="58" y="574" class="ct" fill="#0F6E56">Outputs</text>
+    <rect class="chip" x="58" y="586" width="144" height="28" rx="6"/>
+    <text x="130" y="604" text-anchor="middle" class="ct">scorecard.json</text>
+    <rect class="chip" x="58" y="620" width="144" height="28" rx="6"/>
+    <text x="130" y="638" text-anchor="middle" class="ct">console table</text>
+    <rect class="chip" x="58" y="654" width="144" height="28" rx="6"/>
+    <text x="130" y="672" text-anchor="middle" class="ct">HTML dashboard</text>
+  </g>
+  <line x1="222" y1="622" x2="258" y2="622" class="edge" marker-end="url(#ar)"/>
+
+  <g>
+    <rect class="accent" x="262" y="552" width="698" height="140" rx="9"/>
+    <text x="284" y="578" class="t" fill="#0F6E56">Where does the swarm break?</text>
+
+    <rect class="chip" x="284" y="592" width="150" height="40" rx="6"/>
+    <text x="359" y="610" text-anchor="middle" class="ct">By capability</text>
+    <text x="359" y="624" text-anchor="middle" class="cs">which skill fails</text>
+
+    <rect class="chip" x="444" y="592" width="150" height="40" rx="6"/>
+    <text x="519" y="610" text-anchor="middle" class="ct">By tier</text>
+    <text x="519" y="624" text-anchor="middle" class="cs">easy → extreme</text>
+
+    <rect class="chip" x="604" y="592" width="150" height="40" rx="6"/>
+    <text x="679" y="610" text-anchor="middle" class="ct">By workbook</text>
+    <text x="679" y="624" text-anchor="middle" class="cs">which traps bite</text>
+
+    <rect class="chip" x="764" y="592" width="176" height="40" rx="6"/>
+    <text x="852" y="610" text-anchor="middle" class="ct">Failing-sample drilldown</text>
+    <text x="852" y="624" text-anchor="middle" class="cs">expected vs got</text>
+
+    <rect class="pill" x="284" y="648" width="300" height="30" rx="15"/>
+    <text x="434" y="668" text-anchor="middle" class="pt">oracle 100% — labels + scorer sanity</text>
+    <rect class="pill" x="596" y="648" width="344" height="30" rx="15"/>
+    <text x="768" y="668" text-anchor="middle" class="pt">noisy 82% — proves the scorer discriminates</text>
+  </g>
+</svg>

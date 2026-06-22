@@ -1,0 +1,686 @@
+{
+  "workbook": "vendor_spend.xlsx",
+  "rel_path": "workbooks/vendor_spend.xlsx",
+  "difficulty": "medium",
+  "domain": "finance",
+  "traps": [
+    "title_banner",
+    "totals_row",
+    "totals_column"
+  ],
+  "sheets": [
+    "Vendor Spend"
+  ],
+  "business_logic": "Annual spend per vendor = sum of the four quarterly spends.",
+  "tables": [
+    {
+      "table_id": "vendor_spend",
+      "name": "Vendor Spend",
+      "sheet": "Vendor Spend",
+      "region": "A1:F8",
+      "header_region": "A2:F2",
+      "data_region": "A3:F8",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Q1",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Q2",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Q3",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Q4",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Annual",
+          "col_index": 6,
+          "col_letter": "F",
+          "dtype": "number",
+          "unit": null
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Acme",
+          "row_index": 3
+        },
+        {
+          "label": "Globex",
+          "row_index": 4
+        },
+        {
+          "label": "Initech",
+          "row_index": 5
+        },
+        {
+          "label": "Umbrella",
+          "row_index": 6
+        },
+        {
+          "label": "Stark",
+          "row_index": 7
+        },
+        {
+          "label": "Total",
+          "row_index": 8
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Acme",
+          "col_label": "Q1",
+          "cell_ref": "B3",
+          "value": 12000,
+          "raw": 12000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Acme",
+          "col_label": "Q2",
+          "cell_ref": "C3",
+          "value": 13000,
+          "raw": 13000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Acme",
+          "col_label": "Q3",
+          "cell_ref": "D3",
+          "value": 11000,
+          "raw": 11000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Acme",
+          "col_label": "Q4",
+          "cell_ref": "E3",
+          "value": 14000,
+          "raw": 14000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Acme",
+          "col_label": "Annual",
+          "cell_ref": "F3",
+          "value": 50000,
+          "raw": 50000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Globex",
+          "col_label": "Q1",
+          "cell_ref": "B4",
+          "value": 8000,
+          "raw": 8000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Globex",
+          "col_label": "Q2",
+          "cell_ref": "C4",
+          "value": 8500,
+          "raw": 8500,
+          "is_formula": false
+        },
+        {
+          "row_label": "Globex",
+          "col_label": "Q3",
+          "cell_ref": "D4",
+          "value": 9000,
+          "raw": 9000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Globex",
+          "col_label": "Q4",
+          "cell_ref": "E4",
+          "value": 9500,
+          "raw": 9500,
+          "is_formula": false
+        },
+        {
+          "row_label": "Globex",
+          "col_label": "Annual",
+          "cell_ref": "F4",
+          "value": 35000,
+          "raw": 35000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Initech",
+          "col_label": "Q1",
+          "cell_ref": "B5",
+          "value": 5000,
+          "raw": 5000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Initech",
+          "col_label": "Q2",
+          "cell_ref": "C5",
+          "value": 5200,
+          "raw": 5200,
+          "is_formula": false
+        },
+        {
+          "row_label": "Initech",
+          "col_label": "Q3",
+          "cell_ref": "D5",
+          "value": 4800,
+          "raw": 4800,
+          "is_formula": false
+        },
+        {
+          "row_label": "Initech",
+          "col_label": "Q4",
+          "cell_ref": "E5",
+          "value": 5100,
+          "raw": 5100,
+          "is_formula": false
+        },
+        {
+          "row_label": "Initech",
+          "col_label": "Annual",
+          "cell_ref": "F5",
+          "value": 20100,
+          "raw": 20100,
+          "is_formula": false
+        },
+        {
+          "row_label": "Umbrella",
+          "col_label": "Q1",
+          "cell_ref": "B6",
+          "value": 22000,
+          "raw": 22000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Umbrella",
+          "col_label": "Q2",
+          "cell_ref": "C6",
+          "value": 21000,
+          "raw": 21000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Umbrella",
+          "col_label": "Q3",
+          "cell_ref": "D6",
+          "value": 23000,
+          "raw": 23000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Umbrella",
+          "col_label": "Q4",
+          "cell_ref": "E6",
+          "value": 20000,
+          "raw": 20000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Umbrella",
+          "col_label": "Annual",
+          "cell_ref": "F6",
+          "value": 86000,
+          "raw": 86000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Stark",
+          "col_label": "Q1",
+          "cell_ref": "B7",
+          "value": 14000,
+          "raw": 14000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Stark",
+          "col_label": "Q2",
+          "cell_ref": "C7",
+          "value": 15000,
+          "raw": 15000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Stark",
+          "col_label": "Q3",
+          "cell_ref": "D7",
+          "value": 16000,
+          "raw": 16000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Stark",
+          "col_label": "Q4",
+          "cell_ref": "E7",
+          "value": 17000,
+          "raw": 17000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Stark",
+          "col_label": "Annual",
+          "cell_ref": "F7",
+          "value": 62000,
+          "raw": 62000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Total",
+          "col_label": "Q1",
+          "cell_ref": "B8",
+          "value": 61000,
+          "raw": 61000,
+          "is_formula": false
+        },
+        {
+          "row_label": "Total",
+          "col_label": "Q2",
+          "cell_ref": "C8",
+          "value": 62700,
+          "raw": 62700,
+          "is_formula": false
+        },
+        {
+          "row_label": "Total",
+          "col_label": "Q3",
+          "cell_ref": "D8",
+          "value": 63800,
+          "raw": 63800,
+          "is_formula": false
+        },
+        {
+          "row_label": "Total",
+          "col_label": "Q4",
+          "cell_ref": "E8",
+          "value": 65600,
+          "raw": 65600,
+          "is_formula": false
+        },
+        {
+          "row_label": "Total",
+          "col_label": "Annual",
+          "cell_ref": "F8",
+          "value": 253100,
+          "raw": 253100,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "title_banner",
+        "totals_row",
+        "totals_column"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "acme_annual",
+      "aliases": [],
+      "table_id": "vendor_spend",
+      "row_label": "Acme",
+      "col_label": "Annual",
+      "unit": null,
+      "value": 50000
+    },
+    {
+      "semantic_name": "umbrella_annual",
+      "aliases": [],
+      "table_id": "vendor_spend",
+      "row_label": "Umbrella",
+      "col_label": "Annual",
+      "unit": null,
+      "value": 86000
+    },
+    {
+      "semantic_name": "total_q1",
+      "aliases": [],
+      "table_id": "vendor_spend",
+      "row_label": "Total",
+      "col_label": "Q1",
+      "unit": "USD",
+      "value": 61000
+    }
+  ],
+  "samples": [
+    {
+      "id": "vendor_spend.xlsx:bnd:vendor_spend",
+      "type": "boundary",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table_name": "Vendor Spend",
+      "expected_region": "A1:F8",
+      "min_iou": 0.999
+    },
+    {
+      "id": "vendor_spend.xlsx:fml:0",
+      "type": "formula",
+      "description": "Acme vs Umbrella annual delta",
+      "business_logic": "Annual spend per vendor = sum of the four quarterly spends.",
+      "expression": "U - A",
+      "operands": {
+        "U": "umbrella_annual",
+        "A": "acme_annual"
+      },
+      "inputs": {
+        "U": 86000.0,
+        "A": 50000.0
+      },
+      "expected_value": 36000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Initech",
+      "col_label": "Q2",
+      "expected_value": 5200,
+      "expected_cell_ref": "C5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Globex",
+      "col_label": "Annual",
+      "expected_value": 35000,
+      "expected_cell_ref": "F4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Stark",
+      "col_label": "Q3",
+      "expected_value": 16000,
+      "expected_cell_ref": "D7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Initech",
+      "col_label": "Q4",
+      "expected_value": 5100,
+      "expected_cell_ref": "E5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Globex",
+      "col_label": "Q1",
+      "expected_value": 8000,
+      "expected_cell_ref": "B4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Acme",
+      "col_label": "Q4",
+      "expected_value": 14000,
+      "expected_cell_ref": "E3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Total",
+      "col_label": "Q1",
+      "expected_value": 61000,
+      "expected_cell_ref": "B8",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Globex",
+      "col_label": "Q2",
+      "expected_value": 8500,
+      "expected_cell_ref": "C4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Acme",
+      "col_label": "Q2",
+      "expected_value": 13000,
+      "expected_cell_ref": "C3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Total",
+      "col_label": "Q2",
+      "expected_value": 62700,
+      "expected_cell_ref": "C8",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Total",
+      "col_label": "Q4",
+      "expected_value": 65600,
+      "expected_cell_ref": "E8",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Acme",
+      "col_label": "Q3",
+      "expected_value": 11000,
+      "expected_cell_ref": "D3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Stark",
+      "col_label": "Q2",
+      "expected_value": 15000,
+      "expected_cell_ref": "C7",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Vendor Spend",
+      "table_id": "vendor_spend",
+      "table": "Vendor Spend",
+      "row_label": "Globex",
+      "col_label": "Q3",
+      "expected_value": 9000,
+      "expected_cell_ref": "D4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:0",
+      "type": "semantic",
+      "query": "Globex Annual",
+      "expected_value": 35000,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Globex",
+      "expected_col_label": "Annual",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:1",
+      "type": "semantic",
+      "query": "What is Globex's Q1 in dollars?",
+      "expected_value": 8000,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Globex",
+      "expected_col_label": "Q1",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:2",
+      "type": "semantic",
+      "query": "What is the Q2 for Globex in Vendor Spend?",
+      "expected_value": 8500,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Globex",
+      "expected_col_label": "Q2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:3",
+      "type": "semantic",
+      "query": "How much Q4 did Total have?",
+      "expected_value": 65600,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Total",
+      "expected_col_label": "Q4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:4",
+      "type": "semantic",
+      "query": "How much Q3 did Globex have?",
+      "expected_value": 9000,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Globex",
+      "expected_col_label": "Q3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:5",
+      "type": "semantic",
+      "query": "Give me Globex's Q4.",
+      "expected_value": 9500,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Globex",
+      "expected_col_label": "Q4",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:6",
+      "type": "semantic",
+      "query": "What is Initech's Q1 in dollars?",
+      "expected_value": 5000,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Initech",
+      "expected_col_label": "Q1",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:7",
+      "type": "semantic",
+      "query": "Umbrella Q3",
+      "expected_value": 23000,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Umbrella",
+      "expected_col_label": "Q3",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:8",
+      "type": "semantic",
+      "query": "How much Annual did Initech have?",
+      "expected_value": 20100,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Initech",
+      "expected_col_label": "Annual",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "vendor_spend.xlsx:sem:9",
+      "type": "semantic",
+      "query": "What is the Annual for Acme in Vendor Spend?",
+      "expected_value": 50000,
+      "expected_table_id": "vendor_spend",
+      "expected_row_label": "Acme",
+      "expected_col_label": "Annual",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}

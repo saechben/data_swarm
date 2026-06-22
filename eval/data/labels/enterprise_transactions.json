@@ -1,0 +1,3784 @@
+{
+  "workbook": "enterprise_transactions.xlsx",
+  "rel_path": "workbooks/enterprise_transactions.xlsx",
+  "difficulty": "hard",
+  "domain": "sales",
+  "traps": [
+    "extreme_scale",
+    "requires_segmentation",
+    "100k_rows",
+    "multi_sheet",
+    "wide_table"
+  ],
+  "sheets": [
+    "Transactions",
+    "Region Summary",
+    "Monthly Summary",
+    "Category Summary"
+  ],
+  "business_logic": "Per transaction: gross = units x price; net = gross - discount; COGS = net x category ratio; gross profit = net - COGS; tax = 20% of positive gross profit; net revenue = net. Regional / monthly / category summaries aggregate the ledger; company net revenue = sum of regions.",
+  "tables": [
+    {
+      "table_id": "transactions",
+      "name": "Transaction Ledger",
+      "sheet": "Transactions",
+      "region": "A1:V100001",
+      "header_region": "A1:V1",
+      "data_region": "A2:V100001",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "Date",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "date",
+          "unit": null
+        },
+        {
+          "label": "FiscalQuarter",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "Region",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "Country",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "Channel",
+          "col_index": 6,
+          "col_letter": "F",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "Segment",
+          "col_index": 7,
+          "col_letter": "G",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "ProductCategory",
+          "col_index": 8,
+          "col_letter": "H",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "ProductSKU",
+          "col_index": 9,
+          "col_letter": "I",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "SalesRep",
+          "col_index": 10,
+          "col_letter": "J",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "CustomerID",
+          "col_index": 11,
+          "col_letter": "K",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "Currency",
+          "col_index": 12,
+          "col_letter": "L",
+          "dtype": "string",
+          "unit": null
+        },
+        {
+          "label": "UnitsSold",
+          "col_index": 13,
+          "col_letter": "M",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "GrossAmount",
+          "col_index": 14,
+          "col_letter": "N",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "DiscountPct",
+          "col_index": 15,
+          "col_letter": "O",
+          "dtype": "number",
+          "unit": "%"
+        },
+        {
+          "label": "DiscountAmount",
+          "col_index": 16,
+          "col_letter": "P",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "NetAmount",
+          "col_index": 17,
+          "col_letter": "Q",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "COGS",
+          "col_index": 18,
+          "col_letter": "R",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "GrossProfit",
+          "col_index": 19,
+          "col_letter": "S",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "TaxAmount",
+          "col_index": 20,
+          "col_letter": "T",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "NetRevenue",
+          "col_index": 21,
+          "col_letter": "U",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "Status",
+          "col_index": 22,
+          "col_letter": "V",
+          "dtype": "string",
+          "unit": null
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "T000000",
+          "row_index": 2
+        },
+        {
+          "label": "T000467",
+          "row_index": 469
+        },
+        {
+          "label": "T004373",
+          "row_index": 4375
+        },
+        {
+          "label": "T004410",
+          "row_index": 4412
+        },
+        {
+          "label": "T006228",
+          "row_index": 6230
+        },
+        {
+          "label": "T008757",
+          "row_index": 8759
+        },
+        {
+          "label": "T009181",
+          "row_index": 9183
+        },
+        {
+          "label": "T012618",
+          "row_index": 12620
+        },
+        {
+          "label": "T013423",
+          "row_index": 13425
+        },
+        {
+          "label": "T015975",
+          "row_index": 15977
+        },
+        {
+          "label": "T018965",
+          "row_index": 18967
+        },
+        {
+          "label": "T019841",
+          "row_index": 19843
+        },
+        {
+          "label": "T021413",
+          "row_index": 21415
+        },
+        {
+          "label": "T022328",
+          "row_index": 22330
+        },
+        {
+          "label": "T022743",
+          "row_index": 22745
+        },
+        {
+          "label": "T024464",
+          "row_index": 24466
+        },
+        {
+          "label": "T027749",
+          "row_index": 27751
+        },
+        {
+          "label": "T030256",
+          "row_index": 30258
+        },
+        {
+          "label": "T031129",
+          "row_index": 31131
+        },
+        {
+          "label": "T036449",
+          "row_index": 36451
+        },
+        {
+          "label": "T037323",
+          "row_index": 37325
+        },
+        {
+          "label": "T041875",
+          "row_index": 41877
+        },
+        {
+          "label": "T044306",
+          "row_index": 44308
+        },
+        {
+          "label": "T044430",
+          "row_index": 44432
+        },
+        {
+          "label": "T045098",
+          "row_index": 45100
+        },
+        {
+          "label": "T045121",
+          "row_index": 45123
+        },
+        {
+          "label": "T046844",
+          "row_index": 46846
+        },
+        {
+          "label": "T049999",
+          "row_index": 50001
+        },
+        {
+          "label": "T052689",
+          "row_index": 52691
+        },
+        {
+          "label": "T057922",
+          "row_index": 57924
+        },
+        {
+          "label": "T058648",
+          "row_index": 58650
+        },
+        {
+          "label": "T060889",
+          "row_index": 60891
+        },
+        {
+          "label": "T061043",
+          "row_index": 61045
+        },
+        {
+          "label": "T068614",
+          "row_index": 68616
+        },
+        {
+          "label": "T073406",
+          "row_index": 73408
+        },
+        {
+          "label": "T073420",
+          "row_index": 73422
+        },
+        {
+          "label": "T075280",
+          "row_index": 75282
+        },
+        {
+          "label": "T076178",
+          "row_index": 76180
+        },
+        {
+          "label": "T078275",
+          "row_index": 78277
+        },
+        {
+          "label": "T078799",
+          "row_index": 78801
+        },
+        {
+          "label": "T080723",
+          "row_index": 80725
+        },
+        {
+          "label": "T087433",
+          "row_index": 87435
+        },
+        {
+          "label": "T088022",
+          "row_index": 88024
+        },
+        {
+          "label": "T088686",
+          "row_index": 88688
+        },
+        {
+          "label": "T088977",
+          "row_index": 88979
+        },
+        {
+          "label": "T089644",
+          "row_index": 89646
+        },
+        {
+          "label": "T092970",
+          "row_index": 92972
+        },
+        {
+          "label": "T095894",
+          "row_index": 95896
+        },
+        {
+          "label": "T099985",
+          "row_index": 99987
+        },
+        {
+          "label": "T099999",
+          "row_index": 100001
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "T000000",
+          "col_label": "UnitsSold",
+          "cell_ref": "M2",
+          "value": 19,
+          "raw": 19,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000000",
+          "col_label": "GrossAmount",
+          "cell_ref": "N2",
+          "value": 114,
+          "raw": 114,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000000",
+          "col_label": "NetAmount",
+          "cell_ref": "Q2",
+          "value": 114.0,
+          "raw": 114.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000000",
+          "col_label": "GrossProfit",
+          "cell_ref": "S2",
+          "value": 34.2,
+          "raw": 34.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000000",
+          "col_label": "NetRevenue",
+          "cell_ref": "U2",
+          "value": 114.0,
+          "raw": 114.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000467",
+          "col_label": "UnitsSold",
+          "cell_ref": "M469",
+          "value": 13,
+          "raw": 13,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000467",
+          "col_label": "GrossAmount",
+          "cell_ref": "N469",
+          "value": 91,
+          "raw": 91,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000467",
+          "col_label": "NetAmount",
+          "cell_ref": "Q469",
+          "value": 72.8,
+          "raw": 72.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000467",
+          "col_label": "GrossProfit",
+          "cell_ref": "S469",
+          "value": 43.68,
+          "raw": 43.68,
+          "is_formula": false
+        },
+        {
+          "row_label": "T000467",
+          "col_label": "NetRevenue",
+          "cell_ref": "U469",
+          "value": 72.8,
+          "raw": 72.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004373",
+          "col_label": "UnitsSold",
+          "cell_ref": "M4375",
+          "value": 31,
+          "raw": 31,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004373",
+          "col_label": "GrossAmount",
+          "cell_ref": "N4375",
+          "value": 8773,
+          "raw": 8773,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004373",
+          "col_label": "NetAmount",
+          "cell_ref": "Q4375",
+          "value": 7018.4,
+          "raw": 7018.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004373",
+          "col_label": "GrossProfit",
+          "cell_ref": "S4375",
+          "value": 2947.73,
+          "raw": 2947.73,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004373",
+          "col_label": "NetRevenue",
+          "cell_ref": "U4375",
+          "value": 7018.4,
+          "raw": 7018.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004410",
+          "col_label": "UnitsSold",
+          "cell_ref": "M4412",
+          "value": 42,
+          "raw": 42,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004410",
+          "col_label": "GrossAmount",
+          "cell_ref": "N4412",
+          "value": 588,
+          "raw": 588,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004410",
+          "col_label": "NetAmount",
+          "cell_ref": "Q4412",
+          "value": 588.0,
+          "raw": 588.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004410",
+          "col_label": "GrossProfit",
+          "cell_ref": "S4412",
+          "value": 352.8,
+          "raw": 352.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T004410",
+          "col_label": "NetRevenue",
+          "cell_ref": "U4412",
+          "value": 588.0,
+          "raw": 588.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T006228",
+          "col_label": "UnitsSold",
+          "cell_ref": "M6230",
+          "value": 13,
+          "raw": 13,
+          "is_formula": false
+        },
+        {
+          "row_label": "T006228",
+          "col_label": "GrossAmount",
+          "cell_ref": "N6230",
+          "value": 195,
+          "raw": 195,
+          "is_formula": false
+        },
+        {
+          "row_label": "T006228",
+          "col_label": "NetAmount",
+          "cell_ref": "Q6230",
+          "value": 156.0,
+          "raw": 156.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T006228",
+          "col_label": "GrossProfit",
+          "cell_ref": "S6230",
+          "value": 93.6,
+          "raw": 93.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T006228",
+          "col_label": "NetRevenue",
+          "cell_ref": "U6230",
+          "value": 156.0,
+          "raw": 156.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T008757",
+          "col_label": "UnitsSold",
+          "cell_ref": "M8759",
+          "value": 33,
+          "raw": 33,
+          "is_formula": false
+        },
+        {
+          "row_label": "T008757",
+          "col_label": "GrossAmount",
+          "cell_ref": "N8759",
+          "value": 264,
+          "raw": 264,
+          "is_formula": false
+        },
+        {
+          "row_label": "T008757",
+          "col_label": "NetAmount",
+          "cell_ref": "Q8759",
+          "value": 250.8,
+          "raw": 250.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T008757",
+          "col_label": "GrossProfit",
+          "cell_ref": "S8759",
+          "value": 75.24,
+          "raw": 75.24,
+          "is_formula": false
+        },
+        {
+          "row_label": "T008757",
+          "col_label": "NetRevenue",
+          "cell_ref": "U8759",
+          "value": 250.8,
+          "raw": 250.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T009181",
+          "col_label": "UnitsSold",
+          "cell_ref": "M9183",
+          "value": 41,
+          "raw": 41,
+          "is_formula": false
+        },
+        {
+          "row_label": "T009181",
+          "col_label": "GrossAmount",
+          "cell_ref": "N9183",
+          "value": 164,
+          "raw": 164,
+          "is_formula": false
+        },
+        {
+          "row_label": "T009181",
+          "col_label": "NetAmount",
+          "cell_ref": "Q9183",
+          "value": 139.4,
+          "raw": 139.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T009181",
+          "col_label": "GrossProfit",
+          "cell_ref": "S9183",
+          "value": 83.64,
+          "raw": 83.64,
+          "is_formula": false
+        },
+        {
+          "row_label": "T009181",
+          "col_label": "NetRevenue",
+          "cell_ref": "U9183",
+          "value": 139.4,
+          "raw": 139.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T012618",
+          "col_label": "UnitsSold",
+          "cell_ref": "M12620",
+          "value": 10,
+          "raw": 10,
+          "is_formula": false
+        },
+        {
+          "row_label": "T012618",
+          "col_label": "GrossAmount",
+          "cell_ref": "N12620",
+          "value": 1160,
+          "raw": 1160,
+          "is_formula": false
+        },
+        {
+          "row_label": "T012618",
+          "col_label": "NetAmount",
+          "cell_ref": "Q12620",
+          "value": 986.0,
+          "raw": 986.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T012618",
+          "col_label": "GrossProfit",
+          "cell_ref": "S12620",
+          "value": 374.68,
+          "raw": 374.68,
+          "is_formula": false
+        },
+        {
+          "row_label": "T012618",
+          "col_label": "NetRevenue",
+          "cell_ref": "U12620",
+          "value": 986.0,
+          "raw": 986.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T013423",
+          "col_label": "UnitsSold",
+          "cell_ref": "M13425",
+          "value": 9,
+          "raw": 9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T013423",
+          "col_label": "GrossAmount",
+          "cell_ref": "N13425",
+          "value": 153,
+          "raw": 153,
+          "is_formula": false
+        },
+        {
+          "row_label": "T013423",
+          "col_label": "NetAmount",
+          "cell_ref": "Q13425",
+          "value": 145.35,
+          "raw": 145.35,
+          "is_formula": false
+        },
+        {
+          "row_label": "T013423",
+          "col_label": "GrossProfit",
+          "cell_ref": "S13425",
+          "value": 43.61,
+          "raw": 43.61,
+          "is_formula": false
+        },
+        {
+          "row_label": "T013423",
+          "col_label": "NetRevenue",
+          "cell_ref": "U13425",
+          "value": 145.35,
+          "raw": 145.35,
+          "is_formula": false
+        },
+        {
+          "row_label": "T015975",
+          "col_label": "UnitsSold",
+          "cell_ref": "M15977",
+          "value": 18,
+          "raw": 18,
+          "is_formula": false
+        },
+        {
+          "row_label": "T015975",
+          "col_label": "GrossAmount",
+          "cell_ref": "N15977",
+          "value": 2718,
+          "raw": 2718,
+          "is_formula": false
+        },
+        {
+          "row_label": "T015975",
+          "col_label": "NetAmount",
+          "cell_ref": "Q15977",
+          "value": 2446.2,
+          "raw": 2446.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T015975",
+          "col_label": "GrossProfit",
+          "cell_ref": "S15977",
+          "value": 1027.4,
+          "raw": 1027.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T015975",
+          "col_label": "NetRevenue",
+          "cell_ref": "U15977",
+          "value": 2446.2,
+          "raw": 2446.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T018965",
+          "col_label": "UnitsSold",
+          "cell_ref": "M18967",
+          "value": 9,
+          "raw": 9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T018965",
+          "col_label": "GrossAmount",
+          "cell_ref": "N18967",
+          "value": 81,
+          "raw": 81,
+          "is_formula": false
+        },
+        {
+          "row_label": "T018965",
+          "col_label": "NetAmount",
+          "cell_ref": "Q18967",
+          "value": 64.8,
+          "raw": 64.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T018965",
+          "col_label": "GrossProfit",
+          "cell_ref": "S18967",
+          "value": 19.44,
+          "raw": 19.44,
+          "is_formula": false
+        },
+        {
+          "row_label": "T018965",
+          "col_label": "NetRevenue",
+          "cell_ref": "U18967",
+          "value": 64.8,
+          "raw": 64.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T019841",
+          "col_label": "UnitsSold",
+          "cell_ref": "M19843",
+          "value": 41,
+          "raw": 41,
+          "is_formula": false
+        },
+        {
+          "row_label": "T019841",
+          "col_label": "GrossAmount",
+          "cell_ref": "N19843",
+          "value": 2173,
+          "raw": 2173,
+          "is_formula": false
+        },
+        {
+          "row_label": "T019841",
+          "col_label": "NetAmount",
+          "cell_ref": "Q19843",
+          "value": 1738.4,
+          "raw": 1738.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T019841",
+          "col_label": "GrossProfit",
+          "cell_ref": "S19843",
+          "value": 782.28,
+          "raw": 782.28,
+          "is_formula": false
+        },
+        {
+          "row_label": "T019841",
+          "col_label": "NetRevenue",
+          "cell_ref": "U19843",
+          "value": 1738.4,
+          "raw": 1738.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T021413",
+          "col_label": "UnitsSold",
+          "cell_ref": "M21415",
+          "value": 39,
+          "raw": 39,
+          "is_formula": false
+        },
+        {
+          "row_label": "T021413",
+          "col_label": "GrossAmount",
+          "cell_ref": "N21415",
+          "value": 7644,
+          "raw": 7644,
+          "is_formula": false
+        },
+        {
+          "row_label": "T021413",
+          "col_label": "NetAmount",
+          "cell_ref": "Q21415",
+          "value": 6879.6,
+          "raw": 6879.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T021413",
+          "col_label": "GrossProfit",
+          "cell_ref": "S21415",
+          "value": 3577.39,
+          "raw": 3577.39,
+          "is_formula": false
+        },
+        {
+          "row_label": "T021413",
+          "col_label": "NetRevenue",
+          "cell_ref": "U21415",
+          "value": 6879.6,
+          "raw": 6879.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022328",
+          "col_label": "UnitsSold",
+          "cell_ref": "M22330",
+          "value": 33,
+          "raw": 33,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022328",
+          "col_label": "GrossAmount",
+          "cell_ref": "N22330",
+          "value": 2574,
+          "raw": 2574,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022328",
+          "col_label": "NetAmount",
+          "cell_ref": "Q22330",
+          "value": 2316.6,
+          "raw": 2316.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022328",
+          "col_label": "GrossProfit",
+          "cell_ref": "S22330",
+          "value": 1204.63,
+          "raw": 1204.63,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022328",
+          "col_label": "NetRevenue",
+          "cell_ref": "U22330",
+          "value": 2316.6,
+          "raw": 2316.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022743",
+          "col_label": "UnitsSold",
+          "cell_ref": "M22745",
+          "value": 18,
+          "raw": 18,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022743",
+          "col_label": "GrossAmount",
+          "cell_ref": "N22745",
+          "value": 144,
+          "raw": 144,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022743",
+          "col_label": "NetAmount",
+          "cell_ref": "Q22745",
+          "value": 136.8,
+          "raw": 136.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022743",
+          "col_label": "GrossProfit",
+          "cell_ref": "S22745",
+          "value": 82.08,
+          "raw": 82.08,
+          "is_formula": false
+        },
+        {
+          "row_label": "T022743",
+          "col_label": "NetRevenue",
+          "cell_ref": "U22745",
+          "value": 136.8,
+          "raw": 136.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T024464",
+          "col_label": "UnitsSold",
+          "cell_ref": "M24466",
+          "value": 44,
+          "raw": 44,
+          "is_formula": false
+        },
+        {
+          "row_label": "T024464",
+          "col_label": "GrossAmount",
+          "cell_ref": "N24466",
+          "value": 5500,
+          "raw": 5500,
+          "is_formula": false
+        },
+        {
+          "row_label": "T024464",
+          "col_label": "NetAmount",
+          "cell_ref": "Q24466",
+          "value": 4400.0,
+          "raw": 4400.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T024464",
+          "col_label": "GrossProfit",
+          "cell_ref": "S24466",
+          "value": 1848.0,
+          "raw": 1848.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T024464",
+          "col_label": "NetRevenue",
+          "cell_ref": "U24466",
+          "value": 4400.0,
+          "raw": 4400.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T027749",
+          "col_label": "UnitsSold",
+          "cell_ref": "M27751",
+          "value": 13,
+          "raw": 13,
+          "is_formula": false
+        },
+        {
+          "row_label": "T027749",
+          "col_label": "GrossAmount",
+          "cell_ref": "N27751",
+          "value": 598,
+          "raw": 598,
+          "is_formula": false
+        },
+        {
+          "row_label": "T027749",
+          "col_label": "NetAmount",
+          "cell_ref": "Q27751",
+          "value": 538.2,
+          "raw": 538.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T027749",
+          "col_label": "GrossProfit",
+          "cell_ref": "S27751",
+          "value": 204.52,
+          "raw": 204.52,
+          "is_formula": false
+        },
+        {
+          "row_label": "T027749",
+          "col_label": "NetRevenue",
+          "cell_ref": "U27751",
+          "value": 538.2,
+          "raw": 538.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T030256",
+          "col_label": "UnitsSold",
+          "cell_ref": "M30258",
+          "value": 28,
+          "raw": 28,
+          "is_formula": false
+        },
+        {
+          "row_label": "T030256",
+          "col_label": "GrossAmount",
+          "cell_ref": "N30258",
+          "value": 5292,
+          "raw": 5292,
+          "is_formula": false
+        },
+        {
+          "row_label": "T030256",
+          "col_label": "NetAmount",
+          "cell_ref": "Q30258",
+          "value": 5027.4,
+          "raw": 5027.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T030256",
+          "col_label": "GrossProfit",
+          "cell_ref": "S30258",
+          "value": 2614.25,
+          "raw": 2614.25,
+          "is_formula": false
+        },
+        {
+          "row_label": "T030256",
+          "col_label": "NetRevenue",
+          "cell_ref": "U30258",
+          "value": 5027.4,
+          "raw": 5027.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T031129",
+          "col_label": "UnitsSold",
+          "cell_ref": "M31131",
+          "value": 44,
+          "raw": 44,
+          "is_formula": false
+        },
+        {
+          "row_label": "T031129",
+          "col_label": "GrossAmount",
+          "cell_ref": "N31131",
+          "value": 748,
+          "raw": 748,
+          "is_formula": false
+        },
+        {
+          "row_label": "T031129",
+          "col_label": "NetAmount",
+          "cell_ref": "Q31131",
+          "value": 635.8,
+          "raw": 635.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T031129",
+          "col_label": "GrossProfit",
+          "cell_ref": "S31131",
+          "value": 190.74,
+          "raw": 190.74,
+          "is_formula": false
+        },
+        {
+          "row_label": "T031129",
+          "col_label": "NetRevenue",
+          "cell_ref": "U31131",
+          "value": 635.8,
+          "raw": 635.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T036449",
+          "col_label": "UnitsSold",
+          "cell_ref": "M36451",
+          "value": 47,
+          "raw": 47,
+          "is_formula": false
+        },
+        {
+          "row_label": "T036449",
+          "col_label": "GrossAmount",
+          "cell_ref": "N36451",
+          "value": 7003,
+          "raw": 7003,
+          "is_formula": false
+        },
+        {
+          "row_label": "T036449",
+          "col_label": "NetAmount",
+          "cell_ref": "Q36451",
+          "value": 5602.4,
+          "raw": 5602.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T036449",
+          "col_label": "GrossProfit",
+          "cell_ref": "S36451",
+          "value": 2913.25,
+          "raw": 2913.25,
+          "is_formula": false
+        },
+        {
+          "row_label": "T036449",
+          "col_label": "NetRevenue",
+          "cell_ref": "U36451",
+          "value": 5602.4,
+          "raw": 5602.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T037323",
+          "col_label": "UnitsSold",
+          "cell_ref": "M37325",
+          "value": 7,
+          "raw": 7,
+          "is_formula": false
+        },
+        {
+          "row_label": "T037323",
+          "col_label": "GrossAmount",
+          "cell_ref": "N37325",
+          "value": 602,
+          "raw": 602,
+          "is_formula": false
+        },
+        {
+          "row_label": "T037323",
+          "col_label": "NetAmount",
+          "cell_ref": "Q37325",
+          "value": 571.9,
+          "raw": 571.9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T037323",
+          "col_label": "GrossProfit",
+          "cell_ref": "S37325",
+          "value": 217.32,
+          "raw": 217.32,
+          "is_formula": false
+        },
+        {
+          "row_label": "T037323",
+          "col_label": "NetRevenue",
+          "cell_ref": "U37325",
+          "value": 571.9,
+          "raw": 571.9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T041875",
+          "col_label": "UnitsSold",
+          "cell_ref": "M41877",
+          "value": 24,
+          "raw": 24,
+          "is_formula": false
+        },
+        {
+          "row_label": "T041875",
+          "col_label": "GrossAmount",
+          "cell_ref": "N41877",
+          "value": 624,
+          "raw": 624,
+          "is_formula": false
+        },
+        {
+          "row_label": "T041875",
+          "col_label": "NetAmount",
+          "cell_ref": "Q41877",
+          "value": 561.6,
+          "raw": 561.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T041875",
+          "col_label": "GrossProfit",
+          "cell_ref": "S41877",
+          "value": 252.72,
+          "raw": 252.72,
+          "is_formula": false
+        },
+        {
+          "row_label": "T041875",
+          "col_label": "NetRevenue",
+          "cell_ref": "U41877",
+          "value": 561.6,
+          "raw": 561.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044306",
+          "col_label": "UnitsSold",
+          "cell_ref": "M44308",
+          "value": 3,
+          "raw": 3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044306",
+          "col_label": "GrossAmount",
+          "cell_ref": "N44308",
+          "value": 294,
+          "raw": 294,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044306",
+          "col_label": "NetAmount",
+          "cell_ref": "Q44308",
+          "value": 279.3,
+          "raw": 279.3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044306",
+          "col_label": "GrossProfit",
+          "cell_ref": "S44308",
+          "value": 106.13,
+          "raw": 106.13,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044306",
+          "col_label": "NetRevenue",
+          "cell_ref": "U44308",
+          "value": 279.3,
+          "raw": 279.3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044430",
+          "col_label": "UnitsSold",
+          "cell_ref": "M44432",
+          "value": 16,
+          "raw": 16,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044430",
+          "col_label": "GrossAmount",
+          "cell_ref": "N44432",
+          "value": 1504,
+          "raw": 1504,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044430",
+          "col_label": "NetAmount",
+          "cell_ref": "Q44432",
+          "value": 1278.4,
+          "raw": 1278.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044430",
+          "col_label": "GrossProfit",
+          "cell_ref": "S44432",
+          "value": 485.79,
+          "raw": 485.79,
+          "is_formula": false
+        },
+        {
+          "row_label": "T044430",
+          "col_label": "NetRevenue",
+          "cell_ref": "U44432",
+          "value": 1278.4,
+          "raw": 1278.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045098",
+          "col_label": "UnitsSold",
+          "cell_ref": "M45100",
+          "value": 38,
+          "raw": 38,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045098",
+          "col_label": "GrossAmount",
+          "cell_ref": "N45100",
+          "value": 1710,
+          "raw": 1710,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045098",
+          "col_label": "NetAmount",
+          "cell_ref": "Q45100",
+          "value": 1539.0,
+          "raw": 1539.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045098",
+          "col_label": "GrossProfit",
+          "cell_ref": "S45100",
+          "value": 692.55,
+          "raw": 692.55,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045098",
+          "col_label": "NetRevenue",
+          "cell_ref": "U45100",
+          "value": 1539.0,
+          "raw": 1539.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045121",
+          "col_label": "UnitsSold",
+          "cell_ref": "M45123",
+          "value": 24,
+          "raw": 24,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045121",
+          "col_label": "GrossAmount",
+          "cell_ref": "N45123",
+          "value": 1152,
+          "raw": 1152,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045121",
+          "col_label": "NetAmount",
+          "cell_ref": "Q45123",
+          "value": 1036.8,
+          "raw": 1036.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045121",
+          "col_label": "GrossProfit",
+          "cell_ref": "S45123",
+          "value": 466.56,
+          "raw": 466.56,
+          "is_formula": false
+        },
+        {
+          "row_label": "T045121",
+          "col_label": "NetRevenue",
+          "cell_ref": "U45123",
+          "value": 1036.8,
+          "raw": 1036.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T046844",
+          "col_label": "UnitsSold",
+          "cell_ref": "M46846",
+          "value": 13,
+          "raw": 13,
+          "is_formula": false
+        },
+        {
+          "row_label": "T046844",
+          "col_label": "GrossAmount",
+          "cell_ref": "N46846",
+          "value": 2028,
+          "raw": 2028,
+          "is_formula": false
+        },
+        {
+          "row_label": "T046844",
+          "col_label": "NetAmount",
+          "cell_ref": "Q46846",
+          "value": 1926.6,
+          "raw": 1926.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T046844",
+          "col_label": "GrossProfit",
+          "cell_ref": "S46846",
+          "value": 809.17,
+          "raw": 809.17,
+          "is_formula": false
+        },
+        {
+          "row_label": "T046844",
+          "col_label": "NetRevenue",
+          "cell_ref": "U46846",
+          "value": 1926.6,
+          "raw": 1926.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T049999",
+          "col_label": "UnitsSold",
+          "cell_ref": "M50001",
+          "value": 27,
+          "raw": 27,
+          "is_formula": false
+        },
+        {
+          "row_label": "T049999",
+          "col_label": "GrossAmount",
+          "cell_ref": "N50001",
+          "value": 648,
+          "raw": 648,
+          "is_formula": false
+        },
+        {
+          "row_label": "T049999",
+          "col_label": "NetAmount",
+          "cell_ref": "Q50001",
+          "value": 550.8,
+          "raw": 550.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T049999",
+          "col_label": "GrossProfit",
+          "cell_ref": "S50001",
+          "value": 247.86,
+          "raw": 247.86,
+          "is_formula": false
+        },
+        {
+          "row_label": "T049999",
+          "col_label": "NetRevenue",
+          "cell_ref": "U50001",
+          "value": 550.8,
+          "raw": 550.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T052689",
+          "col_label": "UnitsSold",
+          "cell_ref": "M52691",
+          "value": 36,
+          "raw": 36,
+          "is_formula": false
+        },
+        {
+          "row_label": "T052689",
+          "col_label": "GrossAmount",
+          "cell_ref": "N52691",
+          "value": 4860,
+          "raw": 4860,
+          "is_formula": false
+        },
+        {
+          "row_label": "T052689",
+          "col_label": "NetAmount",
+          "cell_ref": "Q52691",
+          "value": 4860.0,
+          "raw": 4860.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T052689",
+          "col_label": "GrossProfit",
+          "cell_ref": "S52691",
+          "value": 2527.2,
+          "raw": 2527.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T052689",
+          "col_label": "NetRevenue",
+          "cell_ref": "U52691",
+          "value": 4860.0,
+          "raw": 4860.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T057922",
+          "col_label": "UnitsSold",
+          "cell_ref": "M57924",
+          "value": 9,
+          "raw": 9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T057922",
+          "col_label": "GrossAmount",
+          "cell_ref": "N57924",
+          "value": 90,
+          "raw": 90,
+          "is_formula": false
+        },
+        {
+          "row_label": "T057922",
+          "col_label": "NetAmount",
+          "cell_ref": "Q57924",
+          "value": 90.0,
+          "raw": 90.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T057922",
+          "col_label": "GrossProfit",
+          "cell_ref": "S57924",
+          "value": 54.0,
+          "raw": 54.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T057922",
+          "col_label": "NetRevenue",
+          "cell_ref": "U57924",
+          "value": 90.0,
+          "raw": 90.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T058648",
+          "col_label": "UnitsSold",
+          "cell_ref": "M58650",
+          "value": 3,
+          "raw": 3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T058648",
+          "col_label": "GrossAmount",
+          "cell_ref": "N58650",
+          "value": 75,
+          "raw": 75,
+          "is_formula": false
+        },
+        {
+          "row_label": "T058648",
+          "col_label": "NetAmount",
+          "cell_ref": "Q58650",
+          "value": 71.25,
+          "raw": 71.25,
+          "is_formula": false
+        },
+        {
+          "row_label": "T058648",
+          "col_label": "GrossProfit",
+          "cell_ref": "S58650",
+          "value": 32.06,
+          "raw": 32.06,
+          "is_formula": false
+        },
+        {
+          "row_label": "T058648",
+          "col_label": "NetRevenue",
+          "cell_ref": "U58650",
+          "value": 71.25,
+          "raw": 71.25,
+          "is_formula": false
+        },
+        {
+          "row_label": "T060889",
+          "col_label": "UnitsSold",
+          "cell_ref": "M60891",
+          "value": 36,
+          "raw": 36,
+          "is_formula": false
+        },
+        {
+          "row_label": "T060889",
+          "col_label": "GrossAmount",
+          "cell_ref": "N60891",
+          "value": 3564,
+          "raw": 3564,
+          "is_formula": false
+        },
+        {
+          "row_label": "T060889",
+          "col_label": "NetAmount",
+          "cell_ref": "Q60891",
+          "value": 3207.6,
+          "raw": 3207.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T060889",
+          "col_label": "GrossProfit",
+          "cell_ref": "S60891",
+          "value": 1218.89,
+          "raw": 1218.89,
+          "is_formula": false
+        },
+        {
+          "row_label": "T060889",
+          "col_label": "NetRevenue",
+          "cell_ref": "U60891",
+          "value": 3207.6,
+          "raw": 3207.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T061043",
+          "col_label": "UnitsSold",
+          "cell_ref": "M61045",
+          "value": 3,
+          "raw": 3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T061043",
+          "col_label": "GrossAmount",
+          "cell_ref": "N61045",
+          "value": 252,
+          "raw": 252,
+          "is_formula": false
+        },
+        {
+          "row_label": "T061043",
+          "col_label": "NetAmount",
+          "cell_ref": "Q61045",
+          "value": 226.8,
+          "raw": 226.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T061043",
+          "col_label": "GrossProfit",
+          "cell_ref": "S61045",
+          "value": 86.18,
+          "raw": 86.18,
+          "is_formula": false
+        },
+        {
+          "row_label": "T061043",
+          "col_label": "NetRevenue",
+          "cell_ref": "U61045",
+          "value": 226.8,
+          "raw": 226.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T068614",
+          "col_label": "UnitsSold",
+          "cell_ref": "M68616",
+          "value": 34,
+          "raw": 34,
+          "is_formula": false
+        },
+        {
+          "row_label": "T068614",
+          "col_label": "GrossAmount",
+          "cell_ref": "N68616",
+          "value": 6052,
+          "raw": 6052,
+          "is_formula": false
+        },
+        {
+          "row_label": "T068614",
+          "col_label": "NetAmount",
+          "cell_ref": "Q68616",
+          "value": 5749.4,
+          "raw": 5749.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T068614",
+          "col_label": "GrossProfit",
+          "cell_ref": "S68616",
+          "value": 2414.75,
+          "raw": 2414.75,
+          "is_formula": false
+        },
+        {
+          "row_label": "T068614",
+          "col_label": "NetRevenue",
+          "cell_ref": "U68616",
+          "value": 5749.4,
+          "raw": 5749.4,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073406",
+          "col_label": "UnitsSold",
+          "cell_ref": "M73408",
+          "value": 39,
+          "raw": 39,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073406",
+          "col_label": "GrossAmount",
+          "cell_ref": "N73408",
+          "value": 7605,
+          "raw": 7605,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073406",
+          "col_label": "NetAmount",
+          "cell_ref": "Q73408",
+          "value": 6844.5,
+          "raw": 6844.5,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073406",
+          "col_label": "GrossProfit",
+          "cell_ref": "S73408",
+          "value": 3559.14,
+          "raw": 3559.14,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073406",
+          "col_label": "NetRevenue",
+          "cell_ref": "U73408",
+          "value": 6844.5,
+          "raw": 6844.5,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073420",
+          "col_label": "UnitsSold",
+          "cell_ref": "M73422",
+          "value": 9,
+          "raw": 9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073420",
+          "col_label": "GrossAmount",
+          "cell_ref": "N73422",
+          "value": 171,
+          "raw": 171,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073420",
+          "col_label": "NetAmount",
+          "cell_ref": "Q73422",
+          "value": 153.9,
+          "raw": 153.9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073420",
+          "col_label": "GrossProfit",
+          "cell_ref": "S73422",
+          "value": 46.17,
+          "raw": 46.17,
+          "is_formula": false
+        },
+        {
+          "row_label": "T073420",
+          "col_label": "NetRevenue",
+          "cell_ref": "U73422",
+          "value": 153.9,
+          "raw": 153.9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T075280",
+          "col_label": "UnitsSold",
+          "cell_ref": "M75282",
+          "value": 31,
+          "raw": 31,
+          "is_formula": false
+        },
+        {
+          "row_label": "T075280",
+          "col_label": "GrossAmount",
+          "cell_ref": "N75282",
+          "value": 186,
+          "raw": 186,
+          "is_formula": false
+        },
+        {
+          "row_label": "T075280",
+          "col_label": "NetAmount",
+          "cell_ref": "Q75282",
+          "value": 148.8,
+          "raw": 148.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T075280",
+          "col_label": "GrossProfit",
+          "cell_ref": "S75282",
+          "value": 44.64,
+          "raw": 44.64,
+          "is_formula": false
+        },
+        {
+          "row_label": "T075280",
+          "col_label": "NetRevenue",
+          "cell_ref": "U75282",
+          "value": 148.8,
+          "raw": 148.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T076178",
+          "col_label": "UnitsSold",
+          "cell_ref": "M76180",
+          "value": 2,
+          "raw": 2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T076178",
+          "col_label": "GrossAmount",
+          "cell_ref": "N76180",
+          "value": 448,
+          "raw": 448,
+          "is_formula": false
+        },
+        {
+          "row_label": "T076178",
+          "col_label": "NetAmount",
+          "cell_ref": "Q76180",
+          "value": 403.2,
+          "raw": 403.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T076178",
+          "col_label": "GrossProfit",
+          "cell_ref": "S76180",
+          "value": 169.34,
+          "raw": 169.34,
+          "is_formula": false
+        },
+        {
+          "row_label": "T076178",
+          "col_label": "NetRevenue",
+          "cell_ref": "U76180",
+          "value": 403.2,
+          "raw": 403.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078275",
+          "col_label": "UnitsSold",
+          "cell_ref": "M78277",
+          "value": 44,
+          "raw": 44,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078275",
+          "col_label": "GrossAmount",
+          "cell_ref": "N78277",
+          "value": 2992,
+          "raw": 2992,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078275",
+          "col_label": "NetAmount",
+          "cell_ref": "Q78277",
+          "value": 2393.6,
+          "raw": 2393.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078275",
+          "col_label": "GrossProfit",
+          "cell_ref": "S78277",
+          "value": 909.57,
+          "raw": 909.57,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078275",
+          "col_label": "NetRevenue",
+          "cell_ref": "U78277",
+          "value": 2393.6,
+          "raw": 2393.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078799",
+          "col_label": "UnitsSold",
+          "cell_ref": "M78801",
+          "value": 11,
+          "raw": 11,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078799",
+          "col_label": "GrossAmount",
+          "cell_ref": "N78801",
+          "value": 550,
+          "raw": 550,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078799",
+          "col_label": "NetAmount",
+          "cell_ref": "Q78801",
+          "value": 440.0,
+          "raw": 440.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078799",
+          "col_label": "GrossProfit",
+          "cell_ref": "S78801",
+          "value": 198.0,
+          "raw": 198.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T078799",
+          "col_label": "NetRevenue",
+          "cell_ref": "U78801",
+          "value": 440.0,
+          "raw": 440.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T080723",
+          "col_label": "UnitsSold",
+          "cell_ref": "M80725",
+          "value": 39,
+          "raw": 39,
+          "is_formula": false
+        },
+        {
+          "row_label": "T080723",
+          "col_label": "GrossAmount",
+          "cell_ref": "N80725",
+          "value": 2574,
+          "raw": 2574,
+          "is_formula": false
+        },
+        {
+          "row_label": "T080723",
+          "col_label": "NetAmount",
+          "cell_ref": "Q80725",
+          "value": 2445.3,
+          "raw": 2445.3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T080723",
+          "col_label": "GrossProfit",
+          "cell_ref": "S80725",
+          "value": 1271.56,
+          "raw": 1271.56,
+          "is_formula": false
+        },
+        {
+          "row_label": "T080723",
+          "col_label": "NetRevenue",
+          "cell_ref": "U80725",
+          "value": 2445.3,
+          "raw": 2445.3,
+          "is_formula": false
+        },
+        {
+          "row_label": "T087433",
+          "col_label": "UnitsSold",
+          "cell_ref": "M87435",
+          "value": 6,
+          "raw": 6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T087433",
+          "col_label": "GrossAmount",
+          "cell_ref": "N87435",
+          "value": 1050,
+          "raw": 1050,
+          "is_formula": false
+        },
+        {
+          "row_label": "T087433",
+          "col_label": "NetAmount",
+          "cell_ref": "Q87435",
+          "value": 1050.0,
+          "raw": 1050.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T087433",
+          "col_label": "GrossProfit",
+          "cell_ref": "S87435",
+          "value": 546.0,
+          "raw": 546.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T087433",
+          "col_label": "NetRevenue",
+          "cell_ref": "U87435",
+          "value": 1050.0,
+          "raw": 1050.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088022",
+          "col_label": "UnitsSold",
+          "cell_ref": "M88024",
+          "value": 22,
+          "raw": 22,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088022",
+          "col_label": "GrossAmount",
+          "cell_ref": "N88024",
+          "value": 2090,
+          "raw": 2090,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088022",
+          "col_label": "NetAmount",
+          "cell_ref": "Q88024",
+          "value": 1985.5,
+          "raw": 1985.5,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088022",
+          "col_label": "GrossProfit",
+          "cell_ref": "S88024",
+          "value": 833.91,
+          "raw": 833.91,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088022",
+          "col_label": "NetRevenue",
+          "cell_ref": "U88024",
+          "value": 1985.5,
+          "raw": 1985.5,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088686",
+          "col_label": "UnitsSold",
+          "cell_ref": "M88688",
+          "value": 42,
+          "raw": 42,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088686",
+          "col_label": "GrossAmount",
+          "cell_ref": "N88688",
+          "value": 11130,
+          "raw": 11130,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088686",
+          "col_label": "NetAmount",
+          "cell_ref": "Q88688",
+          "value": 11130.0,
+          "raw": 11130.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088686",
+          "col_label": "GrossProfit",
+          "cell_ref": "S88688",
+          "value": 4674.6,
+          "raw": 4674.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088686",
+          "col_label": "NetRevenue",
+          "cell_ref": "U88688",
+          "value": 11130.0,
+          "raw": 11130.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088977",
+          "col_label": "UnitsSold",
+          "cell_ref": "M88979",
+          "value": 34,
+          "raw": 34,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088977",
+          "col_label": "GrossAmount",
+          "cell_ref": "N88979",
+          "value": 6222,
+          "raw": 6222,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088977",
+          "col_label": "NetAmount",
+          "cell_ref": "Q88979",
+          "value": 4977.6,
+          "raw": 4977.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088977",
+          "col_label": "GrossProfit",
+          "cell_ref": "S88979",
+          "value": 2588.35,
+          "raw": 2588.35,
+          "is_formula": false
+        },
+        {
+          "row_label": "T088977",
+          "col_label": "NetRevenue",
+          "cell_ref": "U88979",
+          "value": 4977.6,
+          "raw": 4977.6,
+          "is_formula": false
+        },
+        {
+          "row_label": "T089644",
+          "col_label": "UnitsSold",
+          "cell_ref": "M89646",
+          "value": 28,
+          "raw": 28,
+          "is_formula": false
+        },
+        {
+          "row_label": "T089644",
+          "col_label": "GrossAmount",
+          "cell_ref": "N89646",
+          "value": 7420,
+          "raw": 7420,
+          "is_formula": false
+        },
+        {
+          "row_label": "T089644",
+          "col_label": "NetAmount",
+          "cell_ref": "Q89646",
+          "value": 6307.0,
+          "raw": 6307.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T089644",
+          "col_label": "GrossProfit",
+          "cell_ref": "S89646",
+          "value": 2648.94,
+          "raw": 2648.94,
+          "is_formula": false
+        },
+        {
+          "row_label": "T089644",
+          "col_label": "NetRevenue",
+          "cell_ref": "U89646",
+          "value": 6307.0,
+          "raw": 6307.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T092970",
+          "col_label": "UnitsSold",
+          "cell_ref": "M92972",
+          "value": 13,
+          "raw": 13,
+          "is_formula": false
+        },
+        {
+          "row_label": "T092970",
+          "col_label": "GrossAmount",
+          "cell_ref": "N92972",
+          "value": 1781,
+          "raw": 1781,
+          "is_formula": false
+        },
+        {
+          "row_label": "T092970",
+          "col_label": "NetAmount",
+          "cell_ref": "Q92972",
+          "value": 1424.8,
+          "raw": 1424.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T092970",
+          "col_label": "GrossProfit",
+          "cell_ref": "S92972",
+          "value": 740.9,
+          "raw": 740.9,
+          "is_formula": false
+        },
+        {
+          "row_label": "T092970",
+          "col_label": "NetRevenue",
+          "cell_ref": "U92972",
+          "value": 1424.8,
+          "raw": 1424.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T095894",
+          "col_label": "UnitsSold",
+          "cell_ref": "M95896",
+          "value": 24,
+          "raw": 24,
+          "is_formula": false
+        },
+        {
+          "row_label": "T095894",
+          "col_label": "GrossAmount",
+          "cell_ref": "N95896",
+          "value": 4080,
+          "raw": 4080,
+          "is_formula": false
+        },
+        {
+          "row_label": "T095894",
+          "col_label": "NetAmount",
+          "cell_ref": "Q95896",
+          "value": 3876.0,
+          "raw": 3876.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T095894",
+          "col_label": "GrossProfit",
+          "cell_ref": "S95896",
+          "value": 2015.52,
+          "raw": 2015.52,
+          "is_formula": false
+        },
+        {
+          "row_label": "T095894",
+          "col_label": "NetRevenue",
+          "cell_ref": "U95896",
+          "value": 3876.0,
+          "raw": 3876.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099985",
+          "col_label": "UnitsSold",
+          "cell_ref": "M99987",
+          "value": 12,
+          "raw": 12,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099985",
+          "col_label": "GrossAmount",
+          "cell_ref": "N99987",
+          "value": 108,
+          "raw": 108,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099985",
+          "col_label": "NetAmount",
+          "cell_ref": "Q99987",
+          "value": 91.8,
+          "raw": 91.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099985",
+          "col_label": "GrossProfit",
+          "cell_ref": "S99987",
+          "value": 27.54,
+          "raw": 27.54,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099985",
+          "col_label": "NetRevenue",
+          "cell_ref": "U99987",
+          "value": 91.8,
+          "raw": 91.8,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099999",
+          "col_label": "UnitsSold",
+          "cell_ref": "M100001",
+          "value": 38,
+          "raw": 38,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099999",
+          "col_label": "GrossAmount",
+          "cell_ref": "N100001",
+          "value": 5852,
+          "raw": 5852,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099999",
+          "col_label": "NetAmount",
+          "cell_ref": "Q100001",
+          "value": 4974.2,
+          "raw": 4974.2,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099999",
+          "col_label": "GrossProfit",
+          "cell_ref": "S100001",
+          "value": 2089.16,
+          "raw": 2089.16,
+          "is_formula": false
+        },
+        {
+          "row_label": "T099999",
+          "col_label": "NetRevenue",
+          "cell_ref": "U100001",
+          "value": 4974.2,
+          "raw": 4974.2,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "extreme_scale",
+        "requires_segmentation",
+        "100k_rows",
+        "wide_table"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "region_summary",
+      "name": "Regional Summary",
+      "sheet": "Region Summary",
+      "region": "A1:F6",
+      "header_region": "A1:F1",
+      "data_region": "A2:F6",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "UnitsSold",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "NetRevenue",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "COGS",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "GrossProfit",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "TaxAmount",
+          "col_index": 6,
+          "col_letter": "F",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "EMEA",
+          "row_index": 2
+        },
+        {
+          "label": "APAC",
+          "row_index": 3
+        },
+        {
+          "label": "NorthAm",
+          "row_index": 4
+        },
+        {
+          "label": "LatAm",
+          "row_index": 5
+        },
+        {
+          "label": "MEA",
+          "row_index": 6
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "EMEA",
+          "col_label": "UnitsSold",
+          "cell_ref": "B2",
+          "value": 511409,
+          "raw": 511409,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "NetRevenue",
+          "cell_ref": "C2",
+          "value": 35534915.10000014,
+          "raw": 35534915.10000014,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "COGS",
+          "cell_ref": "D2",
+          "value": 19744685.17000024,
+          "raw": 19744685.17000024,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "GrossProfit",
+          "cell_ref": "E2",
+          "value": 15790229.929999972,
+          "raw": 15790229.929999972,
+          "is_formula": false
+        },
+        {
+          "row_label": "EMEA",
+          "col_label": "TaxAmount",
+          "cell_ref": "F2",
+          "value": 3158045.730000014,
+          "raw": 3158045.730000014,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "UnitsSold",
+          "cell_ref": "B3",
+          "value": 511005,
+          "raw": 511005,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "NetRevenue",
+          "cell_ref": "C3",
+          "value": 35480366.84999997,
+          "raw": 35480366.84999997,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "COGS",
+          "cell_ref": "D3",
+          "value": 19744371.630000014,
+          "raw": 19744371.630000014,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "GrossProfit",
+          "cell_ref": "E3",
+          "value": 15735995.219999896,
+          "raw": 15735995.219999896,
+          "is_formula": false
+        },
+        {
+          "row_label": "APAC",
+          "col_label": "TaxAmount",
+          "cell_ref": "F3",
+          "value": 3147199.1099999743,
+          "raw": 3147199.1099999743,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "UnitsSold",
+          "cell_ref": "B4",
+          "value": 515622,
+          "raw": 515622,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "NetRevenue",
+          "cell_ref": "C4",
+          "value": 35639382.94999984,
+          "raw": 35639382.94999984,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "COGS",
+          "cell_ref": "D4",
+          "value": 19823533.469999824,
+          "raw": 19823533.469999824,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "GrossProfit",
+          "cell_ref": "E4",
+          "value": 15815849.479999997,
+          "raw": 15815849.479999997,
+          "is_formula": false
+        },
+        {
+          "row_label": "NorthAm",
+          "col_label": "TaxAmount",
+          "cell_ref": "F4",
+          "value": 3163169.469999978,
+          "raw": 3163169.469999978,
+          "is_formula": false
+        },
+        {
+          "row_label": "LatAm",
+          "col_label": "UnitsSold",
+          "cell_ref": "B5",
+          "value": 506851,
+          "raw": 506851,
+          "is_formula": false
+        },
+        {
+          "row_label": "LatAm",
+          "col_label": "NetRevenue",
+          "cell_ref": "C5",
+          "value": 34987645.800000004,
+          "raw": 34987645.800000004,
+          "is_formula": false
+        },
+        {
+          "row_label": "LatAm",
+          "col_label": "COGS",
+          "cell_ref": "D5",
+          "value": 19481076.959999893,
+          "raw": 19481076.959999893,
+          "is_formula": false
+        },
+        {
+          "row_label": "LatAm",
+          "col_label": "GrossProfit",
+          "cell_ref": "E5",
+          "value": 15506568.840000045,
+          "raw": 15506568.840000045,
+          "is_formula": false
+        },
+        {
+          "row_label": "LatAm",
+          "col_label": "TaxAmount",
+          "cell_ref": "F5",
+          "value": 3101313.439999983,
+          "raw": 3101313.439999983,
+          "is_formula": false
+        },
+        {
+          "row_label": "MEA",
+          "col_label": "UnitsSold",
+          "cell_ref": "B6",
+          "value": 510058,
+          "raw": 510058,
+          "is_formula": false
+        },
+        {
+          "row_label": "MEA",
+          "col_label": "NetRevenue",
+          "cell_ref": "C6",
+          "value": 35308722.34999997,
+          "raw": 35308722.34999997,
+          "is_formula": false
+        },
+        {
+          "row_label": "MEA",
+          "col_label": "COGS",
+          "cell_ref": "D6",
+          "value": 19656595.190000042,
+          "raw": 19656595.190000042,
+          "is_formula": false
+        },
+        {
+          "row_label": "MEA",
+          "col_label": "GrossProfit",
+          "cell_ref": "E6",
+          "value": 15652127.159999978,
+          "raw": 15652127.159999978,
+          "is_formula": false
+        },
+        {
+          "row_label": "MEA",
+          "col_label": "TaxAmount",
+          "cell_ref": "F6",
+          "value": 3130425.3699999913,
+          "raw": 3130425.3699999913,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "aggregate_table"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "monthly_summary",
+      "name": "Monthly Summary",
+      "sheet": "Monthly Summary",
+      "region": "A1:D13",
+      "header_region": "A1:D1",
+      "data_region": "A2:D13",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "UnitsSold",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "NetRevenue",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "GrossProfit",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "2024-01",
+          "row_index": 2
+        },
+        {
+          "label": "2024-02",
+          "row_index": 3
+        },
+        {
+          "label": "2024-03",
+          "row_index": 4
+        },
+        {
+          "label": "2024-04",
+          "row_index": 5
+        },
+        {
+          "label": "2024-05",
+          "row_index": 6
+        },
+        {
+          "label": "2024-06",
+          "row_index": 7
+        },
+        {
+          "label": "2024-07",
+          "row_index": 8
+        },
+        {
+          "label": "2024-08",
+          "row_index": 9
+        },
+        {
+          "label": "2024-09",
+          "row_index": 10
+        },
+        {
+          "label": "2024-10",
+          "row_index": 11
+        },
+        {
+          "label": "2024-11",
+          "row_index": 12
+        },
+        {
+          "label": "2024-12",
+          "row_index": 13
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "2024-01",
+          "col_label": "UnitsSold",
+          "cell_ref": "B2",
+          "value": 214389,
+          "raw": 214389,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-01",
+          "col_label": "NetRevenue",
+          "cell_ref": "C2",
+          "value": 14366615.89999997,
+          "raw": 14366615.89999997,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-01",
+          "col_label": "GrossProfit",
+          "cell_ref": "D2",
+          "value": 6377874.629999987,
+          "raw": 6377874.629999987,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-02",
+          "col_label": "UnitsSold",
+          "cell_ref": "B3",
+          "value": 212351,
+          "raw": 212351,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-02",
+          "col_label": "NetRevenue",
+          "cell_ref": "C3",
+          "value": 14588478.049999971,
+          "raw": 14588478.049999971,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-02",
+          "col_label": "GrossProfit",
+          "cell_ref": "D3",
+          "value": 6486039.729999983,
+          "raw": 6486039.729999983,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-03",
+          "col_label": "UnitsSold",
+          "cell_ref": "B4",
+          "value": 211865,
+          "raw": 211865,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-03",
+          "col_label": "NetRevenue",
+          "cell_ref": "C4",
+          "value": 14787007.749999993,
+          "raw": 14787007.749999993,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-03",
+          "col_label": "GrossProfit",
+          "cell_ref": "D4",
+          "value": 6534379.59999999,
+          "raw": 6534379.59999999,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-04",
+          "col_label": "UnitsSold",
+          "cell_ref": "B5",
+          "value": 213566,
+          "raw": 213566,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-04",
+          "col_label": "NetRevenue",
+          "cell_ref": "C5",
+          "value": 15137792.100000033,
+          "raw": 15137792.100000033,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-04",
+          "col_label": "GrossProfit",
+          "cell_ref": "D5",
+          "value": 6712626.239999987,
+          "raw": 6712626.239999987,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-05",
+          "col_label": "UnitsSold",
+          "cell_ref": "B6",
+          "value": 211795,
+          "raw": 211795,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-05",
+          "col_label": "NetRevenue",
+          "cell_ref": "C6",
+          "value": 14900255.199999988,
+          "raw": 14900255.199999988,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-05",
+          "col_label": "GrossProfit",
+          "cell_ref": "D6",
+          "value": 6613244.900000011,
+          "raw": 6613244.900000011,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-06",
+          "col_label": "UnitsSold",
+          "cell_ref": "B7",
+          "value": 211234,
+          "raw": 211234,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-06",
+          "col_label": "NetRevenue",
+          "cell_ref": "C7",
+          "value": 14526313.700000053,
+          "raw": 14526313.700000053,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-06",
+          "col_label": "GrossProfit",
+          "cell_ref": "D7",
+          "value": 6436617.019999998,
+          "raw": 6436617.019999998,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-07",
+          "col_label": "UnitsSold",
+          "cell_ref": "B8",
+          "value": 211435,
+          "raw": 211435,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-07",
+          "col_label": "NetRevenue",
+          "cell_ref": "C8",
+          "value": 14556857.75000003,
+          "raw": 14556857.75000003,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-07",
+          "col_label": "GrossProfit",
+          "cell_ref": "D8",
+          "value": 6452443.5900000315,
+          "raw": 6452443.5900000315,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-08",
+          "col_label": "UnitsSold",
+          "cell_ref": "B9",
+          "value": 210094,
+          "raw": 210094,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-08",
+          "col_label": "NetRevenue",
+          "cell_ref": "C9",
+          "value": 14747520.150000008,
+          "raw": 14747520.150000008,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-08",
+          "col_label": "GrossProfit",
+          "cell_ref": "D9",
+          "value": 6544615.240000005,
+          "raw": 6544615.240000005,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-09",
+          "col_label": "UnitsSold",
+          "cell_ref": "B10",
+          "value": 215855,
+          "raw": 215855,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-09",
+          "col_label": "NetRevenue",
+          "cell_ref": "C10",
+          "value": 14893804.65000002,
+          "raw": 14893804.65000002,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-09",
+          "col_label": "GrossProfit",
+          "cell_ref": "D10",
+          "value": 6604598.680000015,
+          "raw": 6604598.680000015,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-10",
+          "col_label": "UnitsSold",
+          "cell_ref": "B11",
+          "value": 212378,
+          "raw": 212378,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-10",
+          "col_label": "NetRevenue",
+          "cell_ref": "C11",
+          "value": 14942528.299999978,
+          "raw": 14942528.299999978,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-10",
+          "col_label": "GrossProfit",
+          "cell_ref": "D11",
+          "value": 6627760.210000005,
+          "raw": 6627760.210000005,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-11",
+          "col_label": "UnitsSold",
+          "cell_ref": "B12",
+          "value": 214115,
+          "raw": 214115,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-11",
+          "col_label": "NetRevenue",
+          "cell_ref": "C12",
+          "value": 14877794.650000008,
+          "raw": 14877794.650000008,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-11",
+          "col_label": "GrossProfit",
+          "cell_ref": "D12",
+          "value": 6620952.389999965,
+          "raw": 6620952.389999965,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-12",
+          "col_label": "UnitsSold",
+          "cell_ref": "B13",
+          "value": 215868,
+          "raw": 215868,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-12",
+          "col_label": "NetRevenue",
+          "cell_ref": "C13",
+          "value": 14626064.849999998,
+          "raw": 14626064.849999998,
+          "is_formula": false
+        },
+        {
+          "row_label": "2024-12",
+          "col_label": "GrossProfit",
+          "cell_ref": "D13",
+          "value": 6489618.399999995,
+          "raw": 6489618.399999995,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "aggregate_table"
+      ],
+      "is_duplicate_of": null
+    },
+    {
+      "table_id": "category_summary",
+      "name": "Category Summary",
+      "sheet": "Category Summary",
+      "region": "A1:E7",
+      "header_region": "A1:E1",
+      "data_region": "A2:E7",
+      "orientation": "vertical",
+      "columns": [
+        {
+          "label": "UnitsSold",
+          "col_index": 2,
+          "col_letter": "B",
+          "dtype": "number",
+          "unit": "count"
+        },
+        {
+          "label": "NetRevenue",
+          "col_index": 3,
+          "col_letter": "C",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "COGS",
+          "col_index": 4,
+          "col_letter": "D",
+          "dtype": "number",
+          "unit": "USD"
+        },
+        {
+          "label": "GrossProfit",
+          "col_index": 5,
+          "col_letter": "E",
+          "dtype": "number",
+          "unit": "USD"
+        }
+      ],
+      "row_keys": [
+        {
+          "label": "Widgets",
+          "row_index": 2
+        },
+        {
+          "label": "Gadgets",
+          "row_index": 3
+        },
+        {
+          "label": "Gizmos",
+          "row_index": 4
+        },
+        {
+          "label": "Sprockets",
+          "row_index": 5
+        },
+        {
+          "label": "Cogs",
+          "row_index": 6
+        },
+        {
+          "label": "Modules",
+          "row_index": 7
+        }
+      ],
+      "cells": [
+        {
+          "row_label": "Widgets",
+          "col_label": "UnitsSold",
+          "cell_ref": "B2",
+          "value": 424598,
+          "raw": 424598,
+          "is_formula": false
+        },
+        {
+          "row_label": "Widgets",
+          "col_label": "NetRevenue",
+          "cell_ref": "C2",
+          "value": 15262897.650000015,
+          "raw": 15262897.650000015,
+          "is_formula": false
+        },
+        {
+          "row_label": "Widgets",
+          "col_label": "COGS",
+          "cell_ref": "D2",
+          "value": 8394601.870000025,
+          "raw": 8394601.870000025,
+          "is_formula": false
+        },
+        {
+          "row_label": "Widgets",
+          "col_label": "GrossProfit",
+          "cell_ref": "E2",
+          "value": 6868295.780000004,
+          "raw": 6868295.780000004,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadgets",
+          "col_label": "UnitsSold",
+          "cell_ref": "B3",
+          "value": 425004,
+          "raw": 425004,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadgets",
+          "col_label": "NetRevenue",
+          "cell_ref": "C3",
+          "value": 30458973.99999993,
+          "raw": 30458973.99999993,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadgets",
+          "col_label": "COGS",
+          "cell_ref": "D3",
+          "value": 18884563.86000011,
+          "raw": 18884563.86000011,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gadgets",
+          "col_label": "GrossProfit",
+          "cell_ref": "E3",
+          "value": 11574410.139999937,
+          "raw": 11574410.139999937,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmos",
+          "col_label": "UnitsSold",
+          "cell_ref": "B4",
+          "value": 427785,
+          "raw": 427785,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmos",
+          "col_label": "NetRevenue",
+          "cell_ref": "C4",
+          "value": 50236608.84999998,
+          "raw": 50236608.84999998,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmos",
+          "col_label": "COGS",
+          "cell_ref": "D4",
+          "value": 24113572.300000057,
+          "raw": 24113572.300000057,
+          "is_formula": false
+        },
+        {
+          "row_label": "Gizmos",
+          "col_label": "GrossProfit",
+          "cell_ref": "E4",
+          "value": 26123036.549999993,
+          "raw": 26123036.549999993,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprockets",
+          "col_label": "UnitsSold",
+          "cell_ref": "B5",
+          "value": 431325,
+          "raw": 431325,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprockets",
+          "col_label": "NetRevenue",
+          "cell_ref": "C5",
+          "value": 5819672.0,
+          "raw": 5819672.0,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprockets",
+          "col_label": "COGS",
+          "cell_ref": "D5",
+          "value": 4073764.8599999845,
+          "raw": 4073764.8599999845,
+          "is_formula": false
+        },
+        {
+          "row_label": "Sprockets",
+          "col_label": "GrossProfit",
+          "cell_ref": "E5",
+          "value": 1745907.1399999962,
+          "raw": 1745907.1399999962,
+          "is_formula": false
+        },
+        {
+          "row_label": "Cogs",
+          "col_label": "UnitsSold",
+          "cell_ref": "B6",
+          "value": 425614,
+          "raw": 425614,
+          "is_formula": false
+        },
+        {
+          "row_label": "Cogs",
+          "col_label": "NetRevenue",
+          "cell_ref": "C6",
+          "value": 3425049.5500000115,
+          "raw": 3425049.5500000115,
+          "is_formula": false
+        },
+        {
+          "row_label": "Cogs",
+          "col_label": "COGS",
+          "cell_ref": "D6",
+          "value": 1370019.8199999991,
+          "raw": 1370019.8199999991,
+          "is_formula": false
+        },
+        {
+          "row_label": "Cogs",
+          "col_label": "GrossProfit",
+          "cell_ref": "E6",
+          "value": 2055029.729999995,
+          "raw": 2055029.729999995,
+          "is_formula": false
+        },
+        {
+          "row_label": "Modules",
+          "col_label": "UnitsSold",
+          "cell_ref": "B7",
+          "value": 420619,
+          "raw": 420619,
+          "is_formula": false
+        },
+        {
+          "row_label": "Modules",
+          "col_label": "NetRevenue",
+          "cell_ref": "C7",
+          "value": 71747831.00000018,
+          "raw": 71747831.00000018,
+          "is_formula": false
+        },
+        {
+          "row_label": "Modules",
+          "col_label": "COGS",
+          "cell_ref": "D7",
+          "value": 41613739.71000006,
+          "raw": 41613739.71000006,
+          "is_formula": false
+        },
+        {
+          "row_label": "Modules",
+          "col_label": "GrossProfit",
+          "cell_ref": "E7",
+          "value": 30134091.290000092,
+          "raw": 30134091.290000092,
+          "is_formula": false
+        }
+      ],
+      "traps": [
+        "aggregate_table"
+      ],
+      "is_duplicate_of": null
+    }
+  ],
+  "measures": [
+    {
+      "semantic_name": "netrev_emea",
+      "aliases": [
+        "EMEA net revenue"
+      ],
+      "table_id": "region_summary",
+      "row_label": "EMEA",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 35534915.10000014
+    },
+    {
+      "semantic_name": "netrev_apac",
+      "aliases": [
+        "APAC net revenue"
+      ],
+      "table_id": "region_summary",
+      "row_label": "APAC",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 35480366.84999997
+    },
+    {
+      "semantic_name": "netrev_northam",
+      "aliases": [
+        "NorthAm net revenue"
+      ],
+      "table_id": "region_summary",
+      "row_label": "NorthAm",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 35639382.94999984
+    },
+    {
+      "semantic_name": "netrev_latam",
+      "aliases": [
+        "LatAm net revenue"
+      ],
+      "table_id": "region_summary",
+      "row_label": "LatAm",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 34987645.800000004
+    },
+    {
+      "semantic_name": "netrev_mea",
+      "aliases": [
+        "MEA net revenue"
+      ],
+      "table_id": "region_summary",
+      "row_label": "MEA",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 35308722.34999997
+    },
+    {
+      "semantic_name": "gp_emea",
+      "aliases": [],
+      "table_id": "region_summary",
+      "row_label": "EMEA",
+      "col_label": "GrossProfit",
+      "unit": "USD",
+      "value": 15790229.929999972
+    },
+    {
+      "semantic_name": "gp_apac",
+      "aliases": [],
+      "table_id": "region_summary",
+      "row_label": "APAC",
+      "col_label": "GrossProfit",
+      "unit": "USD",
+      "value": 15735995.219999896
+    },
+    {
+      "semantic_name": "netrev_widgets",
+      "aliases": [],
+      "table_id": "category_summary",
+      "row_label": "Widgets",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 15262897.650000015
+    },
+    {
+      "semantic_name": "netrev_jan",
+      "aliases": [],
+      "table_id": "monthly_summary",
+      "row_label": "2024-01",
+      "col_label": "NetRevenue",
+      "unit": "USD",
+      "value": 14366615.89999997
+    }
+  ],
+  "samples": [
+    {
+      "id": "enterprise_transactions.xlsx:bnd:transactions",
+      "type": "boundary",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table_name": "Transaction Ledger",
+      "expected_region": "A1:V100001",
+      "min_iou": 0.999
+    },
+    {
+      "id": "enterprise_transactions.xlsx:bnd:region_summary",
+      "type": "boundary",
+      "sheet": "Region Summary",
+      "table_id": "region_summary",
+      "table_name": "Regional Summary",
+      "expected_region": "A1:F6",
+      "min_iou": 0.999
+    },
+    {
+      "id": "enterprise_transactions.xlsx:bnd:monthly_summary",
+      "type": "boundary",
+      "sheet": "Monthly Summary",
+      "table_id": "monthly_summary",
+      "table_name": "Monthly Summary",
+      "expected_region": "A1:D13",
+      "min_iou": 0.999
+    },
+    {
+      "id": "enterprise_transactions.xlsx:bnd:category_summary",
+      "type": "boundary",
+      "sheet": "Category Summary",
+      "table_id": "category_summary",
+      "table_name": "Category Summary",
+      "expected_region": "A1:E7",
+      "min_iou": 0.999
+    },
+    {
+      "id": "enterprise_transactions.xlsx:fml:0",
+      "type": "formula",
+      "description": "Company-wide NetRevenue = sum of regional NetRevenue",
+      "business_logic": "Per transaction: gross = units x price; net = gross - discount; COGS = net x category ratio; gross profit = net - COGS; tax = 20% of positive gross profit; net revenue = net. Regional / monthly / category summaries aggregate the ledger; company net revenue = sum of regions.",
+      "expression": "E + A + N + L + M",
+      "operands": {
+        "E": "netrev_emea",
+        "A": "netrev_apac",
+        "N": "netrev_northam",
+        "L": "netrev_latam",
+        "M": "netrev_mea"
+      },
+      "inputs": {
+        "E": 35534915.10000014,
+        "A": 35480366.84999997,
+        "N": 35639382.94999984,
+        "L": 34987645.800000004,
+        "M": 35308722.34999997
+      },
+      "expected_value": 176951033.04999992,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "enterprise_transactions.xlsx:fml:1",
+      "type": "formula",
+      "description": "EMEA gross margin (%)",
+      "business_logic": "Per transaction: gross = units x price; net = gross - discount; COGS = net x category ratio; gross profit = net - COGS; tax = 20% of positive gross profit; net revenue = net. Regional / monthly / category summaries aggregate the ledger; company net revenue = sum of regions.",
+      "expression": "G / R * 100",
+      "operands": {
+        "G": "gp_emea",
+        "R": "netrev_emea"
+      },
+      "inputs": {
+        "G": 15790229.929999972,
+        "R": 35534915.10000014
+      },
+      "expected_value": 44.4358172393661,
+      "tolerance": 1e-6
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:0",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T088977",
+      "col_label": "NetRevenue",
+      "expected_value": 4977.6,
+      "expected_cell_ref": "U88979",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:1",
+      "type": "extraction",
+      "sheet": "Region Summary",
+      "table_id": "region_summary",
+      "table": "Regional Summary",
+      "row_label": "EMEA",
+      "col_label": "COGS",
+      "expected_value": 19744685.17000024,
+      "expected_cell_ref": "D2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:2",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T045098",
+      "col_label": "GrossAmount",
+      "expected_value": 1710,
+      "expected_cell_ref": "N45100",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:3",
+      "type": "extraction",
+      "sheet": "Region Summary",
+      "table_id": "region_summary",
+      "table": "Regional Summary",
+      "row_label": "LatAm",
+      "col_label": "COGS",
+      "expected_value": 19481076.959999893,
+      "expected_cell_ref": "D5",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:4",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T088977",
+      "col_label": "UnitsSold",
+      "expected_value": 34,
+      "expected_cell_ref": "M88979",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:5",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T031129",
+      "col_label": "NetAmount",
+      "expected_value": 635.8,
+      "expected_cell_ref": "Q31131",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:6",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T061043",
+      "col_label": "GrossProfit",
+      "expected_value": 86.18,
+      "expected_cell_ref": "S61045",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:7",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T044306",
+      "col_label": "GrossProfit",
+      "expected_value": 106.13,
+      "expected_cell_ref": "S44308",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:8",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T000467",
+      "col_label": "NetAmount",
+      "expected_value": 72.8,
+      "expected_cell_ref": "Q469",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:9",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T000000",
+      "col_label": "NetAmount",
+      "expected_value": 114.0,
+      "expected_cell_ref": "Q2",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:10",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T018965",
+      "col_label": "NetRevenue",
+      "expected_value": 64.8,
+      "expected_cell_ref": "U18967",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:11",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T076178",
+      "col_label": "GrossAmount",
+      "expected_value": 448,
+      "expected_cell_ref": "N76180",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:12",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T080723",
+      "col_label": "NetAmount",
+      "expected_value": 2445.3,
+      "expected_cell_ref": "Q80725",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:ext:13",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T022743",
+      "col_label": "GrossAmount",
+      "expected_value": 144,
+      "expected_cell_ref": "N22745",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:0",
+      "type": "semantic",
+      "query": "What is EMEA's COGS in dollars?",
+      "expected_value": 19744685.17000024,
+      "expected_table_id": "region_summary",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "COGS",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:1",
+      "type": "semantic",
+      "query": "What is the UnitsSold for T088977 in Transaction Ledger?",
+      "expected_value": 34,
+      "expected_table_id": "transactions",
+      "expected_row_label": "T088977",
+      "expected_col_label": "UnitsSold",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:2",
+      "type": "semantic",
+      "query": "What is the GrossProfit for T044306 in Transaction Ledger?",
+      "expected_value": 106.13,
+      "expected_table_id": "transactions",
+      "expected_row_label": "T044306",
+      "expected_col_label": "GrossProfit",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:3",
+      "type": "semantic",
+      "query": "Give me T018965's NetRevenue.",
+      "expected_value": 64.8,
+      "expected_table_id": "transactions",
+      "expected_row_label": "T018965",
+      "expected_col_label": "NetRevenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:4",
+      "type": "semantic",
+      "query": "What is the GrossAmount for T022743 in Transaction Ledger?",
+      "expected_value": 144,
+      "expected_table_id": "transactions",
+      "expected_row_label": "T022743",
+      "expected_col_label": "GrossAmount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:5",
+      "type": "semantic",
+      "query": "How much UnitsSold did 2024-09 have?",
+      "expected_value": 215855,
+      "expected_table_id": "monthly_summary",
+      "expected_row_label": "2024-09",
+      "expected_col_label": "UnitsSold",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:6",
+      "type": "semantic",
+      "query": "EMEA NetRevenue",
+      "expected_value": 35534915.10000014,
+      "expected_table_id": "region_summary",
+      "expected_row_label": "EMEA",
+      "expected_col_label": "NetRevenue",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:sem:7",
+      "type": "semantic",
+      "query": "How much NetAmount did T021413 have?",
+      "expected_value": 6879.6,
+      "expected_table_id": "transactions",
+      "expected_row_label": "T021413",
+      "expected_col_label": "NetAmount",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:deep:0",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T095894",
+      "col_label": "NetRevenue",
+      "expected_value": 3876.0,
+      "expected_cell_ref": "U95896",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:deep:1",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T099985",
+      "col_label": "NetRevenue",
+      "expected_value": 91.8,
+      "expected_cell_ref": "U99987",
+      "dtype": "number",
+      "tolerance": 1e-9
+    },
+    {
+      "id": "enterprise_transactions.xlsx:deep:2",
+      "type": "extraction",
+      "sheet": "Transactions",
+      "table_id": "transactions",
+      "table": "Transaction Ledger",
+      "row_label": "T099999",
+      "col_label": "NetRevenue",
+      "expected_value": 4974.2,
+      "expected_cell_ref": "U100001",
+      "dtype": "number",
+      "tolerance": 1e-9
+    }
+  ]
+}
