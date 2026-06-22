@@ -35,3 +35,33 @@ def test_build_env_column_and_param_override():
     env = build_env(f, row_key=["r1"], query=fake_query, overrides={"Discount": 25})
     assert env == {"Gross": 100, "Discount": 25}
     assert evaluate(f, env) == 75
+
+
+def test_build_env_cell_source():
+    f = TableFormula(
+        target="Rate", expression="Rate",
+        operands=[OperandBinding(name="Rate", source="cell", ref="B2")],
+    )
+    cell_val = type("V", (), {"value": 42})()
+    env = build_env(f, row_key=["r1"], query=None, query_cell=lambda ref: cell_val)
+    assert env["Rate"] == 42
+
+
+def test_build_env_range_source():
+    f = TableFormula(
+        target="Total", expression="SUM(vals)",
+        operands=[OperandBinding(name="vals", source="range", ref="A1:A3")],
+    )
+    cells = [type("V", (), {"value": v})() for v in (10, 20, 30)]
+    env = build_env(f, row_key=["r1"], query=None, query_range=lambda ref: cells)
+    assert env["vals"] == [10, 20, 30]
+    assert evaluate(f, env) == 60
+
+
+def test_build_env_param_missing_override_raises():
+    f = TableFormula(
+        target="Net", expression="x",
+        operands=[OperandBinding(name="x", source="param", ref="x")],
+    )
+    with pytest.raises(ValueError, match="missing override for param operand"):
+        build_env(f, row_key=["r1"], query=None, overrides=None)

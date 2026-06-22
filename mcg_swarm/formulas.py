@@ -108,7 +108,9 @@ def build_env(formula, row_key, query, query_cell=None, query_range=None, overri
         elif op.source == "range":
             env[op.name] = [c.value for c in query_range(op.ref)]
         elif op.source == "param":
-            env[op.name] = (overrides or {})[op.name]
+            if not overrides or op.name not in overrides:
+                raise ValueError(f"missing override for param operand: {op.name!r}")
+            env[op.name] = overrides[op.name]
     if overrides:
         env.update(overrides)
     return env
