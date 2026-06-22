@@ -20,14 +20,14 @@ def resolve_messy_tab(path: str, handle: TableHandle, llm) -> TableHandle:
 
     Never raises. Returns handle still-ambiguous on low confidence or error.
     """
-    preview = _preview(path, handle.sheet)
-    schema = {
-        "confident": "bool",
-        "header_row": "int",
-        "region": "A1 range",
-        "columns": [{"name": "str", "dtype": "number|string|boolean|date"}],
-    }
     try:
+        preview = _preview(path, handle.sheet)
+        schema = {
+            "confident": "bool",
+            "header_row": "int",
+            "region": "A1 range",
+            "columns": [{"name": "str", "dtype": "number|string|boolean|date"}],
+        }
         res = llm.complete(
             system=(
                 "You analyze a messy spreadsheet tab and identify the single clean table: "
@@ -36,25 +36,23 @@ def resolve_messy_tab(path: str, handle: TableHandle, llm) -> TableHandle:
             user=f"Sheet {handle.sheet!r}, first rows (values only):\n{preview}",
             schema=schema,
         )
+        if not res.get("confident"):
+            return replace(handle, ambiguous=True, reason="llm not confident about header structure")
+        cols = [
+            ColumnSpec(
+                name=str(c["name"]),
+                dtype=c.get("dtype", "string"),
+                role="key" if i == 0 else "value",
+            )
+            for i, c in enumerate(res["columns"])
+        ]
+        return TableHandle(
+            sheet=handle.sheet,
+            region=res["region"],
+            header_row=int(res["header_row"]),
+            columns=cols,
+            ambiguous=False,
+            reason="resolved by llm header fallback",
+        )
     except Exception as e:
         return replace(handle, ambiguous=True, reason=f"llm header fallback error: {e}")
-
-    if not res.get("confident"):
-        return replace(handle, ambiguous=True, reason="llm not confident about header structure")
-
-    cols = [
-        ColumnSpec(
-            name=str(c["name"]),
-            dtype=c.get("dtype", "string"),
-            role="key" if i == 0 else "value",
-        )
-        for i, c in enumerate(res.get("columns", []))
-    ]
-    return TableHandle(
-        sheet=handle.sheet,
-        region=res["region"],
-        header_row=int(res["header_row"]),
-        columns=cols,
-        ambiguous=False,
-        reason="resolved by llm header fallback",
-    )

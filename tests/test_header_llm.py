@@ -1,4 +1,5 @@
 import openpyxl
+from dataclasses import replace
 from mcg_swarm.header_llm import resolve_messy_tab
 from mcg_swarm.splitter import split_workbook
 from mcg_swarm.llm.client import FakeLLMClient
@@ -53,3 +54,24 @@ def test_llm_exception_stays_ambiguous(tmp_path):
     out = resolve_messy_tab(p, h, BrokenLLM())
     assert out.ambiguous
     assert "llm header fallback error" in out.reason
+
+
+def test_confident_but_malformed_stays_ambiguous(tmp_path):
+    """confident=True but missing region/header_row/columns must not raise."""
+    p = _wb(tmp_path, [["A", "B"], [1, 2]])
+    h = split_workbook(p)[0]
+    fake = FakeLLMClient(responses=[{"confident": True}])  # missing required fields
+    out = resolve_messy_tab(p, h, fake)
+    assert out.ambiguous
+    assert "error" in out.reason
+
+
+def test_bad_sheet_name_stays_ambiguous(tmp_path):
+    """A handle whose .sheet does not exist in the workbook must not raise."""
+    p = _wb(tmp_path, [["A", "B"], [1, 2]])
+    h = split_workbook(p)[0]
+    bad_handle = replace(h, sheet="NoSuchSheet")
+    fake = FakeLLMClient(responses=[{"confident": True, "header_row": 1, "region": "A1:B2",
+                                     "columns": [{"name": "A"}, {"name": "B"}]}])
+    out = resolve_messy_tab(p, bad_handle, fake)
+    assert out.ambiguous
