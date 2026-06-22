@@ -143,6 +143,38 @@ def test_gate_flags_duplicate_columns(tmp_path):
     )
 
 
+def test_roundtrip_detects_query_divergence(tmp_path):
+    """Phase 3 round-trip must catch when index.query() returns a different value than live_cache.
+
+    We patch index.query() to return a wrong value for one cell, then verify run_table_tests
+    flags a round-trip failure — proving Phase 3 is not a tautology.
+    """
+    from unittest.mock import patch, MagicMock
+
+    p = _wb(tmp_path, [["Region", "Revenue"], ["EMEA", 100], ["APAC", 200]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+    table = _canon(h)
+
+    # Patch index.query to return a wrong value for "Revenue" column
+    original_query = idx.query
+    def bad_query(k, col):
+        result = original_query(k, col)
+        if col == "Revenue":
+            bad = MagicMock()
+            bad.value = 999999  # wrong value
+            return bad
+        return result
+
+    with patch.object(idx, "query", side_effect=bad_query):
+        rep = run_table_tests(p, table, idx)
+
+    assert not rep.passed, f"Expected round-trip failure but passed: {rep.failures}"
+    assert any("round-trip" in f for f in rep.failures), (
+        f"Expected round-trip failure message, got: {rep.failures}"
+    )
+
+
 def test_gate_flags_column_name_mismatch_vs_live_header(tmp_path):
     """
     Fix 3: fail-loud gate — CanonicalTable.columns names that don't match the live

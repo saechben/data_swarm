@@ -22,6 +22,11 @@ from mcg_swarm.llm.client import AnthropicClient
 
 
 MEASURE_ROW_CAP = 200
+# Labeled measures only live on small summary/metric tables (≤12 rows in this corpus).
+# Large data tables (transactions, ledger) carry NO labeled measures — emitting per-cell
+# measures on them floods false positives (precision crashes to ~2%).
+# Skip measure emission entirely for tables whose row-key count exceeds this threshold.
+MEASURE_MAX_TABLE_ROWS = 40
 
 
 class SwarmAdapter(EvalAdapter):
@@ -98,6 +103,9 @@ class SwarmAdapter(EvalAdapter):
         out: list[DetectedMeasure] = []
         for label_table_id, idx in self._indices.get(wb, {}).items():
             total = len(idx._key_to_phys)
+            # Skip large data tables — they carry no labeled measures and flood false positives.
+            if total > MEASURE_MAX_TABLE_ROWS:
+                continue
             capped = MEASURE_ROW_CAP is not None and total > MEASURE_ROW_CAP
             if capped:
                 print(

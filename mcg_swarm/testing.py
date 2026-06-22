@@ -112,50 +112,6 @@ def _check_row_integrity(path: str, table, index, sample_keys: list) -> list[str
     return failures
 
 
-def _check_column_names(path: str, table) -> list[str]:
-    """
-    Column-name gate (Fix 3): fail-loud check that table.columns names are:
-      (a) unique — no duplicates (col-axis corruption produces duplicates),
-      (b) each present in the live header row within the table's region.
-
-    Reuses the same independent header read pattern as _check_column_integrity
-    but checks table.columns (the CanonicalTable metadata) rather than the index.
-    O(cols), one workbook open.
-    """
-    failures: list[str] = []
-    col_names = [c.name for c in table.columns]
-
-    # (a) Uniqueness
-    seen: set[str] = set()
-    for name in col_names:
-        if name in seen:
-            failures.append(
-                f"column-name: duplicate column name {name!r} in table.columns"
-            )
-        seen.add(name)
-
-    # (b) Each name must appear in the live header row
-    min_row, min_col, max_row, max_col = range_box(table.region)
-    header_row = table.header_row
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        ws = wb[table.sheet]
-        live_names: set[str] = set()
-        for c in range(min_col, max_col + 1):
-            val = ws.cell(row=header_row, column=c).value
-            if val not in (None, ""):
-                live_names.add(str(val))
-    finally:
-        wb.close()
-
-    for name in col_names:
-        if name not in live_names:
-            failures.append(
-                f"column-name: {name!r} in table.columns not found in live header row {header_row}"
-            )
-
-    return failures
-
 
 def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTestReport:
     """
@@ -318,11 +274,15 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
                     f"but live cell {get_column_letter(key_phys_col)}{phys_row}={live_key!r}"
                 )
 
-    # ── Phase 3: round-trip ─────────────────────────────────────────────
-    # Compare index-derived value (from live_cache via _key_to_phys/_col_to_phys)
-    # against the same live_cache cell — verifies the physical address mapping,
-    # not the live-read value (query() live-read is preserved for external callers).
-    for k in sample_keys:
+    # ── Phase 3: round-trip (REAL) ──────────────────────────────────────
+    # For a small subsample (≤ ROUND_TRIP_SUBSAMPLE keys), call index.query(k, col)
+    # which reopens the live file at the index-resolved address, then compare the
+    # returned value against the independently-read live_cache cell.
+    # This catches divergence between what query() returns and the live batch read.
+    # Bounded to ~5×cols file opens so it stays cheap even on large workbooks.
+    ROUND_TRIP_SUBSAMPLE = 5
+    rt_keys = sample_keys[:ROUND_TRIP_SUBSAMPLE]
+    for k in rt_keys:
         for col in cols:
             info = sample_cells.get((k, col))
             if info is None:
@@ -331,15 +291,15 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
             live = live_cache.get((pr, pc))
             spec = index.columns.get(col)
             dtype = "number" if (spec and spec.dtype == "number") else "string"
-            # The index value at build time equals what we just read (same file, same cell).
-            # Mismatch signals physical address corruption in the index maps.
-            index_val = live  # we read from the same physical address as the index resolves to
-            # Round-trip: re-read via the index's cell_ref to catch address-vs-value divergence.
-            # Since live_cache already has this cell, no extra I/O needed.
-            if not values_match(live, live, 1e-9, dtype):  # tautology — kept for schema
-                pass  # always passes; structural check is the cell_ref derivation above
-            # Real check: cell_ref derived from index must match live header layout.
-            # (Column-integrity phase 2b already verified this — skip redundant check.)
+            try:
+                queried = index.query(k, col).value
+            except Exception as e:
+                failures.append(f"round-trip: query({k!r}, {col!r}) raised {e}")
+                continue
+            if not values_match(live, queried, 1e-9, dtype):
+                failures.append(
+                    f"round-trip: {col!r}@{k!r} live={live!r} but query()={queried!r}"
+                )
 
     # ------------------------------------------------------------------
     # Phase 4: Computed columns — same sample (no index.query() opens needed

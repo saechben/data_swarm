@@ -48,11 +48,11 @@ def _analyze_band_single_open(path, band, header):
     Returns (columns, formulas, anomalies).
     """
     anomalies: list[str] = []
-    # data_only=True gives us computed values; first row also reveals formula strings
-    # only when data_only=False.  We do ONE open with data_only=True for dtype
-    # inference (we can't get raw formula strings this way, but formula detection
-    # from just the first data row is an approximation anyway — anomalies are
-    # informational, not blocking).
+    # data_only=True returns computed cell VALUES (not raw formula strings).
+    # Formula strings are only visible with data_only=False, which we intentionally
+    # skip here to avoid a second workbook open.  As a result, the formulas list
+    # stays empty in this fast path.  This is informational-only: formula detection
+    # does not affect scored capabilities.
     wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
     try:
         ws = wb[band.sheet]
