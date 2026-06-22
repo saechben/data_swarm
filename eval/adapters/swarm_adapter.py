@@ -130,7 +130,9 @@ class SwarmAdapter(EvalAdapter):
                 catalog = self._build_catalog(wb)
                 if catalog:
                     result = self._resolve_via_llm(catalog, phrase)
-        except Exception:
+        except Exception as _exc:
+            import sys
+            print(f"[swarm_adapter] resolve_coord error ({type(_exc).__name__}): {_exc}", file=sys.stderr)
             result = None
 
         self._coord_cache[cache_key] = result
@@ -166,7 +168,9 @@ class SwarmAdapter(EvalAdapter):
 
         try:
             resp = self._llm.complete(system, user, schema=schema)
-        except Exception:
+        except Exception as _exc:
+            import sys
+            print(f"[swarm_adapter] LLM call failed ({type(_exc).__name__}): {_exc}", file=sys.stderr)
             return None
 
         if not resp.get("found", False):
