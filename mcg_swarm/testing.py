@@ -112,6 +112,51 @@ def _check_row_integrity(path: str, table, index, sample_keys: list) -> list[str
     return failures
 
 
+def _check_column_names(path: str, table) -> list[str]:
+    """
+    Column-name gate (Fix 3): fail-loud check that table.columns names are:
+      (a) unique — no duplicates (col-axis corruption produces duplicates),
+      (b) each present in the live header row within the table's region.
+
+    Reuses the same independent header read pattern as _check_column_integrity
+    but checks table.columns (the CanonicalTable metadata) rather than the index.
+    O(cols), one workbook open.
+    """
+    failures: list[str] = []
+    col_names = [c.name for c in table.columns]
+
+    # (a) Uniqueness
+    seen: set[str] = set()
+    for name in col_names:
+        if name in seen:
+            failures.append(
+                f"column-name: duplicate column name {name!r} in table.columns"
+            )
+        seen.add(name)
+
+    # (b) Each name must appear in the live header row
+    min_row, min_col, max_row, max_col = range_box(table.region)
+    header_row = table.header_row
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    try:
+        ws = wb[table.sheet]
+        live_names: set[str] = set()
+        for c in range(min_col, max_col + 1):
+            val = ws.cell(row=header_row, column=c).value
+            if val not in (None, ""):
+                live_names.add(str(val))
+    finally:
+        wb.close()
+
+    for name in col_names:
+        if name not in live_names:
+            failures.append(
+                f"column-name: {name!r} in table.columns not found in live header row {header_row}"
+            )
+
+    return failures
+
+
 def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTestReport:
     """
     Run deterministic in-loop quality checks on an extracted table.
@@ -172,6 +217,7 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
     # ------------------------------------------------------------------
     # Phase 2: Index integrity — independent cross-checks against live file
     # ------------------------------------------------------------------
+    failures.extend(_check_column_names(path, table))
     failures.extend(_check_column_integrity(path, table, index))
     failures.extend(_check_row_integrity(path, table, index, sample_keys))
 

@@ -105,3 +105,77 @@ def test_row_integrity_detects_key_remap(tmp_path):
     assert any("row-integrity" in f for f in rep.failures), (
         f"Expected row-integrity failure, got: {rep.failures}"
     )
+
+
+def test_gate_flags_duplicate_columns(tmp_path):
+    """
+    Fix 3: fail-loud gate — duplicate column names in CanonicalTable.columns must
+    produce a column-name failure even when the index itself is internally consistent.
+
+    Scenario: table has columns [Region, Revenue] but we hand run_table_tests a
+    CanonicalTable whose .columns list contains ["Region", "Revenue", "Revenue"]
+    (duplicated — the corruption that col-axis fan-out used to produce).  The gate
+    must flag this as a failure so it cannot escape with errors==[].
+    """
+    from mcg_swarm.schemas import CanonicalTable, ExtractionRef, ColumnSpec
+
+    p = _wb(tmp_path, [["Region", "Revenue"], ["EMEA", 100], ["APAC", 200]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+
+    # Build a CanonicalTable with a duplicated column name (simulates col-axis corruption)
+    dup_columns = list(h.columns) + [h.columns[1]]  # Revenue duplicated
+    table_with_dup = CanonicalTable(
+        table_id="t",
+        sheet=h.sheet,
+        region=h.region,
+        header_row=h.header_row,
+        columns=dup_columns,
+        description="d",
+        extraction=ExtractionRef(script_name="idx", row_key=["Region"]),
+    )
+
+    rep = run_table_tests(p, table_with_dup, idx)
+
+    assert not rep.passed, "Expected failure for duplicate column names"
+    assert any("duplicate" in f.lower() or "column-name" in f.lower() for f in rep.failures), (
+        f"Expected duplicate/column-name failure, got: {rep.failures}"
+    )
+
+
+def test_gate_flags_column_name_mismatch_vs_live_header(tmp_path):
+    """
+    Fix 3: fail-loud gate — CanonicalTable.columns names that don't match the live
+    header must be flagged.
+
+    Scenario: workbook has [Region, Revenue] but table.columns claims [Region, Turnover].
+    The gate must detect that "Turnover" is not present in the live header and flag it.
+    """
+    from mcg_swarm.schemas import CanonicalTable, ExtractionRef, ColumnSpec
+
+    p = _wb(tmp_path, [["Region", "Revenue"], ["EMEA", 100], ["APAC", 200]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+
+    # Build table claiming a column name that doesn't exist in the live header
+    wrong_columns = [
+        h.columns[0],  # Region — correct
+        ColumnSpec(name="Turnover", dtype="number", role="value"),  # wrong name
+    ]
+    table_wrong_name = CanonicalTable(
+        table_id="t",
+        sheet=h.sheet,
+        region=h.region,
+        header_row=h.header_row,
+        columns=wrong_columns,
+        description="d",
+        extraction=ExtractionRef(script_name="idx", row_key=["Region"]),
+    )
+
+    rep = run_table_tests(p, table_wrong_name, idx)
+
+    assert not rep.passed, "Expected failure for column name mismatch vs live header"
+    assert any(
+        "column-name" in f.lower() or "not found" in f.lower() or "mismatch" in f.lower()
+        for f in rep.failures
+    ), f"Expected column-name/mismatch failure, got: {rep.failures}"
