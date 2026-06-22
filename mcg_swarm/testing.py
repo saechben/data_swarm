@@ -1,13 +1,13 @@
 # mcg_swarm/testing.py
-"""In-loop quality gate: coverage (resolution-only) + round-trip + computed-column checks."""
+"""In-loop quality gate: coverage (resolution-only) + index integrity + round-trip + computed-column checks."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 import openpyxl
-from openpyxl.utils import coordinate_to_tuple
+from openpyxl.utils import coordinate_to_tuple, get_column_letter
 
-from eval.util import values_match
+from eval.util import range_box, values_match
 from mcg_swarm.formulas import build_env, evaluate
 
 
@@ -27,20 +27,111 @@ def _live_value(path: str, sheet: str, cell_ref: str):
         wb.close()
 
 
+def _check_column_integrity(path: str, table, index) -> list[str]:
+    """
+    Column-integrity check (O(cols), one workbook open).
+
+    Derives truth from the live file independently of index._col_to_phys:
+    reads the header row at table.header_row and builds name->physical_col
+    from the header cells within the table's column bounds, then asserts
+    it matches index._col_to_phys for every column name.
+
+    Catches numeric->numeric column remaps that round-trip misses because
+    both cell_ref and value come from the same (possibly corrupted) map.
+    """
+    failures: list[str] = []
+    min_row, min_col, max_row, max_col = range_box(table.region)
+    header_row = table.header_row
+
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    try:
+        ws = wb[table.sheet]
+        # Build name -> physical_col from the live header row
+        live_col_map: dict[str, int] = {}
+        for c in range(min_col, max_col + 1):
+            val = ws.cell(row=header_row, column=c).value
+            if val not in (None, ""):
+                live_col_map[str(val)] = c
+    finally:
+        wb.close()
+
+    for col_name, idx_phys in index._col_to_phys.items():
+        live_phys = live_col_map.get(col_name)
+        if live_phys is None:
+            failures.append(
+                f"column-integrity: {col_name!r} in index but not found in live header row {header_row}"
+            )
+        elif idx_phys != live_phys:
+            failures.append(
+                f"column-integrity: {col_name!r} index col={get_column_letter(idx_phys)} "
+                f"but live header says col={get_column_letter(live_phys)}"
+            )
+
+    return failures
+
+
+def _check_row_integrity(path: str, table, index, sample_keys: list) -> list[str]:
+    """
+    Row-integrity check on sampled keys (bounded by sample_size).
+
+    For each sampled key, takes the index-resolved physical row from
+    index._key_to_phys, then reads the key-column cell at that row directly
+    from the live file and asserts it equals the key.
+
+    Catches row remaps where _key_to_phys points to the wrong physical row.
+    Skipped when row_key is empty (positional indexing — no key to verify).
+    """
+    failures: list[str] = []
+    row_key_names = table.extraction.row_key
+    if not row_key_names:
+        return failures  # positional — nothing to verify
+
+    key_col_name = row_key_names[0]
+    if key_col_name not in index._col_to_phys:
+        return failures  # can't verify without a resolved key column
+
+    key_phys_col = index._col_to_phys[key_col_name]
+
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    try:
+        ws = wb[table.sheet]
+        for k in sample_keys:
+            if k not in index._key_to_phys:
+                continue  # already caught by coverage check
+            phys_row = index._key_to_phys[k]
+            live_key = ws.cell(row=phys_row, column=key_phys_col).value
+            # Normalise: index stores the key as read at build time; compare same type
+            if live_key != k:
+                failures.append(
+                    f"row-integrity: key {k!r} -> row {phys_row} "
+                    f"but live cell {get_column_letter(key_phys_col)}{phys_row}={live_key!r}"
+                )
+    finally:
+        wb.close()
+
+    return failures
+
+
 def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTestReport:
     """
     Run deterministic in-loop quality checks on an extracted table.
 
-    Three phases:
+    Four phases:
     1. Coverage (resolution-only, O(keys+cols), zero file I/O):
        Every column in index.column_names() must exist in _col_to_phys and every
        row key in index.row_keys() must exist in _key_to_phys.  No per-cell reads.
 
-    2. Round-trip (bounded sample, ≤ sample_size × cols file reads):
+    2. Index integrity (one workbook open total, O(cols) + O(sample) reads):
+       (a) Column-integrity: reads the live header row and asserts name->physical_col
+           matches _col_to_phys for each column.  Catches numeric->numeric column remaps.
+       (b) Row-integrity: for each sampled key, reads the key-column cell at the
+           index-resolved physical row and asserts it equals the key.
+
+    3. Round-trip (bounded sample, ≤ sample_size × cols file reads):
        For a deterministic subset of row keys, compare index.query() value against
        the live cell value read directly from the workbook.
 
-    3. Computed columns (same sample):
+    4. Computed columns (same sample):
        For columns with role="computed" and a matching TableFormula, re-evaluate
        the formula and compare against the live cell.
     """
@@ -51,10 +142,6 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
 
     # ------------------------------------------------------------------
     # Phase 1: Coverage — resolution-only, no file I/O
-    # Check that every column name resolves in the physical-column map
-    # and every row key resolves in the physical-row map.
-    # This catches gaps where a header column or data row key is missing
-    # from the precomputed maps without opening the workbook at all.
     # ------------------------------------------------------------------
     for col in cols:
         if col not in index._col_to_phys:
@@ -65,9 +152,7 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
             failures.append(f"coverage gap: row key {k!r} not in _key_to_phys")
 
     # ------------------------------------------------------------------
-    # Phase 2: Round-trip — bounded sample
-    # Build a deterministic sample: on small tables use all keys; on large
-    # tables take first, last, and evenly-spaced interior keys up to sample_size.
+    # Build deterministic sample (used by phases 2b, 3, 4)
     # ------------------------------------------------------------------
     if len(keys) <= sample_size:
         sample_keys = keys[:]
@@ -84,6 +169,15 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
                 deduped.append(k)
         sample_keys = deduped
 
+    # ------------------------------------------------------------------
+    # Phase 2: Index integrity — independent cross-checks against live file
+    # ------------------------------------------------------------------
+    failures.extend(_check_column_integrity(path, table, index))
+    failures.extend(_check_row_integrity(path, table, index, sample_keys))
+
+    # ------------------------------------------------------------------
+    # Phase 3: Round-trip — bounded sample
+    # ------------------------------------------------------------------
     for k in sample_keys:
         for col in cols:
             try:
@@ -99,7 +193,7 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
                 )
 
     # ------------------------------------------------------------------
-    # Phase 3: Computed columns — same sample
+    # Phase 4: Computed columns — same sample
     # ------------------------------------------------------------------
     formulas_by_target = {f.target: f for f in table.formulas}
     for c in table.columns:

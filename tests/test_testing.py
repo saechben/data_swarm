@@ -38,13 +38,37 @@ def test_passes_on_clean_table(tmp_path):
 
 
 def test_detects_roundtrip_mismatch(tmp_path):
+    """Column-integrity (and round-trip) must catch a string-col-into-number-col remap."""
     p = _wb(tmp_path, [["Region", "Revenue"], ["EMEA", 100]])
     h = split_workbook(p)[0]
     idx = build_index(p, h, row_key=["Region"])
-    # corrupt the index's column map so query() returns the wrong cell
+    # corrupt: Revenue now points to Region's physical column
     idx._col_to_phys["Revenue"] = idx._col_to_phys["Region"]
     rep = run_table_tests(p, _canon(h), idx)
+    # column-integrity catches it: Revenue col in index != Revenue col in live header
     assert not rep.passed and rep.failures
+
+
+def test_detects_numeric_column_swap(tmp_path):
+    """Regression guard: numeric->numeric column remap must be caught by column-integrity.
+
+    A Revenue/Units swap produces self-consistent cell_ref+value in the index,
+    so the round-trip alone cannot detect it.  The column-integrity check reads
+    the live header independently and must flag the mismatch.
+    """
+    p = _wb(tmp_path, [["Region", "Revenue", "Units"], ["EMEA", 100, 5], ["APAC", 200, 8]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+    # swap Revenue and Units — both numeric so round-trip cannot distinguish them
+    idx._col_to_phys["Revenue"], idx._col_to_phys["Units"] = (
+        idx._col_to_phys["Units"],
+        idx._col_to_phys["Revenue"],
+    )
+    rep = run_table_tests(p, _canon(h), idx)
+    assert not rep.passed, f"Expected failure but got no failures: {rep.failures}"
+    assert any("column-integrity" in f for f in rep.failures), (
+        f"Expected column-integrity failure, got: {rep.failures}"
+    )
 
 
 def test_report_dataclass_defaults():
@@ -64,21 +88,20 @@ def test_passes_single_row(tmp_path):
     assert rep.passed
 
 
-def test_coverage_detects_unknown_column(tmp_path):
-    """Resolution-only coverage: injecting a bogus key into _col_to_phys is caught."""
-    p = _wb(tmp_path, [["Name", "Val"], ["Alice", 10]])
+def test_row_integrity_detects_key_remap(tmp_path):
+    """Row-integrity check must catch a row remap: _key_to_phys["Alice"] -> wrong row.
+
+    If _key_to_phys["Alice"] points to row 3 (Bob's row), the index resolves "Alice"
+    to the wrong physical row.  The row-integrity check reads the key-column cell at
+    that physical row and finds "Bob" != "Alice", flagging a failure.
+    """
+    p = _wb(tmp_path, [["Name", "Val"], ["Alice", 10], ["Bob", 20]])
     h = split_workbook(p)[0]
     idx = build_index(p, h, row_key=["Name"])
-    # Inject a column name that maps to an out-of-range column index (simulate gap)
-    idx._col_to_phys["Ghost"] = 9999
+    # Remap Alice to Bob's physical row
+    idx._key_to_phys["Alice"] = idx._key_to_phys["Bob"]
     rep = run_table_tests(p, _canon(h), idx)
-    # Ghost is not in index.column_names() (derived from _col_to_phys keys),
-    # so it WILL appear in column_names() — coverage check will try to resolve it
-    # against _key_to_phys, which is fine, but out-of-range col means _read() fails.
-    # Actually: Ghost appears in column_names(), round-trip will try index.query(key, "Ghost")
-    # which calls _read(row, 9999) — openpyxl returns None for out-of-range.
-    # The live read of that cell_ref would also be None. This tests that injection
-    # doesn't silently corrupt results — in practice the coverage resolution check catches
-    # columns that don't appear in the header via _col_to_phys integrity.
-    # For this test, we just confirm the report is well-formed.
-    assert isinstance(rep, TableTestReport)
+    assert not rep.passed, "Expected failure when key maps to wrong physical row"
+    assert any("row-integrity" in f for f in rep.failures), (
+        f"Expected row-integrity failure, got: {rep.failures}"
+    )
