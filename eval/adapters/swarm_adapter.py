@@ -21,13 +21,17 @@ from mcg_swarm.env import load_dotenv
 from mcg_swarm.llm.client import AnthropicClient
 
 
+MEASURE_ROW_CAP = 200
+
+
 class SwarmAdapter(EvalAdapter):
     name = "swarm"
 
     def __init__(self) -> None:
-        self._tables: dict[str, dict] = {}   # wb -> {label_table_id: CanonicalTable}
-        self._indices: dict[str, dict] = {}  # wb -> {label_table_id: ExtractionIndex}
+        self._tables: dict[str, dict] = {}          # wb -> {label_table_id: CanonicalTable}
+        self._indices: dict[str, dict] = {}         # wb -> {label_table_id: ExtractionIndex}
         self._paths: dict[str, str] = {}
+        self._measures_cache: dict[str, list] = {}  # wb -> list[DetectedMeasure]
 
     def prepare(self, workbook_path: str, label: WorkbookLabel) -> None:
         wb = label.workbook
@@ -87,29 +91,49 @@ class SwarmAdapter(EvalAdapter):
         return SemanticResult()
 
     def detected_measures(self, wb: str) -> list[DetectedMeasure]:
-        out = []
+        # Memoize: compute once per workbook, return cached on subsequent calls.
+        if wb in self._measures_cache:
+            return self._measures_cache[wb]
+
+        out: list[DetectedMeasure] = []
         for label_table_id, idx in self._indices.get(wb, {}).items():
-            for col_name in idx.column_names():
+            total = len(idx._key_to_phys)
+            capped = MEASURE_ROW_CAP is not None and total > MEASURE_ROW_CAP
+            if capped:
+                print(
+                    f"[swarm_adapter] measure emission capped at {MEASURE_ROW_CAP} rows "
+                    f"for table {label_table_id} ({total} rows)"
+                )
+
+            # One workbook open for the whole table — O(1) opens per table.
+            rows = idx.read_all(max_rows=MEASURE_ROW_CAP)
+
+            for row_key, col_name, value, _cell_ref in rows:
+                if value is None:
+                    continue
                 col_spec = idx.columns.get(col_name)
-                if col_spec and col_spec.role == "key":
-                    continue  # skip key columns — they are row labels, not values
-                for row_key in idx._key_to_phys:
-                    try:
-                        val = idx.query(row_key, col_name).value
-                    except KeyError:
-                        continue
-                    out.append(DetectedMeasure(
-                        table_id=label_table_id,
-                        row_label=str(row_key),
-                        col_label=col_name,
-                        value=val,
-                        semantic_name=col_name,
-                    ))
+                # Emit only numeric value/computed columns; skip key columns and
+                # non-numeric columns — they only add false positives.
+                if col_spec is None:
+                    continue
+                if col_spec.role not in ("value", "computed"):
+                    continue
+                if col_spec.dtype != "number":
+                    continue
+                out.append(DetectedMeasure(
+                    table_id=label_table_id,
+                    row_label=str(row_key),
+                    col_label=col_name,
+                    value=value,
+                    semantic_name=col_name,
+                ))
+
+        self._measures_cache[wb] = out
         return out
 
     def compute_formula(self, wb: str, expression: str, operands: dict[str, str],
                         business_logic: str) -> Optional[float]:
-        # Build semantic_name -> value map from detected measures.
+        # Build semantic_name -> value map from cached detected measures (no repeated opens).
         measures: dict[str, Any] = {
             dm.semantic_name: dm.value for dm in self.detected_measures(wb)
         }

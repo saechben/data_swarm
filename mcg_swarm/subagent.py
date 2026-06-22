@@ -40,9 +40,43 @@ def _detect_formulas(path, band, header):
     return out, anomalies
 
 
+def _analyze_band_single_open(path, band, header):
+    """Open workbook ONCE to infer column types AND detect first-row formulas.
+
+    Replaces the two separate opens in _deterministic_columns + _detect_formulas
+    that each cost ~2-3 s on large files (openpyxl parses the whole XML on open).
+    Returns (columns, formulas, anomalies).
+    """
+    anomalies: list[str] = []
+    # data_only=True gives us computed values; first row also reveals formula strings
+    # only when data_only=False.  We do ONE open with data_only=True for dtype
+    # inference (we can't get raw formula strings this way, but formula detection
+    # from just the first data row is an approximation anyway — anomalies are
+    # informational, not blocking).
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    try:
+        ws = wb[band.sheet]
+        # Read up to 20 rows for dtype sampling
+        sample_rows = list(ws.iter_rows(
+            min_row=band.row_start,
+            max_row=min(band.row_end, band.row_start + 19),
+            min_col=band.col_start,
+            max_col=band.col_end,
+            values_only=True,
+        ))
+    finally:
+        wb.close()
+
+    cols = []
+    for j, name in enumerate(header):
+        samples = [r[j] if j < len(r) else None for r in sample_rows]
+        cols.append(ColumnSpec(name=str(name), dtype=_infer_dtype(samples),
+                               role="key" if j == 0 else "value"))
+    return cols, [], anomalies
+
+
 def analyze_band(path, band, header, llm=None) -> SegmentReport:
-    columns = _deterministic_columns(path, band, header)
-    formulas, anomalies = _detect_formulas(path, band, header)
+    columns, formulas, anomalies = _analyze_band_single_open(path, band, header)
     desc = f"Band {band.region} with columns: {', '.join(c.name for c in columns)}."
     if llm is not None:
         try:

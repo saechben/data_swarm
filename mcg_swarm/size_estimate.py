@@ -6,7 +6,7 @@ from eval.util import range_box
 
 ROWS_PER_AGENT = 5_000
 COLS_PER_AGENT = 40
-K_MAX = 16
+K_MAX = 4  # cap bands to avoid O(K) workbook opens on huge files (each open ~2-3 s)
 
 
 @dataclass

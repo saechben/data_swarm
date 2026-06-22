@@ -99,6 +99,36 @@ class ExtractionIndex:
             wb.close()
         return out
 
+    def read_all(self, max_rows: int | None = None) -> list[tuple]:
+        """Open the workbook ONCE and return all (row_key, col_name, value, cell_ref) tuples.
+
+        Respects ``_key_to_phys`` / ``_col_to_phys`` so values are consistent with
+        ``query()``.  If *max_rows* is given, only the first *max_rows* row keys are
+        read (order = insertion order of ``_key_to_phys``).
+
+        Does NOT affect the live-read property of ``query()`` — each call here opens
+        a fresh workbook handle and closes it when done.
+        """
+        row_keys = list(self._key_to_phys.keys())
+        if max_rows is not None:
+            row_keys = row_keys[:max_rows]
+
+        col_items = list(self._col_to_phys.items())  # [(col_name, phys_col), ...]
+
+        wb = openpyxl.load_workbook(self.path, data_only=True, read_only=True)
+        out: list[tuple] = []
+        try:
+            ws = wb[self.sheet]
+            for row_key in row_keys:
+                phys_row = self._key_to_phys[row_key]
+                for col_name, phys_col in col_items:
+                    value = ws.cell(row=phys_row, column=phys_col).value
+                    cell_ref = f"{get_column_letter(phys_col)}{phys_row}"
+                    out.append((row_key, col_name, value, cell_ref))
+        finally:
+            wb.close()
+        return out
+
     def row_keys(self) -> list:
         return list(self._key_to_phys.keys())
 
