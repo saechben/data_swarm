@@ -14,6 +14,7 @@ from mcg_swarm.subagent import analyze_band
 from mcg_swarm.merge import merge_reports
 from mcg_swarm.extraction import build_index
 from mcg_swarm.testing import run_table_tests
+from mcg_swarm.header_llm import resolve_messy_tab
 
 
 def _stub(handle, table_id: str, errors: list[str]) -> CanonicalTable:
@@ -52,6 +53,10 @@ def orchestrate_table(
     -------
     CanonicalTable — always. Never raises.
     """
+    # §0  LLM header fallback — attempt resolution before fail-loud
+    if handle.ambiguous and llm is not None:
+        handle = resolve_messy_tab(path, handle, llm)  # never raises
+
     # §1  Ambiguous handle — fail-loud stub immediately
     if handle.ambiguous:
         return _stub(
