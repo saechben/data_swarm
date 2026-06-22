@@ -1,6 +1,63 @@
 from __future__ import annotations
-import json, os
+import json, os, re
 from typing import Any, Callable, Optional, Protocol
+
+
+def extract_json(text: str) -> dict:
+    """Extract the first JSON object from text, handling fenced blocks and prose."""
+    # (a) Try raw JSON first (stripped)
+    stripped = text.strip()
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        pass
+
+    # (b) Try ```json ... ``` fenced block
+    m = re.search(r"```json\s*\n(.*?)\n```", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # (c) Try ``` ... ``` unlabeled fenced block
+    m = re.search(r"```\s*\n(.*?)\n```", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # (d) Find first balanced {...} object in prose
+    start = text.find("{")
+    while start != -1:
+        depth = 0
+        i = start
+        in_str = False
+        escape = False
+        while i < len(text):
+            ch = text[i]
+            if escape:
+                escape = False
+            elif ch == "\\" and in_str:
+                escape = True
+            elif ch == '"':
+                in_str = not in_str
+            elif not in_str:
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        candidate = text[start:i + 1]
+                        try:
+                            return json.loads(candidate)
+                        except json.JSONDecodeError:
+                            break
+            i += 1
+        start = text.find("{", start + 1)
+
+    raise ValueError(f"no JSON object found in text: {text[:200]!r}")
 
 
 class LLMClient(Protocol):
@@ -34,7 +91,7 @@ class AnthropicClient:
             model=self._model, max_tokens=2048, system=system,
             messages=[{"role": "user", "content": instr}])
         text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
-        return json.loads(text)
+        return extract_json(text)
 
 
 def default_client() -> LLMClient:

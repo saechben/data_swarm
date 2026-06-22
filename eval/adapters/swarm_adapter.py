@@ -9,6 +9,7 @@ Nothing here reads the ``label`` argument for answer *values* — only metadata
 """
 from __future__ import annotations
 
+import os
 from typing import Any, Optional
 
 from eval.adapters.base import DetectedMeasure, EvalAdapter, SemanticResult
@@ -16,6 +17,8 @@ from eval.schemas import WorkbookLabel
 from eval.util import range_iou
 from mcg_swarm.runner import run_swarm, build_indices
 from mcg_swarm.formulas import eval_expr
+from mcg_swarm.env import load_dotenv
+from mcg_swarm.llm.client import AnthropicClient
 
 
 class SwarmAdapter(EvalAdapter):
@@ -30,8 +33,14 @@ class SwarmAdapter(EvalAdapter):
         wb = label.workbook
         self._paths[wb] = workbook_path
 
+        # Load .env (tolerates missing file, won't clobber existing env vars).
+        load_dotenv()
+
+        # Wire LLM only when a key is available; fall back to deterministic (llm=None).
+        llm = AnthropicClient(model="claude-haiku-4-5-20251001") if os.environ.get("ANTHROPIC_API_KEY") else None
+
         # Run the swarm and build extraction indices keyed by swarm table_id.
-        ext = run_swarm({"main": workbook_path})
+        ext = run_swarm({"main": workbook_path}, llm=llm)
         idxs = build_indices(workbook_path, ext)  # {swarm_table_id: ExtractionIndex}
 
         # Map label table-ids -> swarm CanonicalTables by sheet match + max IoU.
