@@ -25,6 +25,14 @@ def test_col_merge_concatenates():
     m = merge_reports([r1, r2], axis="col")
     assert [c.name for c in m.columns] == ["Region", "Rev", "Units"]
 
+def test_empty_reports_returns_empty_result():
+    for ax in ("row", "col"):
+        m = merge_reports([], axis=ax)
+        assert m.columns == []
+        assert m.formulas == []
+        assert m.description == ""
+        assert m.conflicts == []
+
 def test_formula_union_dedupe():
     f = TableFormula(target="Net", expression="Gross - Disc")
     m = merge_reports([_rep("A2:B5", [("Gross", "number")], [f]),

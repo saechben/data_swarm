@@ -11,7 +11,9 @@ class MergeResult:
     conflicts: list = field(default_factory=list)
 
 
-def merge_reports(reports, axis: str) -> MergeResult:
+def merge_reports(reports: list, axis: str) -> MergeResult:
+    if not reports:
+        return MergeResult(columns=[], formulas=[], description="", conflicts=[])
     conflicts: list[str] = []
     if axis == "col":
         columns = [c for r in reports for c in r.columns]
