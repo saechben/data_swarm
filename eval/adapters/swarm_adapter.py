@@ -28,6 +28,9 @@ MEASURE_ROW_CAP = 200
 # Skip measure emission entirely for tables whose row-key count exceeds this threshold.
 MEASURE_MAX_TABLE_ROWS = 40
 
+# Max row_keys to include in the catalog prompt per table.
+_CATALOG_MAX_ROWS = 60
+
 
 class SwarmAdapter(EvalAdapter):
     name = "swarm"
@@ -37,6 +40,9 @@ class SwarmAdapter(EvalAdapter):
         self._indices: dict[str, dict] = {}         # wb -> {label_table_id: ExtractionIndex}
         self._paths: dict[str, str] = {}
         self._measures_cache: dict[str, list] = {}  # wb -> list[DetectedMeasure]
+        self._llm = None                             # set during prepare(); injectable for tests
+        self._catalog_cache: dict[str, list] = {}   # wb -> catalog list
+        self._coord_cache: dict[tuple, Any] = {}    # (wb, phrase) -> (table_id, row, col) | None
 
     def prepare(self, workbook_path: str, label: WorkbookLabel) -> None:
         wb = label.workbook
@@ -47,6 +53,7 @@ class SwarmAdapter(EvalAdapter):
 
         # Wire LLM only when a key is available; fall back to deterministic (llm=None).
         llm = AnthropicClient(model="claude-haiku-4-5-20251001") if os.environ.get("ANTHROPIC_API_KEY") else None
+        self._llm = llm
 
         # Run the swarm and build extraction indices keyed by swarm table_id.
         ext = run_swarm({"main": workbook_path}, llm=llm)
@@ -76,6 +83,115 @@ class SwarmAdapter(EvalAdapter):
         self._tables[wb] = tables_map
         self._indices[wb] = indices_map
 
+    # ------------------------------------------------------------------
+    # Catalog + semantic resolver
+    # ------------------------------------------------------------------
+
+    def _build_catalog(self, wb: str) -> list[dict]:
+        """Build a compact catalog of all tables for the given workbook.
+
+        Each entry: {table_id, sheet, columns: [...], row_keys: [...]}
+        row_keys capped at _CATALOG_MAX_ROWS to keep prompts small.
+        """
+        if wb in self._catalog_cache:
+            return self._catalog_cache[wb]
+
+        catalog = []
+        for table_id, idx in self._indices.get(wb, {}).items():
+            all_rows = [str(k) for k in idx.row_keys()]
+            row_keys = all_rows[:_CATALOG_MAX_ROWS]
+            entry = {
+                "table_id": table_id,
+                "columns": idx.column_names(),
+                "row_keys": row_keys,
+            }
+            # Annotate if truncated so the LLM knows the list is partial.
+            if len(all_rows) > _CATALOG_MAX_ROWS:
+                entry["row_keys_truncated"] = True
+            catalog.append(entry)
+
+        self._catalog_cache[wb] = catalog
+        return catalog
+
+    def resolve_coord(self, wb: str, phrase: str) -> Optional[tuple]:
+        """Map a phrase to (table_id, row_label, col_label) or None.
+
+        Result cached per (wb, phrase). Calls LLM once per unique phrase per wb.
+        Returns None if self._llm is None, LLM returns found=false, or
+        returned coords fail validation.
+        """
+        cache_key = (wb, phrase)
+        if cache_key in self._coord_cache:
+            return self._coord_cache[cache_key]
+
+        result = None
+        try:
+            if self._llm is not None:
+                catalog = self._build_catalog(wb)
+                if catalog:
+                    result = self._resolve_via_llm(catalog, phrase)
+        except Exception:
+            result = None
+
+        self._coord_cache[cache_key] = result
+        return result
+
+    def _resolve_via_llm(self, catalog: list[dict], phrase: str) -> Optional[tuple]:
+        """Call the LLM to resolve phrase against the catalog. Returns (table_id, row, col) or None."""
+        import json as _json
+
+        catalog_json = _json.dumps(catalog, indent=2)
+        system = (
+            "You are a spreadsheet data resolver. Given a catalog of tables and a phrase, "
+            "identify the EXACT table, row, and column that the phrase refers to. "
+            "You MUST choose table_id, row_label, and col_label VERBATIM from the catalog lists. "
+            "If nothing matches, return {\"found\": false}."
+        )
+        user = (
+            f"CATALOG:\n{catalog_json}\n\n"
+            f"PHRASE: {phrase}\n\n"
+            "Return JSON with these fields:\n"
+            "  found: bool — true if you found a match, false otherwise\n"
+            "  table_id: str — must be verbatim from catalog table_id values\n"
+            "  row_label: str — must be verbatim from that table's row_keys list\n"
+            "  col_label: str — must be verbatim from that table's columns list\n\n"
+            "Return ONLY JSON, no prose."
+        )
+        schema = {
+            "found": "bool",
+            "table_id": "str",
+            "row_label": "str",
+            "col_label": "str",
+        }
+
+        try:
+            resp = self._llm.complete(system, user, schema=schema)
+        except Exception:
+            return None
+
+        if not resp.get("found", False):
+            return None
+
+        table_id = resp.get("table_id")
+        row_label = resp.get("row_label")
+        col_label = resp.get("col_label")
+
+        # Validate returned coords exist in the catalog.
+        catalog_by_id = {e["table_id"]: e for e in catalog}
+        if table_id not in catalog_by_id:
+            return None
+        entry = catalog_by_id[table_id]
+        if col_label not in entry["columns"]:
+            return None
+        if row_label not in entry["row_keys"]:
+            return None
+
+        return (table_id, row_label, col_label)
+
+    # ------------------------------------------------------------------
+    # Capability methods
+    # ------------------------------------------------------------------
+
     def table_region(self, wb: str, table_id: str, table_name: str,
                      sheet: str) -> Optional[str]:
         t = self._tables.get(wb, {}).get(table_id)
@@ -92,8 +208,23 @@ class SwarmAdapter(EvalAdapter):
             return None
 
     def answer_semantic(self, wb: str, query: str) -> SemanticResult:
-        # Semantic NL path deferred — scores 0 for now, per plan.
-        return SemanticResult()
+        try:
+            coord = self.resolve_coord(wb, query)
+            if coord is None:
+                return SemanticResult()
+            table_id, row_label, col_label = coord
+            idx = self._indices.get(wb, {}).get(table_id)
+            if idx is None:
+                return SemanticResult()
+            extracted = idx.query(row_label, col_label)
+            return SemanticResult(
+                value=extracted.value,
+                table_id=table_id,
+                row_label=row_label,
+                col_label=col_label,
+            )
+        except Exception:
+            return SemanticResult()
 
     def detected_measures(self, wb: str) -> list[DetectedMeasure]:
         # Memoize: compute once per workbook, return cached on subsequent calls.
@@ -141,16 +272,23 @@ class SwarmAdapter(EvalAdapter):
 
     def compute_formula(self, wb: str, expression: str, operands: dict[str, str],
                         business_logic: str) -> Optional[float]:
-        # Build semantic_name -> value map from cached detected measures (no repeated opens).
-        measures: dict[str, Any] = {
-            dm.semantic_name: dm.value for dm in self.detected_measures(wb)
-        }
-        env: dict[str, Any] = {}
-        for symbol, semantic_name in operands.items():
-            if semantic_name not in measures:
-                return None
-            env[symbol] = measures[semantic_name]
         try:
+            env: dict[str, Any] = {}
+            for symbol, semantic_name in operands.items():
+                coord = self.resolve_coord(wb, semantic_name)
+                if coord is None:
+                    return None
+                table_id, row_label, col_label = coord
+                idx = self._indices.get(wb, {}).get(table_id)
+                if idx is None:
+                    return None
+                extracted = idx.query(row_label, col_label)
+                if extracted.value is None:
+                    return None
+                try:
+                    env[symbol] = float(extracted.value)
+                except (TypeError, ValueError):
+                    return None
             return float(eval_expr(expression, env))
         except Exception:
             return None
