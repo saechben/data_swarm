@@ -1,5 +1,16 @@
 import openpyxl, pytest
-from mcg_swarm.splitter import split_workbook, TableHandle, detect_table
+from mcg_swarm.splitter import split_workbook, TableHandle, detect_table, _is_secondary_header
+
+
+def test_secondary_header_rejects_non_string_rows():
+    """A 2-row header is pure labels; rows with any bool/number cell are data, not headers."""
+    # genuine leaf header (all strings) → True
+    assert _is_secondary_header(("Gross", "Net", "Margin"), [(1, 2, 3)]) is True
+    # 2 strings + a boolean, no numerics → still a DATA row, must NOT be a header
+    assert _is_secondary_header(("Status", True, "Active"), [("Item", 1, 2)]) is False
+    # any numeric → data row
+    assert _is_secondary_header(("Region", 100, "Note"), [("X", 1, 2)]) is False
+
 
 # ── Pattern C: 2-row header composite naming ───────────────────────────────────
 

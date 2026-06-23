@@ -103,11 +103,12 @@ def _is_secondary_header(row: tuple, rows_after: list[tuple]) -> bool:
         except (TypeError, ValueError):
             return False
 
-    # A secondary header row must be ALL strings — no numerics allowed.
-    # Data rows always have numeric values; header rows never do.
-    if any(_isnum(v) for v in nonempty):
+    # A secondary header row must be PURE LABELS — every non-empty cell is a string
+    # (no numerics, no booleans, no dates). Data rows always carry a non-string value
+    # column; this rejects e.g. ("Status", True, "Active") which has 2 strings + a bool.
+    if not all(isinstance(c, str) for c in nonempty):
         return False
-    strings = [c for c in nonempty if isinstance(c, str)]
+    strings = nonempty
     # Must have at least 2 string cells (distinguishes data rows that have only 1 string key)
     if len(strings) < 2:
         return False
