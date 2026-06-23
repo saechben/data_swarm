@@ -20,25 +20,6 @@ def _deterministic_columns(path, band, header):
     return cols
 
 
-def _detect_formulas(path, band, header):
-    out, anomalies = [], []
-    wb = openpyxl.load_workbook(path, data_only=False, read_only=True)
-    try:
-        ws = wb[band.sheet]
-        for r in ws.iter_rows(min_row=band.row_start, max_row=band.row_end,
-                              min_col=band.col_start, max_col=band.col_end):
-            for cell in r:
-                if isinstance(cell.value, str) and cell.value.startswith("="):
-                    col_idx = cell.column - band.col_start
-                    target = header[col_idx] if col_idx < len(header) else cell.coordinate
-                    anomalies.append(f"unparsed live formula at {cell.coordinate}: {cell.value}")
-                    # NOTE: translation of arbitrary Excel formulas to the allowlist is out
-                    # of scope here; record as anomaly so merge/repair can decide. role stays "value".
-            break  # one representative row is enough to flag a computed column
-    finally:
-        wb.close()
-    return out, anomalies
-
 
 def _analyze_band_single_open(path, band, header):
     """Open workbook ONCE to infer column types AND detect first-row formulas.

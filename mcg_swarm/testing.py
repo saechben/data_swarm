@@ -216,14 +216,16 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
         wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
         try:
             ws = wb[table.sheet]
-            for row_tuple in ws.iter_rows(
+            for r_off, row_vals in enumerate(ws.iter_rows(
                 min_row=scan_min_row, max_row=scan_max_row,
                 min_col=scan_min_col, max_col=scan_max_col,
-            ):
-                for cell in row_tuple:
-                    pos = (cell.row, cell.column)
+                values_only=True,
+            )):
+                actual_row = scan_min_row + r_off
+                for c_off, val in enumerate(row_vals):
+                    pos = (actual_row, scan_min_col + c_off)
                     if pos in needed:
-                        live_cache[pos] = cell.value
+                        live_cache[pos] = val
         finally:
             wb.close()
 
@@ -295,6 +297,9 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
                 queried = index.query(k, col).value
             except Exception as e:
                 failures.append(f"round-trip: query({k!r}, {col!r}) raised {e}")
+                continue
+            # Both None → cell is genuinely empty and index agrees; not a failure.
+            if live is None and queried is None:
                 continue
             if not values_match(live, queried, 1e-9, dtype):
                 failures.append(

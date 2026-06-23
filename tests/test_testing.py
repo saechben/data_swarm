@@ -211,3 +211,86 @@ def test_gate_flags_column_name_mismatch_vs_live_header(tmp_path):
         "column-name" in f.lower() or "not found" in f.lower() or "mismatch" in f.lower()
         for f in rep.failures
     ), f"Expected column-name/mismatch failure, got: {rep.failures}"
+
+
+def test_gate_handles_region_with_empty_cells(tmp_path):
+    """Regression: EmptyCell crash when region includes left-offset/sparse rows with empty cells.
+
+    Reproduces the bug: openpyxl read_only mode returns EmptyCell objects for cells
+    that were never written to the file.  EmptyCell has NO .row/.column attributes.
+    The old batch-scan code did `pos = (cell.row, cell.column)` → AttributeError.
+
+    Layout mimics capex_plan.xlsx: data starts at column B (col 2), so column A
+    is entirely absent from the file.  The region "A2:C5" includes col A (scan_min_col=1)
+    but ALL cells in column A are EmptyCell in read_only mode.
+
+      row 2: [<empty>, "Key", "A", "B"]  ← header at col B-D but region includes A
+      row 3: [<empty>, "x",   10,  20]
+      row 4: [<empty>, "y",   30,  40]
+
+    scan_min_col = 1 (col A) because that's the left edge of "A2:C5" wait — actually
+    we model it as the table region being B2:D4 with col A absent, so the scan hits
+    EmptyCell when iter_rows spans that absent column.
+
+    The fix uses values_only=True + row/col offset arithmetic, avoiding cell objects.
+    """
+    import openpyxl as xl
+    from mcg_swarm.schemas import CanonicalTable, ExtractionRef, ColumnSpec
+    from mcg_swarm.extraction import ExtractionIndex
+
+    wb = xl.Workbook()
+    ws = wb.active
+    ws.title = "Data"
+    # Simulate left-offset table: col A (col index 1) is never written.
+    # Data lives in cols B-D (indices 2-4).
+    # Row 1 is a banner row that only has content in col C (col index 3).
+    # Only write cells that actually have data — leave col A and D1 absent.
+    ws["C1"] = "Report Title"   # banner in C1 only; A1, B1, D1 absent → EmptyCell
+    ws["B2"] = "Key"
+    ws["C2"] = "Alpha"
+    ws["D2"] = "Beta"
+    ws["B3"] = "x"
+    ws["C3"] = 10
+    ws["D3"] = 20
+    ws["B4"] = "y"
+    ws["C4"] = 30
+    ws["D4"] = 40
+
+    path = str(tmp_path / "offset.xlsx")
+    wb.save(path)
+
+    # Verify EmptyCell is actually returned for A2 in read_only mode (pre-condition)
+    wb_ro = xl.load_workbook(path, data_only=True, read_only=True)
+    ws_ro = wb_ro["Data"]
+    a2_row = list(ws_ro.iter_rows(min_row=2, max_row=2, min_col=1, max_col=1))[0]
+    a2_cell = a2_row[0]
+    assert type(a2_cell).__name__ == "EmptyCell", (
+        f"Pre-condition failed: expected EmptyCell for A2, got {type(a2_cell).__name__}"
+    )
+    wb_ro.close()
+
+    # Region A1:D4 covers the banner row AND the left-offset empty column A.
+    # The scan bounding box will include col A → EmptyCell crash pre-fix.
+    columns = [
+        ColumnSpec(name="Key", dtype="string", role="key"),
+        ColumnSpec(name="Alpha", dtype="number", role="value"),
+        ColumnSpec(name="Beta", dtype="number", role="value"),
+    ]
+    table = CanonicalTable(
+        table_id="offset_table",
+        sheet="Data",
+        region="A1:D4",
+        header_row=2,
+        columns=columns,
+        description="offset table with empty left column in region",
+        extraction=ExtractionRef(script_name="idx", row_key=["Key"]),
+    )
+
+    # Build index: ExtractionIndex already uses values_only=True (no EmptyCell bug there)
+    idx = ExtractionIndex(path, "Data", "A1:D4", 2, columns, ["Key"])
+
+    # This must NOT raise AttributeError on EmptyCell — should return a passing report
+    rep = run_table_tests(path, table, idx)
+
+    assert isinstance(rep, TableTestReport), f"Expected TableTestReport, got {type(rep)}"
+    assert rep.passed, f"Expected gate to pass for correct table, failures: {rep.failures}"
