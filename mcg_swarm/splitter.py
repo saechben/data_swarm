@@ -99,26 +99,59 @@ def detect_table(ws) -> TableHandle:
         return TableHandle(ws.title, "A1:A1", 1, [], ambiguous=True,
                            reason="no header row with data below")
     header = rows[header_idx]
-    # extent: columns spanned by header; rows until a fully-empty row
-    last_col = max((j for j, c in enumerate(header) if c not in (None, "")), default=0)
+
+    # PATTERN A: walk upward to include contiguous banner rows above the header
+    # so the region top captures title banners (e.g. capex row2 title + row3 header).
+    top_idx = header_idx
+    while top_idx - 1 >= 0 and (top_idx - 1) in banner_rows:
+        top_idx -= 1
+
+    # PATTERN B: right-edge stops at first fully-empty gap column (contiguous run).
+    # Find first non-empty header column, then extend right only while each column
+    # has content in the header OR any data row immediately below the header.
+    # We do a two-pass: first compute a provisional last_col from the header alone,
+    # then gather data rows within that range, then re-derive the contiguous extent.
+    provisional_last = max((j for j, c in enumerate(header) if c not in (None, "")), default=0)
+    # collect data rows (use provisional extent to bound the scan)
+    provisional_end = header_idx
+    for r in range(header_idx + 1, len(rows)):
+        if all(c in (None, "") for c in rows[r][: provisional_last + 1]):
+            break
+        provisional_end = r
+    data_provisional = rows[header_idx + 1: provisional_end + 1]
+
+    # find first_col (leftmost non-empty in header or data)
+    all_rows_provisional = [header] + list(data_provisional)
+    first_col = 0
+    for j in range(provisional_last + 1):
+        if any(j < len(r) and r[j] not in (None, "") for r in all_rows_provisional):
+            first_col = j
+            break
+
+    # PATTERN B: contiguous right-edge run starting from first_col.
+    # Stop at the first column that is empty in BOTH header AND all data rows.
+    last_col = first_col
+    max_width = max(len(r) for r in all_rows_provisional) if all_rows_provisional else first_col + 1
+    for j in range(first_col, max_width):
+        col_is_empty = (
+            (j >= len(header) or header[j] in (None, ""))
+            and all(j >= len(r) or r[j] in (None, "") for r in data_provisional)
+        )
+        if col_is_empty:
+            break
+        last_col = j
+
+    # Re-derive end_idx now that last_col is correct (gap-aware).
     end_idx = header_idx
     for r in range(header_idx + 1, len(rows)):
         if all(c in (None, "") for c in rows[r][: last_col + 1]):
             break
         end_idx = r
 
-    # Trim empty leading columns: find the first column index that has any content
-    # in the header or data rows (so left-offset tables don't get phantom "A" columns).
     data = rows[header_idx + 1: end_idx + 1]
     all_table_rows = [header] + list(data)
 
-    first_col = 0
-    for j in range(last_col + 1):
-        if any(j < len(r) and r[j] not in (None, "") for r in all_table_rows):
-            first_col = j
-            break
-
-    # Trim empty trailing columns: last column with content in any table row.
+    # last_col_trimmed: trim trailing empty cols within [first_col, last_col]
     last_col_trimmed = last_col
     for j in range(last_col, first_col - 1, -1):
         if any(j < len(r) and r[j] not in (None, "") for r in all_table_rows):
@@ -127,7 +160,8 @@ def detect_table(ws) -> TableHandle:
 
     start_col_letter = get_column_letter(first_col + 1)
     end_col_letter = get_column_letter(last_col_trimmed + 1)
-    region = f"{start_col_letter}{header_idx + 1}:{end_col_letter}{end_idx + 1}"
+    # PATTERN A: region starts at top_idx (includes banner rows), header stays at header_idx+1
+    region = f"{start_col_letter}{top_idx + 1}:{end_col_letter}{end_idx + 1}"
 
     cols = []
     for j in range(first_col, last_col_trimmed + 1):

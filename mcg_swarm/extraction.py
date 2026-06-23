@@ -24,7 +24,11 @@ class ExtractionIndex:
         finally:
             wb.close()
 
-        header = grid[0]
+        # PATTERN A: header may not be grid[0] when region top is above the header
+        # (i.e. region includes title-banner rows). Use header_row to locate the
+        # correct grid offset so hdr_off==0 in the normal case (no change in behaviour).
+        hdr_off = header_row - min_row          # 0-based offset of header within grid
+        header = grid[hdr_off]
         # column name -> absolute (1-based) column index
         self._col_to_phys: dict[str, int] = {
             str(name): min_col + j
@@ -34,7 +38,7 @@ class ExtractionIndex:
         # row key value -> absolute (1-based) row index
         self._key_to_phys: dict = {}
         key_cols = [self._col_to_phys[k] for k in row_key] if row_key else []
-        for i, row in enumerate(grid[1:], start=header_row + 1):
+        for i, row in enumerate(grid[hdr_off + 1:], start=header_row + 1):
             if row_key:
                 vals = tuple(row[kc - min_col] for kc in key_cols)
                 key = vals[0] if len(vals) == 1 else vals

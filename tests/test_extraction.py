@@ -105,6 +105,30 @@ def test_read_all_max_rows_bounds(tmp_path):
     assert row_keys_seen == {"R1", "R2", "R3"}
 
 
+# ── Pattern A: extraction works when region top is ABOVE header row ────────────
+
+def test_index_resolves_when_region_top_above_header(tmp_path):
+    """PATTERN A: build_index on a handle where region includes a banner row above header."""
+    p = _wb(tmp_path, [
+        ["Report", None],          # row 1: title banner (part of region)
+        ["Region", "Rev"],         # row 2: real header
+        ["East", 500],             # row 3: data
+        ["West", 300],             # row 4: data
+    ])
+    h = split_workbook(p)[0]
+    assert h.header_row == 2, f"Pre-condition: header_row must be 2, got {h.header_row}"
+    assert h.region.startswith("A1"), f"Pre-condition: region must start A1, got {h.region}"
+    idx = build_index(p, h, row_key=["Region"])
+    # East → Rev should be 500 at cell B3
+    v = idx.query("East", "Rev")
+    assert v.value == 500, f"Expected 500, got {v.value}"
+    assert v.cell_ref == "B3", f"Expected B3, got {v.cell_ref}"
+    # West → Rev should be 300 at cell B4
+    v2 = idx.query("West", "Rev")
+    assert v2.value == 300, f"Expected 300, got {v2.value}"
+    assert v2.cell_ref == "B4", f"Expected B4, got {v2.cell_ref}"
+
+
 def test_read_all_none_values_preserved(tmp_path):
     """read_all returns None for empty cells (no silently dropping)."""
     wb = openpyxl.Workbook()
