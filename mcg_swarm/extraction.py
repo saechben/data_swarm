@@ -6,8 +6,38 @@ from eval.util import range_box
 from mcg_swarm.schemas import ExtractedValue
 
 
+def _composite_col_map(grid: list, hdr_off: int, header_span: int,
+                       min_col: int) -> dict:
+    """Build column-name -> absolute-physical-col map using composite (bottom-first) rule.
+
+    For each column position, the name is the bottom header row value if non-empty,
+    else scan upward to the first non-empty cell across the header span.
+    Returns {col_name: abs_phys_col}.
+    """
+    if header_span < 1:
+        header_span = 1
+    header_rows = grid[hdr_off: hdr_off + header_span]
+    if not header_rows:
+        return {}
+    n_cols = max(len(r) for r in header_rows) if header_rows else 0
+    col_map: dict[str, int] = {}
+    for j in range(n_cols):
+        name = None
+        # scan bottom → top
+        for row_idx in range(len(header_rows) - 1, -1, -1):
+            row = header_rows[row_idx]
+            val = row[j] if j < len(row) else None
+            if val not in (None, ""):
+                name = str(val)
+                break
+        if name is not None:
+            col_map[name] = min_col + j
+    return col_map
+
+
 class ExtractionIndex:
-    def __init__(self, path, sheet, region, header_row, columns, row_key):
+    def __init__(self, path, sheet, region, header_row, columns, row_key,
+                 header_span: int = 1):
         self.path, self.sheet = path, sheet
         self.columns = {c.name: c for c in columns}
         self.row_key = row_key
@@ -28,22 +58,26 @@ class ExtractionIndex:
         # (i.e. region includes title-banner rows). Use header_row to locate the
         # correct grid offset so hdr_off==0 in the normal case (no change in behaviour).
         hdr_off = header_row - min_row          # 0-based offset of header within grid
-        header = grid[hdr_off]
-        # column name -> absolute (1-based) column index
-        self._col_to_phys: dict[str, int] = {
-            str(name): min_col + j
-            for j, name in enumerate(header)
-            if name not in (None, "")
-        }
+
+        # PATTERN C: composite column map across header_span rows (bottom-first).
+        # For header_span==1 this is identical to reading grid[hdr_off] directly.
+        self._col_to_phys: dict[str, int] = _composite_col_map(
+            grid, hdr_off, header_span, min_col
+        )
+
         # row key value -> absolute (1-based) row index
+        # Data rows start AFTER all header rows (hdr_off + header_span).
+        data_start_off = hdr_off + header_span
+        data_start_row = header_row + header_span  # absolute 1-based
+
         self._key_to_phys: dict = {}
         key_cols = [self._col_to_phys[k] for k in row_key] if row_key else []
-        for i, row in enumerate(grid[hdr_off + 1:], start=header_row + 1):
+        for i, row in enumerate(grid[data_start_off:], start=data_start_row):
             if row_key:
                 vals = tuple(row[kc - min_col] for kc in key_cols)
                 key = vals[0] if len(vals) == 1 else vals
             else:
-                key = i - header_row  # positional 1-based
+                key = i - (header_row + header_span - 1)  # positional 1-based
             self._key_to_phys[key] = i
 
     def _read(self, phys_row: int, phys_col: int):
@@ -141,6 +175,8 @@ class ExtractionIndex:
 
 
 def build_index(path, handle, row_key) -> ExtractionIndex:
+    header_span = getattr(handle, "header_span", 1)
     return ExtractionIndex(
-        path, handle.sheet, handle.region, handle.header_row, handle.columns, row_key
+        path, handle.sheet, handle.region, handle.header_row, handle.columns, row_key,
+        header_span=header_span,
     )

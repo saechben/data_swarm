@@ -14,6 +14,7 @@ class TableHandle:
     columns: list[ColumnSpec] = field(default_factory=list)
     ambiguous: bool = False
     reason: str = ""
+    header_span: int = 1
 
 
 def _infer_dtype(samples: list) -> str:
@@ -82,6 +83,68 @@ def _is_title_banner(row: tuple, rows_after: list[tuple]) -> bool:
     return False
 
 
+def _is_secondary_header(row: tuple, rows_after: list[tuple]) -> bool:
+    """Return True if *row* looks like a second (leaf) header row immediately below a group header.
+
+    The distinction from a data row:
+    - A secondary header is ALL-STRINGS: every non-empty cell is a string (no numerics).
+      Data rows have at least one numeric value column.
+    - There must be at least 2 non-empty string cells (a single-string row could be a key cell).
+    - The row immediately after must be data (has at least one numeric value).
+    """
+    nonempty = [c for c in row if c not in (None, "")]
+    if not nonempty:
+        return False
+
+    def _isnum(v):
+        try:
+            float(v)
+            return not isinstance(v, bool)
+        except (TypeError, ValueError):
+            return False
+
+    # A secondary header row must be ALL strings — no numerics allowed.
+    # Data rows always have numeric values; header rows never do.
+    if any(_isnum(v) for v in nonempty):
+        return False
+    strings = [c for c in nonempty if isinstance(c, str)]
+    # Must have at least 2 string cells (distinguishes data rows that have only 1 string key)
+    if len(strings) < 2:
+        return False
+    # The very next row must be data (has at least one numeric value)
+    if not rows_after:
+        return False
+    next_row = rows_after[0]
+    next_nonempty = [c for c in next_row if c not in (None, "")]
+    if not next_nonempty:
+        return False
+    nums_in_next = [v for v in next_nonempty if _isnum(v)]
+    return len(nums_in_next) >= 1
+
+
+def _composite_col_names(header_rows: list[tuple], first_col: int, last_col: int) -> list[str]:
+    """Build composite column names using the bottom-row-first, scan-upward rule.
+
+    For each physical column in [first_col, last_col] (0-based indices into the row tuples):
+      name = bottom header row value if non-empty, else scan upward to first non-empty.
+    """
+    names = []
+    n_hdr = len(header_rows)
+    for j in range(first_col, last_col + 1):
+        name = None
+        # scan from bottom header row upward
+        for row_idx in range(n_hdr - 1, -1, -1):
+            row = header_rows[row_idx]
+            val = row[j] if j < len(row) else None
+            if val not in (None, ""):
+                name = str(val)
+                break
+        if name is None:
+            name = get_column_letter(j + 1)
+        names.append(name)
+    return names
+
+
 def detect_table(ws) -> TableHandle:
     rows = list(ws.iter_rows(values_only=True))
     # find first non-empty row that is mostly strings and has a data row after it
@@ -100,6 +163,16 @@ def detect_table(ws) -> TableHandle:
                            reason="no header row with data below")
     header = rows[header_idx]
 
+    # PATTERN C: detect 2-row header (secondary/leaf row immediately below top header).
+    # Cap at span=2; no deeper headers in scope.
+    rows_after_header = rows[header_idx + 1:]
+    header_span = 1
+    if rows_after_header and _is_secondary_header(rows_after_header[0], rows_after_header[1:]):
+        header_span = 2
+
+    # All header rows as a list (1 or 2 rows)
+    header_rows = rows[header_idx: header_idx + header_span]
+
     # PATTERN A: walk upward to include contiguous banner rows above the header
     # so the region top captures title banners (e.g. capex row2 title + row3 header).
     top_idx = header_idx
@@ -107,21 +180,24 @@ def detect_table(ws) -> TableHandle:
         top_idx -= 1
 
     # PATTERN B: right-edge stops at first fully-empty gap column (contiguous run).
-    # Find first non-empty header column, then extend right only while each column
-    # has content in the header OR any data row immediately below the header.
-    # We do a two-pass: first compute a provisional last_col from the header alone,
-    # then gather data rows within that range, then re-derive the contiguous extent.
-    provisional_last = max((j for j, c in enumerate(header) if c not in (None, "")), default=0)
-    # collect data rows (use provisional extent to bound the scan)
-    provisional_end = header_idx
-    for r in range(header_idx + 1, len(rows)):
+    # For multi-row headers, use the UNION of non-empty cells across ALL header rows
+    # (so sparse group-header rows extend the right edge to match their leaf rows).
+    # Provisional last_col = rightmost non-empty cell across all header rows.
+    provisional_last = max(
+        (j for hrow in header_rows for j, c in enumerate(hrow) if c not in (None, "")),
+        default=0
+    )
+    # Data rows start AFTER the last header row.
+    data_start_idx = header_idx + header_span
+    provisional_end = data_start_idx - 1
+    for r in range(data_start_idx, len(rows)):
         if all(c in (None, "") for c in rows[r][: provisional_last + 1]):
             break
         provisional_end = r
-    data_provisional = rows[header_idx + 1: provisional_end + 1]
+    data_provisional = rows[data_start_idx: provisional_end + 1]
 
-    # find first_col (leftmost non-empty in header or data)
-    all_rows_provisional = [header] + list(data_provisional)
+    # find first_col (leftmost non-empty in any header row or data)
+    all_rows_provisional = list(header_rows) + list(data_provisional)
     first_col = 0
     for j in range(provisional_last + 1):
         if any(j < len(r) and r[j] not in (None, "") for r in all_rows_provisional):
@@ -129,12 +205,12 @@ def detect_table(ws) -> TableHandle:
             break
 
     # PATTERN B: contiguous right-edge run starting from first_col.
-    # Stop at the first column that is empty in BOTH header AND all data rows.
+    # Stop at the first column that is empty in BOTH all header rows AND all data rows.
     last_col = first_col
     max_width = max(len(r) for r in all_rows_provisional) if all_rows_provisional else first_col + 1
     for j in range(first_col, max_width):
         col_is_empty = (
-            (j >= len(header) or header[j] in (None, ""))
+            all(j >= len(hrow) or hrow[j] in (None, "") for hrow in header_rows)
             and all(j >= len(r) or r[j] in (None, "") for r in data_provisional)
         )
         if col_is_empty:
@@ -142,14 +218,14 @@ def detect_table(ws) -> TableHandle:
         last_col = j
 
     # Re-derive end_idx now that last_col is correct (gap-aware).
-    end_idx = header_idx
-    for r in range(header_idx + 1, len(rows)):
+    end_idx = data_start_idx - 1
+    for r in range(data_start_idx, len(rows)):
         if all(c in (None, "") for c in rows[r][: last_col + 1]):
             break
         end_idx = r
 
-    data = rows[header_idx + 1: end_idx + 1]
-    all_table_rows = [header] + list(data)
+    data = rows[data_start_idx: end_idx + 1]
+    all_table_rows = list(header_rows) + list(data)
 
     # last_col_trimmed: trim trailing empty cols within [first_col, last_col]
     last_col_trimmed = last_col
@@ -163,11 +239,13 @@ def detect_table(ws) -> TableHandle:
     # PATTERN A: region starts at top_idx (includes banner rows), header stays at header_idx+1
     region = f"{start_col_letter}{top_idx + 1}:{end_col_letter}{end_idx + 1}"
 
+    # PATTERN C: composite column names across header span (bottom-first, scan upward)
+    col_names = _composite_col_names(header_rows, first_col, last_col_trimmed)
     cols = []
-    for j in range(first_col, last_col_trimmed + 1):
-        name = header[j] if j < len(header) and header[j] not in (None, "") else get_column_letter(j + 1)
+    for idx_in_names, j in enumerate(range(first_col, last_col_trimmed + 1)):
+        name = col_names[idx_in_names]
         samples = [r[j] if j < len(r) else None for r in data[:20]]
-        cols.append(ColumnSpec(name=str(name), dtype=_infer_dtype(samples),
+        cols.append(ColumnSpec(name=name, dtype=_infer_dtype(samples),
                                role="key" if j == first_col else "value"))
 
     # Non-empty rows above the header that are NOT recognised title banners make it ambiguous.
@@ -176,7 +254,8 @@ def detect_table(ws) -> TableHandle:
         for k in range(header_idx))
     return TableHandle(ws.title, region, header_idx + 1, cols,
                        ambiguous=ambiguous,
-                       reason="content above header row" if ambiguous else "")
+                       reason="content above header row" if ambiguous else "",
+                       header_span=header_span)
 
 
 def split_workbook(path: str) -> list[TableHandle]:

@@ -1,6 +1,48 @@
 import openpyxl, pytest
 from mcg_swarm.splitter import split_workbook, TableHandle, detect_table
 
+# ── Pattern C: 2-row header composite naming ───────────────────────────────────
+
+def test_two_row_header_composite_names(tmp_path):
+    """Pattern C: group header row + leaf header row → composite column names."""
+    # Mirrors messy_everything Dashboard layout:
+    #   row1: group header [None, "Product", "Revenue", None, None]
+    #   row2: leaf header  [None, None,      "Gross",   "Net", "Margin"]
+    #   rows3-5: data      [None, "Product A", 1000, 850, 85]
+    wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Data"
+    ws.append([None, "Product", "Revenue", None,  None])    # row 1: group header
+    ws.append([None, None,      "Gross",   "Net", "Margin"]) # row 2: leaf header
+    ws.append([None, "Product A", 1000, 850, 85])             # row 3: data
+    ws.append([None, "Product B", 1200, 900, 75])             # row 4: data
+    ws.append([None, "Product C",  800, 600, 60])             # row 5: data
+    p = tmp_path / "two_row.xlsx"; wb.save(p)
+    h = split_workbook(str(p))[0]
+    assert not h.ambiguous, f"Should not be ambiguous: {h.reason!r}"
+    assert h.header_span == 2, f"Expected header_span=2, got {h.header_span}"
+    # header_row is the TOP header row (1-based) = 1
+    assert h.header_row == 1, f"Expected header_row=1, got {h.header_row}"
+    # Composite names: col B = "Product" (leaf empty→group), col C = "Gross", col D = "Net", col E = "Margin"
+    assert [c.name for c in h.columns] == ["Product", "Gross", "Net", "Margin"], \
+        f"Composite names wrong: {[c.name for c in h.columns]}"
+    # First column is key
+    assert h.columns[0].role == "key"
+    # Region spans columns B–E, rows 1–5
+    assert h.region.startswith("B1"), f"Region should start B1, got {h.region!r}"
+    assert h.region.endswith("E5"), f"Region should end E5, got {h.region!r}"
+
+def test_two_row_header_single_row_unchanged(tmp_path):
+    """Regression: single-row header tables still get header_span==1."""
+    p = tmp_path / "single.xlsx"
+    wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Data"
+    ws.append(["Region", "Revenue"])
+    ws.append(["EMEA", 100])
+    ws.append(["APAC", 200])
+    wb.save(p)
+    h = split_workbook(str(p))[0]
+    assert h.header_span == 1
+    assert h.header_row == 1
+    assert [c.name for c in h.columns] == ["Region", "Revenue"]
+
 def _wb(tmp_path, rows, name="t.xlsx"):
     wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Data"
     for r in rows: ws.append(r)

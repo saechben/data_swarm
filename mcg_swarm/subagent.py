@@ -4,21 +4,6 @@ from mcg_swarm.schemas import ColumnSpec, SegmentReport, TableFormula
 from mcg_swarm.splitter import _infer_dtype
 
 
-def _deterministic_columns(path, band, header):
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        ws = wb[band.sheet]
-        grid = list(ws.iter_rows(min_row=band.row_start, max_row=min(band.row_end, band.row_start + 19),
-                                 min_col=band.col_start, max_col=band.col_end, values_only=True))
-    finally:
-        wb.close()
-    cols = []
-    for j, name in enumerate(header):
-        samples = [r[j] if j < len(r) else None for r in grid]
-        cols.append(ColumnSpec(name=str(name), dtype=_infer_dtype(samples),
-                               role="key" if j == 0 else "value"))
-    return cols
-
 
 
 def _analyze_band_single_open(path, band, header):

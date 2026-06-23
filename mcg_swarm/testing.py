@@ -17,100 +17,6 @@ class TableTestReport:
     failures: list = field(default_factory=list)
 
 
-def _live_value(path: str, sheet: str, cell_ref: str):
-    """Read a single cell value directly from the workbook (one open/close per call)."""
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        r, c = coordinate_to_tuple(cell_ref)
-        return wb[sheet].cell(row=r, column=c).value
-    finally:
-        wb.close()
-
-
-def _check_column_integrity(path: str, table, index) -> list[str]:
-    """
-    Column-integrity check (O(cols), one workbook open).
-
-    Derives truth from the live file independently of index._col_to_phys:
-    reads the header row at table.header_row and builds name->physical_col
-    from the header cells within the table's column bounds, then asserts
-    it matches index._col_to_phys for every column name.
-
-    Catches numeric->numeric column remaps that round-trip misses because
-    both cell_ref and value come from the same (possibly corrupted) map.
-    """
-    failures: list[str] = []
-    min_row, min_col, max_row, max_col = range_box(table.region)
-    header_row = table.header_row
-
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        ws = wb[table.sheet]
-        # Build name -> physical_col from the live header row
-        live_col_map: dict[str, int] = {}
-        for c in range(min_col, max_col + 1):
-            val = ws.cell(row=header_row, column=c).value
-            if val not in (None, ""):
-                live_col_map[str(val)] = c
-    finally:
-        wb.close()
-
-    for col_name, idx_phys in index._col_to_phys.items():
-        live_phys = live_col_map.get(col_name)
-        if live_phys is None:
-            failures.append(
-                f"column-integrity: {col_name!r} in index but not found in live header row {header_row}"
-            )
-        elif idx_phys != live_phys:
-            failures.append(
-                f"column-integrity: {col_name!r} index col={get_column_letter(idx_phys)} "
-                f"but live header says col={get_column_letter(live_phys)}"
-            )
-
-    return failures
-
-
-def _check_row_integrity(path: str, table, index, sample_keys: list) -> list[str]:
-    """
-    Row-integrity check on sampled keys (bounded by sample_size).
-
-    For each sampled key, takes the index-resolved physical row from
-    index._key_to_phys, then reads the key-column cell at that row directly
-    from the live file and asserts it equals the key.
-
-    Catches row remaps where _key_to_phys points to the wrong physical row.
-    Skipped when row_key is empty (positional indexing — no key to verify).
-    """
-    failures: list[str] = []
-    row_key_names = table.extraction.row_key
-    if not row_key_names:
-        return failures  # positional — nothing to verify
-
-    key_col_name = row_key_names[0]
-    if key_col_name not in index._col_to_phys:
-        return failures  # can't verify without a resolved key column
-
-    key_phys_col = index._col_to_phys[key_col_name]
-
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        ws = wb[table.sheet]
-        for k in sample_keys:
-            if k not in index._key_to_phys:
-                continue  # already caught by coverage check
-            phys_row = index._key_to_phys[k]
-            live_key = ws.cell(row=phys_row, column=key_phys_col).value
-            # Normalise: index stores the key as read at build time; compare same type
-            if live_key != k:
-                failures.append(
-                    f"row-integrity: key {k!r} -> row {phys_row} "
-                    f"but live cell {get_column_letter(key_phys_col)}{phys_row}={live_key!r}"
-                )
-    finally:
-        wb.close()
-
-    return failures
-
 
 
 def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTestReport:
@@ -165,10 +71,11 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
     # ------------------------------------------------------------------
     min_row, min_col, max_row, max_col = range_box(table.region)
     header_row = table.header_row
+    header_span = getattr(table, "header_span", 1)
 
     # Build all (phys_row, phys_col) cells we need to read:
-    # Phase 2a (col-name gate): header row, all cols in region
-    # Phase 2b (col-integrity): same header row
+    # Phase 2a (col-name gate): ALL header rows in span, all cols in region
+    # Phase 2b (col-integrity): same header rows
     # Phase 2c (row-integrity): key-column cells for each sample key
     # Phase 3  (round-trip):    every (sample_key, col) cell
 
@@ -178,9 +85,10 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
 
     # collect all (r, c) pairs we need; read in one pass
     needed: set[tuple[int, int]] = set()
-    # header
-    for c in range(min_col, max_col + 1):
-        needed.add((header_row, c))
+    # all header rows in the span
+    for hr in range(header_row, header_row + header_span):
+        for c in range(min_col, max_col + 1):
+            needed.add((hr, c))
     # row-integrity: key-column cells
     if key_phys_col is not None:
         for k in sample_keys:
@@ -230,24 +138,31 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
             wb.close()
 
     # ── Phase 2a: column-name gate ──────────────────────────────────────
-    live_names: set[str] = set()
+    # Build composite live_col_map from all header_span rows using bottom-first rule.
     live_col_map: dict[str, int] = {}
+    for c in range(min_col, max_col + 1):
+        name = None
+        # scan bottom header row → top
+        for hr in range(header_row + header_span - 1, header_row - 1, -1):
+            val = live_cache.get((hr, c))
+            if val not in (None, ""):
+                name = str(val)
+                break
+        if name is not None:
+            live_col_map[name] = c
+    live_names: set[str] = set(live_col_map.keys())
+
     col_names_list = [c.name for c in table.columns]
     seen_names: set[str] = set()
     for name in col_names_list:
         if name in seen_names:
             failures.append(f"column-name: duplicate column name {name!r} in table.columns")
         seen_names.add(name)
-    for c in range(min_col, max_col + 1):
-        val = live_cache.get((header_row, c))
-        if val not in (None, ""):
-            s = str(val)
-            live_names.add(s)
-            live_col_map[s] = c
     for name in col_names_list:
         if name not in live_names:
             failures.append(
-                f"column-name: {name!r} in table.columns not found in live header row {header_row}"
+                f"column-name: {name!r} in table.columns not found in live header rows "
+                f"{header_row}–{header_row + header_span - 1}"
             )
 
     # ── Phase 2b: column-integrity ──────────────────────────────────────
@@ -255,7 +170,8 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
         live_phys = live_col_map.get(col_name)
         if live_phys is None:
             failures.append(
-                f"column-integrity: {col_name!r} in index but not found in live header row {header_row}"
+                f"column-integrity: {col_name!r} in index but not found in live header rows "
+                f"{header_row}–{header_row + header_span - 1}"
             )
         elif idx_phys != live_phys:
             failures.append(

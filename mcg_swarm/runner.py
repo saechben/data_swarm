@@ -52,6 +52,7 @@ def build_indices(path: str, extraction: WorkbookExtraction) -> dict:
             region=t.region,
             header_row=t.header_row,
             columns=t.columns,
+            header_span=getattr(t, "header_span", 1),
         )
         out[t.table_id] = build_index(path, handle, row_key=t.extraction.row_key)
     return out

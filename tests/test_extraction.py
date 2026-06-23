@@ -129,6 +129,33 @@ def test_index_resolves_when_region_top_above_header(tmp_path):
     assert v2.cell_ref == "B4", f"Expected B4, got {v2.cell_ref}"
 
 
+# ── Pattern C: ExtractionIndex with 2-row composite header ────────────────────
+
+def test_index_with_two_row_header(tmp_path):
+    """Pattern C: build_index on a 2-row-header handle resolves composite column names."""
+    wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Data"
+    ws.append([None, "Product", "Revenue", None,  None])      # row1: group header
+    ws.append([None, None,      "Gross",   "Net", "Margin"])   # row2: leaf header
+    ws.append([None, "Product A", 1000, 850, 85])               # row3: data
+    ws.append([None, "Product B", 1200, 900, 75])               # row4: data
+    p = tmp_path / "tworow.xlsx"; wb.save(p)
+    h = split_workbook(str(p))[0]
+    assert h.header_span == 2
+    idx = build_index(str(p), h, row_key=["Product"])
+    # Query a leaf-col value
+    v = idx.query("Product A", "Gross")
+    assert v.value == 1000, f"Expected 1000, got {v.value}"
+    assert v.cell_ref == "C3", f"Expected C3, got {v.cell_ref}"
+    # Query Net for Product B
+    v2 = idx.query("Product B", "Net")
+    assert v2.value == 900, f"Expected 900, got {v2.value}"
+    assert v2.cell_ref == "D4", f"Expected D4, got {v2.cell_ref}"
+    # Query the key column itself
+    v3 = idx.query("Product A", "Product")
+    assert v3.value == "Product A"
+    assert v3.cell_ref == "B3"
+
+
 def test_read_all_none_values_preserved(tmp_path):
     """read_all returns None for empty cells (no silently dropping)."""
     wb = openpyxl.Workbook()

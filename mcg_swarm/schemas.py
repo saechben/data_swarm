@@ -32,6 +32,7 @@ class CanonicalTable(_Base):
     sheet: str
     region: str
     header_row: int
+    header_span: int = 1
     orientation: Literal["vertical", "transposed"] = "vertical"
     columns: list[ColumnSpec] = Field(default_factory=list)
     formulas: list[TableFormula] = Field(default_factory=list)
