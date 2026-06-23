@@ -4,7 +4,7 @@
 what it does **not** support (with evidence from the eval corpus), and the tunable limits.
 Update this whenever an assumption changes or a new failure mode is found.
 
-_Last updated: 2026-06-23. Measured against the 19-workbook eval corpus._
+_Last updated: 2026-06-23 (Pattern C / 2-row headers landed). Measured against the 19-workbook eval corpus._
 
 ---
 
@@ -19,7 +19,7 @@ _Last updated: 2026-06-23. Measured against the 19-workbook eval corpus._
 | A5 | **Header column names are unique** within the table. | Column→physical-column map is keyed by name; the in-loop gate fails loud on duplicates. | Duplicate names → gate rejects the table (returned with `errors`, no index). |
 | A6 | **Values are readable from the live file** (openpyxl `data_only` — cached formula results present). | `query()` reads the live cell each call. | Workbook never opened in Excel/LibreOffice → formula cells may read `None`. |
 | A7 | **Tables are independent** (no cross-table/cross-sheet references in the canonical model). | v2 emits independent canonical tables by design (spec §2, §13). | Cross-table formulas are out of scope; not modeled. |
-| A8 | **Single-row headers** for full column-name fidelity. | Column names derive from one header row. | Multi-row/hierarchical headers yield placeholder names for the 2nd row's columns (degraded — see §3). |
+| A8 | **Header is at most 2 rows.** A single header row, or a group-row + leaf-row pair, is supported (composite naming). | Column names derive from the header span. | Headers spanning **3+ rows** fall back to placeholder names for the unlabeled cells (degraded — see §3). |
 
 ---
 
@@ -30,9 +30,10 @@ _Last updated: 2026-06-23. Measured against the 19-workbook eval corpus._
 - **Left-offset tables** (table starts at column B/row 2, leading empty columns) — trimmed correctly.
 - **Trailing stray cells** beyond a gap column (e.g. a lone `FXRate`/`TaxRate` parameter to the right) — excluded from the table.
 - **Large tables** (100k+ rows) — fan-out by row bands; extraction + boundaries scale.
+- **Two-row headers** (a sparse "group" row above a "leaf" row, e.g. `EMEA`/`APAC` over `Actual`/`Budget`) — composite column names via "bottom row, else nearest non-empty above". Detected deterministically; data-row misclassification is guarded (a header row must be pure string labels). `header_span` is carried through the extraction index and the in-loop gate.
 - Live reads: editing a cell changes `query()` output with no re-run.
 
-**Measured (14 in-scope workbooks, no LLM):** table boundaries **100%**, value extraction **~88%**.
+**Measured (14 in-scope workbooks, no LLM):** table boundaries **100% (22/22)**, value extraction **100% (199/199)**.
 
 ---
 
@@ -42,7 +43,7 @@ _Last updated: 2026-06-23. Measured against the 19-workbook eval corpus._
 |---|---|---|---|
 | **Multiple tables on one tab** | `multi_region_sales` (2 on `Sales`), `quarterly_pnl` (2 on `P&L`), `segment_report` (2 on `Segments`), `store_ops` (2 each on `Store 1`/`Store 2`) | Only the first table is captured; the rest are missed. | **Excluded** from swarm scoring (violates A1). |
 | **Transposed / matrix orientation** | `cashflow_signs` (`Summary` tab) | Wrong axis resolved. | **Excluded** (violates A3). |
-| **Multi-row / hierarchical headers** | `consolidated_pnl_multiheader`, `messy_everything` (`Dashboard`) | 2nd header row's columns get placeholder names (`C`, `E`…) → those columns' extraction fails; the in-loop gate may reject the table. | **Degraded** (violates A8). Deterministic "Pattern C" fix possible (merge header rows into composite names) — not yet implemented. |
+| **3+ row hierarchical headers** | — (none in corpus) | Cells unlabeled across the whole span get placeholder letter-names. | **Degraded** (A8 supports up to 2 rows). 2-row headers (`consolidated_pnl_multiheader`, `messy_everything`) are now **fully supported** — see §2. |
 | **Pivot tables** | — | Not a single clean table. | Not supported; should fail loud per spec §5. |
 | **Semantic name → cell mapping** (NL queries; formula operands like `revenue_emea`) | all `semantic` + `formula` eval samples | Requires the LLM resolver. | **Built & unit-tested; blocked on a valid, funded `ANTHROPIC_API_KEY`** (currently 0% live). |
 | **Cross-table / cross-sheet dependencies** | `cross_sheet_model` (cross-sheet formulas) | Not modeled; each table independent. | Out of scope (spec §13). |
