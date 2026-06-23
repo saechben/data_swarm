@@ -19,6 +19,7 @@ from mcg_swarm.runner import run_swarm, build_indices
 from mcg_swarm.formulas import eval_expr
 from mcg_swarm.env import load_dotenv
 from mcg_swarm.llm.client import AnthropicClient
+from mcg_swarm.resolve import deterministic_resolve
 
 
 MEASURE_ROW_CAP = 200
@@ -32,6 +33,26 @@ MEASURE_MAX_TABLE_ROWS = 40
 _CATALOG_MAX_ROWS = 60
 
 
+def _queryable_columns(idx) -> list[str]:
+    """Columns a phrase can resolve to — the value/computed columns, NOT the key.
+
+    The key column holds the row identifiers (already exposed as ``row_keys``); it
+    is never the target of a "what is X for row Y" query.  Worse, its NAME (e.g.
+    "Department", "Vendor", "Product") often appears in the query's table-title
+    suffix ("...in Headcount by Department"), so leaving it in the candidate set
+    makes it win the longest-verbatim-match and the resolver returns the row label
+    itself instead of a value.  Drop it.
+    """
+    out = []
+    for name in idx.column_names():
+        spec = idx.columns.get(name)
+        if spec is not None and spec.role == "key":
+            continue
+        out.append(name)
+    # Defensive: never return an empty column list (would make resolution impossible).
+    return out or idx.column_names()
+
+
 class SwarmAdapter(EvalAdapter):
     name = "swarm"
 
@@ -41,7 +62,8 @@ class SwarmAdapter(EvalAdapter):
         self._paths: dict[str, str] = {}
         self._measures_cache: dict[str, list] = {}  # wb -> list[DetectedMeasure]
         self._llm = None                             # set during prepare(); injectable for tests
-        self._catalog_cache: dict[str, list] = {}   # wb -> catalog list
+        self._catalog_cache: dict[str, list] = {}        # wb -> LLM catalog (row_keys capped)
+        self._full_catalog_cache: dict[str, list] = {}   # wb -> deterministic catalog (all rows)
         self._coord_cache: dict[tuple, Any] = {}    # (wb, phrase) -> (table_id, row, col) | None
 
     def prepare(self, workbook_path: str, label: WorkbookLabel) -> None:
@@ -102,7 +124,7 @@ class SwarmAdapter(EvalAdapter):
             row_keys = all_rows[:_CATALOG_MAX_ROWS]
             entry = {
                 "table_id": table_id,
-                "columns": idx.column_names(),
+                "columns": _queryable_columns(idx),
                 "row_keys": row_keys,
             }
             # Annotate if truncated so the LLM knows the list is partial.
@@ -113,12 +135,32 @@ class SwarmAdapter(EvalAdapter):
         self._catalog_cache[wb] = catalog
         return catalog
 
+    def _build_full_catalog(self, wb: str) -> list[dict]:
+        """Build a catalog with ALL row_keys (no cap) for the deterministic resolver.
+
+        The deterministic resolver uses a token-inverted-index, so including all
+        100k+ rows doesn't cause O(rows*tokens) blowup.
+        """
+        if wb in self._full_catalog_cache:
+            return self._full_catalog_cache[wb]
+
+        catalog = []
+        for table_id, idx in self._indices.get(wb, {}).items():
+            entry = {
+                "table_id": table_id,
+                "columns": _queryable_columns(idx),
+                "row_keys": [str(k) for k in idx.row_keys()],
+            }
+            catalog.append(entry)
+
+        self._full_catalog_cache[wb] = catalog
+        return catalog
+
     def resolve_coord(self, wb: str, phrase: str) -> Optional[tuple]:
         """Map a phrase to (table_id, row_label, col_label) or None.
 
-        Result cached per (wb, phrase). Calls LLM once per unique phrase per wb.
-        Returns None if self._llm is None, LLM returns found=false, or
-        returned coords fail validation.
+        Try LLM first (if available); fall back to deterministic token-matching
+        resolver when LLM is absent or fails.  Result cached per (wb, phrase).
         """
         cache_key = (wb, phrase)
         if cache_key in self._coord_cache:
@@ -126,10 +168,18 @@ class SwarmAdapter(EvalAdapter):
 
         result = None
         try:
+            # --- LLM path (uses capped catalog to keep prompt size small) ---
             if self._llm is not None:
                 catalog = self._build_catalog(wb)
                 if catalog:
                     result = self._resolve_via_llm(catalog, phrase)
+
+            # --- Deterministic fallback (uses FULL row_keys — fast via token index) ---
+            if result is None:
+                full_catalog = self._build_full_catalog(wb)
+                if full_catalog:
+                    result = deterministic_resolve(phrase, full_catalog)
+
         except Exception as _exc:
             import sys
             print(f"[swarm_adapter] resolve_coord error ({type(_exc).__name__}): {_exc}", file=sys.stderr)

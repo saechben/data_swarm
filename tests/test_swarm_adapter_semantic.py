@@ -78,7 +78,11 @@ def test_answer_semantic_valid_coord(adapter_sales):
     table_id = next(iter(indices))
     idx = indices[table_id]
     row_label = str(idx.row_keys()[0])
-    col_label = idx.column_names()[0]
+    # Use a VALUE column (not the key) — the key column holds row identifiers and
+    # is excluded from the resolvable catalog, so the LLM-path membership check
+    # would (correctly) reject it.
+    value_cols = [c for c in idx.column_names() if idx.columns[c].role != "key"]
+    col_label = value_cols[0] if value_cols else idx.column_names()[0]
 
     # Inject fake LLM that returns this coord.
     a._llm = _fake({
@@ -202,20 +206,28 @@ def test_answer_semantic_invalid_col_rejected(adapter_sales):
 
 
 # ---------------------------------------------------------------------------
-# Test 5: no LLM (self._llm is None) → answer_semantic returns empty (backwards compat)
+# Test 5: no LLM (self._llm is None) → deterministic resolver finds result
 # ---------------------------------------------------------------------------
 
 def test_answer_semantic_no_llm(adapter_sales):
+    """With LLM absent, deterministic fallback should still resolve 'revenue EMEA'."""
     a, label = adapter_sales
     wb = label.workbook
 
     a._llm = None
     a._coord_cache = {}
+    a._full_catalog_cache = {}  # Clear full catalog cache too.
 
     res = a.answer_semantic(wb, "revenue EMEA")
 
     assert isinstance(res, SemanticResult)
-    assert res.value is None
+    # Deterministic resolver finds EMEA / Revenue — value must be non-None.
+    assert res.value is not None, (
+        "Deterministic resolver should resolve 'revenue EMEA' without LLM"
+    )
+    assert res.table_id is not None
+    assert res.row_label is not None
+    assert res.col_label is not None
 
 
 # ---------------------------------------------------------------------------

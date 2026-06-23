@@ -13,3 +13,5 @@ eval/results/
 
 # macOS
 .DS_Store
+
+.env
