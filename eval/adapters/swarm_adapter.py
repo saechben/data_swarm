@@ -12,9 +12,8 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
-from pydantic import BaseModel
-
 from eval.adapters.base import DetectedMeasure, EvalAdapter, SemanticResult
+from eval.adapters.coord_resolution import build_catalog, build_full_catalog, resolve_via_llm
 from eval.schemas import WorkbookLabel
 from eval.util import range_iou
 from mcg_swarm.runner import run_swarm, build_indices
@@ -30,37 +29,6 @@ MEASURE_ROW_CAP = 200
 # measures on them floods false positives (precision crashes to ~2%).
 # Skip measure emission entirely for tables whose row-key count exceeds this threshold.
 MEASURE_MAX_TABLE_ROWS = 40
-
-# Max row_keys to include in the catalog prompt per table.
-_CATALOG_MAX_ROWS = 60
-
-
-class CoordResolution(BaseModel):
-    """Schema the LLM coordinate-resolver must return (enforced at the client boundary)."""
-    found: bool
-    table_id: Optional[str] = None
-    row_label: Optional[str] = None
-    col_label: Optional[str] = None
-
-
-def _queryable_columns(idx) -> list[str]:
-    """Columns a phrase can resolve to — the value/computed columns, NOT the key.
-
-    The key column holds the row identifiers (already exposed as ``row_keys``); it
-    is never the target of a "what is X for row Y" query.  Worse, its NAME (e.g.
-    "Department", "Vendor", "Product") often appears in the query's table-title
-    suffix ("...in Headcount by Department"), so leaving it in the candidate set
-    makes it win the longest-verbatim-match and the resolver returns the row label
-    itself instead of a value.  Drop it.
-    """
-    out = []
-    for name in idx.column_names():
-        spec = idx.columns.get(name)
-        if spec is not None and spec.role == "key":
-            continue
-        out.append(name)
-    # Defensive: never return an empty column list (would make resolution impossible).
-    return out or idx.column_names()
 
 
 class SwarmAdapter(EvalAdapter):
@@ -120,51 +88,16 @@ class SwarmAdapter(EvalAdapter):
     # ------------------------------------------------------------------
 
     def _build_catalog(self, wb: str) -> list[dict]:
-        """Build a compact catalog of all tables for the given workbook.
-
-        Each entry: {table_id, sheet, columns: [...], row_keys: [...]}
-        row_keys capped at _CATALOG_MAX_ROWS to keep prompts small.
-        """
-        if wb in self._catalog_cache:
-            return self._catalog_cache[wb]
-
-        catalog = []
-        for table_id, idx in self._indices.get(wb, {}).items():
-            all_rows = [str(k) for k in idx.row_keys()]
-            row_keys = all_rows[:_CATALOG_MAX_ROWS]
-            entry = {
-                "table_id": table_id,
-                "columns": _queryable_columns(idx),
-                "row_keys": row_keys,
-            }
-            # Annotate if truncated so the LLM knows the list is partial.
-            if len(all_rows) > _CATALOG_MAX_ROWS:
-                entry["row_keys_truncated"] = True
-            catalog.append(entry)
-
-        self._catalog_cache[wb] = catalog
-        return catalog
+        """Compact (row_keys-capped) catalog for the LLM prompt; cached per workbook."""
+        if wb not in self._catalog_cache:
+            self._catalog_cache[wb] = build_catalog(self._indices.get(wb, {}))
+        return self._catalog_cache[wb]
 
     def _build_full_catalog(self, wb: str) -> list[dict]:
-        """Build a catalog with ALL row_keys (no cap) for the deterministic resolver.
-
-        The deterministic resolver uses a token-inverted-index, so including all
-        100k+ rows doesn't cause O(rows*tokens) blowup.
-        """
-        if wb in self._full_catalog_cache:
-            return self._full_catalog_cache[wb]
-
-        catalog = []
-        for table_id, idx in self._indices.get(wb, {}).items():
-            entry = {
-                "table_id": table_id,
-                "columns": _queryable_columns(idx),
-                "row_keys": [str(k) for k in idx.row_keys()],
-            }
-            catalog.append(entry)
-
-        self._full_catalog_cache[wb] = catalog
-        return catalog
+        """Full (uncapped) catalog for the deterministic resolver; cached per workbook."""
+        if wb not in self._full_catalog_cache:
+            self._full_catalog_cache[wb] = build_full_catalog(self._indices.get(wb, {}))
+        return self._full_catalog_cache[wb]
 
     def resolve_coord(self, wb: str, phrase: str) -> Optional[tuple]:
         """Map a phrase to (table_id, row_label, col_label) or None.
@@ -199,52 +132,8 @@ class SwarmAdapter(EvalAdapter):
         return result
 
     def _resolve_via_llm(self, catalog: list[dict], phrase: str) -> Optional[tuple]:
-        """Call the LLM to resolve phrase against the catalog. Returns (table_id, row, col) or None."""
-        import json as _json
-
-        catalog_json = _json.dumps(catalog, indent=2)
-        system = (
-            "You are a spreadsheet data resolver. Given a catalog of tables and a phrase, "
-            "identify the EXACT table, row, and column that the phrase refers to. "
-            "You MUST choose table_id, row_label, and col_label VERBATIM from the catalog lists. "
-            "If nothing matches, return {\"found\": false}."
-        )
-        user = (
-            f"CATALOG:\n{catalog_json}\n\n"
-            f"PHRASE: {phrase}\n\n"
-            "Return JSON with these fields:\n"
-            "  found: bool — true if you found a match, false otherwise\n"
-            "  table_id: str — must be verbatim from catalog table_id values\n"
-            "  row_label: str — must be verbatim from that table's row_keys list\n"
-            "  col_label: str — must be verbatim from that table's columns list\n\n"
-            "Return ONLY JSON, no prose."
-        )
-
-        try:
-            resp = self._llm.complete(system, user, schema=CoordResolution)
-        except Exception as _exc:
-            import sys
-            print(f"[swarm_adapter] LLM call failed ({type(_exc).__name__}): {_exc}", file=sys.stderr)
-            return None
-
-        if not resp.get("found", False):
-            return None
-
-        table_id = resp.get("table_id")
-        row_label = resp.get("row_label")
-        col_label = resp.get("col_label")
-
-        # Validate returned coords exist in the catalog.
-        catalog_by_id = {e["table_id"]: e for e in catalog}
-        if table_id not in catalog_by_id:
-            return None
-        entry = catalog_by_id[table_id]
-        if col_label not in entry["columns"]:
-            return None
-        if row_label not in entry["row_keys"]:
-            return None
-
-        return (table_id, row_label, col_label)
+        """Resolve phrase against the catalog via the LLM. Returns (table_id, row, col) or None."""
+        return resolve_via_llm(self._llm, catalog, phrase)
 
     # ------------------------------------------------------------------
     # Capability methods
