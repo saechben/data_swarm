@@ -3,6 +3,7 @@ import os
 from mcg_swarm.schemas import WorkbookExtraction
 from mcg_swarm.splitter import split_workbook, TableHandle
 from mcg_swarm.orchestrator import orchestrate_table
+from mcg_swarm.subagent import build_subagent
 from mcg_swarm.extraction import build_index
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
@@ -26,10 +27,13 @@ def run_swarm(workbooks: dict, llm=None) -> WorkbookExtraction:
             generator_version=GENERATOR_VERSION,
             errors=[f"unreadable workbook: {e}"],
         )
+    # Construct the configured subagent once (MCG_SUBAGENT); threaded down opaquely.
+    subagent = build_subagent(llm=llm)
     tables, sheets = [], []
     for i, h in enumerate(handles):
         sheets.append(h.sheet)
-        tables.append(orchestrate_table(path, h, table_id=f"{h.sheet}__{i}", llm=llm))
+        tables.append(orchestrate_table(
+            path, h, table_id=f"{h.sheet}__{i}", llm=llm, subagent=subagent))
     return WorkbookExtraction(
         workbook=name,
         sheets=sheets,

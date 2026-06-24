@@ -57,7 +57,7 @@ messy-tab fallback and header verification.
 
 ```bash
 # from the repo root
-.venv/bin/python -m pytest -q          # 148 passed, 1 skipped
+.venv/bin/python -m pytest -q          # 169 passed, 1 skipped
 ```
 
 No network or API key is required for the deterministic path.
@@ -139,6 +139,32 @@ downstream. This is centralized in `_SchemaEnforcedClient.complete()`, so every 
 Built-in implementations (`mcg_swarm/llm/client.py`):
 - `AnthropicClient(model=..., api_key=...)` — real API, lazy-imports `anthropic`.
 - `FakeLLMClient(responses)` — scripted dicts or a callable; for tests, no network.
+
+### C. Opt-in ReAct subagent — `MCG_SUBAGENT=react`
+
+How each table *band* is analyzed sits behind the `Subagent` port
+(`mcg_swarm/subagent/`, `analyze(task) -> SegmentReport`); the swarm is unaware which
+strategy runs. `run_swarm` selects it from the `MCG_SUBAGENT` env var:
+
+- `static` (default) — deterministic column inference + the one-shot header-verify above.
+  No extra dependency; behavior unchanged.
+- `react` — a **smart fallback + verifier**. After the static pass, an SDK-backed ReAct
+  agent is invoked **only** when the table is small (≤ `REACT_MAX_TABLE_ROWS`, 40) **and**
+  something looks off (the splitter was unsure, static produced anomalies, or the splitter
+  and static disagree on a column's role). The agent inspects the real cells with
+  read-only probe tools (`peek_rows`, `tail_rows`, `column_values`, `header_candidates`,
+  `peek_region`) and returns column corrections. Any failure falls back to the static
+  result — it never breaks the pipeline.
+
+```bash
+pip install claude-agent-sdk          # optional; only needed for react mode
+export ANTHROPIC_API_KEY=sk-...        # required for react mode
+MCG_SUBAGENT=react .venv/bin/python eval/run_benchmark.py --adapter swarm
+```
+
+If the SDK or key is missing, `react` logs once and degrades to `static`, so enabling it
+is always safe. The probe tools are framework-agnostic (`mcg_swarm/subagent/tools.py`);
+only `sdk_runner.py` imports the Claude Agent SDK.
 
 ---
 
