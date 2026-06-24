@@ -1,9 +1,20 @@
+"""Deterministic-first band analysis — today's behavior behind the Subagent port.
+
+`StaticSubagent.analyze` is byte-for-byte equivalent to the original
+`analyze_band`: infer columns from a 20-row sample, then optionally run a single-shot
+LLM header-verify to fill unit/role. It never invents cell values and never raises on
+LLM failure (the failure is recorded as an anomaly and the deterministic result stands).
+"""
 from __future__ import annotations
+
 from typing import Optional
+
 import openpyxl
 from pydantic import BaseModel
-from mcg_swarm.schemas import ColumnSpec, SegmentReport, TableFormula
+
+from mcg_swarm.schemas import ColumnSpec, SegmentReport
 from mcg_swarm.splitter import _infer_dtype
+from mcg_swarm.subagent.task import BandTask
 
 
 # Output schema the LLM header-verify call must conform to (enforced at the client
@@ -16,8 +27,6 @@ class _ColumnPatch(BaseModel):
 
 class HeaderVerification(BaseModel):
     columns: list[_ColumnPatch] = []
-
-
 
 
 def _analyze_band_single_open(path, band, header):
@@ -55,7 +64,8 @@ def _analyze_band_single_open(path, band, header):
     return cols, [], anomalies
 
 
-def analyze_band(path, band, header, llm=None) -> SegmentReport:
+def run_static(path, band, header, llm=None) -> SegmentReport:
+    """Deterministic column inference + optional one-shot LLM header-verify."""
     columns, formulas, anomalies = _analyze_band_single_open(path, band, header)
     desc = f"Band {band.region} with columns: {', '.join(c.name for c in columns)}."
     if llm is not None:
@@ -75,3 +85,13 @@ def analyze_band(path, band, header, llm=None) -> SegmentReport:
             anomalies.append(f"llm verify skipped: {e}")
     return SegmentReport(band=band.region, columns=columns, formulas=formulas,
                          description=desc, anomalies=anomalies)
+
+
+class StaticSubagent:
+    """Implements the Subagent port with the deterministic-first strategy."""
+
+    def __init__(self, llm=None) -> None:
+        self._llm = llm
+
+    def analyze(self, task: BandTask) -> SegmentReport:
+        return run_static(task.path, task.band, task.header, self._llm)
