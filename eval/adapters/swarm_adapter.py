@@ -12,6 +12,8 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
+from pydantic import BaseModel
+
 from eval.adapters.base import DetectedMeasure, EvalAdapter, SemanticResult
 from eval.schemas import WorkbookLabel
 from eval.util import range_iou
@@ -31,6 +33,14 @@ MEASURE_MAX_TABLE_ROWS = 40
 
 # Max row_keys to include in the catalog prompt per table.
 _CATALOG_MAX_ROWS = 60
+
+
+class CoordResolution(BaseModel):
+    """Schema the LLM coordinate-resolver must return (enforced at the client boundary)."""
+    found: bool
+    table_id: Optional[str] = None
+    row_label: Optional[str] = None
+    col_label: Optional[str] = None
 
 
 def _queryable_columns(idx) -> list[str]:
@@ -209,15 +219,9 @@ class SwarmAdapter(EvalAdapter):
             "  col_label: str — must be verbatim from that table's columns list\n\n"
             "Return ONLY JSON, no prose."
         )
-        schema = {
-            "found": "bool",
-            "table_id": "str",
-            "row_label": "str",
-            "col_label": "str",
-        }
 
         try:
-            resp = self._llm.complete(system, user, schema=schema)
+            resp = self._llm.complete(system, user, schema=CoordResolution)
         except Exception as _exc:
             import sys
             print(f"[swarm_adapter] LLM call failed ({type(_exc).__name__}): {_exc}", file=sys.stderr)

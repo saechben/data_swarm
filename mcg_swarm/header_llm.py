@@ -1,8 +1,31 @@
 from __future__ import annotations
+from typing import Optional
 import openpyxl
 from dataclasses import replace
+from pydantic import BaseModel, model_validator
 from mcg_swarm.splitter import TableHandle
 from mcg_swarm.schemas import ColumnSpec
+
+
+# Output schema for the messy-tab resolution call (enforced at the client boundary).
+class _HeaderCol(BaseModel):
+    name: str
+    dtype: Optional[str] = None
+
+
+class MessyTabResolution(BaseModel):
+    confident: bool
+    header_row: Optional[int] = None
+    region: Optional[str] = None
+    columns: Optional[list[_HeaderCol]] = None
+
+    @model_validator(mode="after")
+    def _confident_requires_table(self):
+        # A confident answer MUST carry the table location; otherwise it is malformed
+        # and must be rejected (→ falls back to ambiguous), not half-applied.
+        if self.confident and (self.header_row is None or not self.region or not self.columns):
+            raise ValueError("confident=true requires header_row, region, and columns")
+        return self
 
 
 def _preview(path: str, sheet: str, n: int = 30) -> list[list]:
@@ -22,19 +45,13 @@ def resolve_messy_tab(path: str, handle: TableHandle, llm) -> TableHandle:
     """
     try:
         preview = _preview(path, handle.sheet)
-        schema = {
-            "confident": "bool",
-            "header_row": "int",
-            "region": "A1 range",
-            "columns": [{"name": "str", "dtype": "number|string|boolean|date"}],
-        }
         res = llm.complete(
             system=(
                 "You analyze a messy spreadsheet tab and identify the single clean table: "
                 "its header row, A1 region, and columns. Set confident=false if you cannot."
             ),
             user=f"Sheet {handle.sheet!r}, first rows (values only):\n{preview}",
-            schema=schema,
+            schema=MessyTabResolution,
         )
         if not res.get("confident"):
             return replace(handle, ambiguous=True, reason="llm not confident about header structure")

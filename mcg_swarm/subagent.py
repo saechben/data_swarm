@@ -1,7 +1,21 @@
 from __future__ import annotations
+from typing import Optional
 import openpyxl
+from pydantic import BaseModel
 from mcg_swarm.schemas import ColumnSpec, SegmentReport, TableFormula
 from mcg_swarm.splitter import _infer_dtype
+
+
+# Output schema the LLM header-verify call must conform to (enforced at the client
+# boundary). Extra fields are ignored; only shape/types of these are guaranteed.
+class _ColumnPatch(BaseModel):
+    name: str
+    unit: Optional[str] = None
+    role: Optional[str] = None
+
+
+class HeaderVerification(BaseModel):
+    columns: list[_ColumnPatch] = []
 
 
 
@@ -46,12 +60,11 @@ def analyze_band(path, band, header, llm=None) -> SegmentReport:
     desc = f"Band {band.region} with columns: {', '.join(c.name for c in columns)}."
     if llm is not None:
         try:
-            schema = {"columns": [{"name": "str", "unit": "str|null", "role": "key|value|computed"}]}
             res = llm.complete(
                 system="You verify spreadsheet table headers. Confirm names make sense and "
                        "fill missing unit/role. Never invent cell values.",
                 user=f"Header: {header}\nInferred: {[c.model_dump() for c in columns]}",
-                schema=schema)
+                schema=HeaderVerification)
             by_name = {c["name"]: c for c in res.get("columns", [])}
             for c in columns:
                 patch = by_name.get(c.name)
