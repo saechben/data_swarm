@@ -14,7 +14,7 @@ from mcg_swarm.size_estimate import plan_bands
 from mcg_swarm.subagent import analyze_band
 from mcg_swarm.merge import merge_reports
 from mcg_swarm.extraction import build_index
-from mcg_swarm.testing import run_table_tests
+from mcg_swarm.quality_gate import run_table_tests
 from mcg_swarm.header_llm import resolve_messy_tab
 from eval.util import range_box
 

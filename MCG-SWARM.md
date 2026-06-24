@@ -309,7 +309,7 @@ and a column-name/table-title collision — all documented in `DATA-REQUIREMENTS
 | `mcg_swarm/orchestrator.py` | Tier-1 per-table orchestration (never raises). |
 | `mcg_swarm/subagent.py` | Tier-2 column/type analysis + optional LLM header verify. |
 | `mcg_swarm/extraction.py` | `ExtractionIndex` — live-read `query()` layer. |
-| `mcg_swarm/testing.py` | In-loop quality gate. |
+| `mcg_swarm/quality_gate.py` | In-loop quality gate. |
 | `mcg_swarm/resolve.py` | Deterministic NL/operand → coordinate resolver. |
 | `mcg_swarm/llm/client.py` | `LLMClient` interface + schema enforcement + clients. |
 | `mcg_swarm/schemas.py` | Output models (`WorkbookExtraction`, `CanonicalTable`, …). |

@@ -1,4 +1,4 @@
-# mcg_swarm/testing.py
+# mcg_swarm/quality_gate.py
 """In-loop quality gate: coverage (resolution-only) + index integrity + round-trip + computed-column checks."""
 from __future__ import annotations
 
