@@ -1,6 +1,6 @@
 # tests/test_testing.py
 import openpyxl
-from mcg_swarm.testing import run_table_tests, TableTestReport
+from mcg_swarm.quality_gate import run_table_tests, TableTestReport
 from mcg_swarm.splitter import split_workbook
 from mcg_swarm.extraction import build_index
 from mcg_swarm.schemas import CanonicalTable, ExtractionRef
