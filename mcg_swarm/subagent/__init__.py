@@ -31,6 +31,11 @@ def _warn_once(msg: str, *args) -> None:
         _react_warned = True
 
 
+def _validate_enabled() -> bool:
+    """Whether the agent also double-checks clean tables (MCG_REACT_VALIDATE, default on)."""
+    return os.environ.get("MCG_REACT_VALIDATE", "on").strip().lower() != "off"
+
+
 def build_subagent(llm=None) -> "Subagent":
     """Construct the configured subagent (`MCG_SUBAGENT`, default `static`).
 
@@ -50,16 +55,34 @@ def build_subagent(llm=None) -> "Subagent":
         from mcg_swarm.subagent.escalating import EscalatingSubagent, EscalationPolicy
         from mcg_swarm.subagent.sdk_runner import ClaudeSDKAgentRunner
         from mcg_swarm.subagent.verifier import ReActVerifier
-        # Default 'always': the agent validates every eligible table (double-checks
-        # static). Set MCG_REACT_MODE=on_error to validate only when static flags a
-        # problem.
-        mode = os.environ.get("MCG_REACT_MODE", "always").strip().lower()
+        # The failure fallback is always active; MCG_REACT_VALIDATE=off disables the
+        # extra "double-check clean tables" validation (default on).
         runner = ClaudeSDKAgentRunner()
         return EscalatingSubagent(
-            StaticSubagent(llm), ReActVerifier(runner), EscalationPolicy(mode=mode))
+            StaticSubagent(llm), ReActVerifier(runner),
+            EscalationPolicy(validate=_validate_enabled()))
     except Exception as e:  # SDK missing / construction failure → degrade to static
         _warn_once("MCG_SUBAGENT=react unavailable (%s); using static.", e)
         return StaticSubagent(llm)
+
+
+def build_table_validator(llm=None):
+    """Construct the table-level validator, or None when the agent is disabled/unavailable.
+
+    Active only when `MCG_SUBAGENT=react` with `ANTHROPIC_API_KEY` + the SDK present. The
+    failure fallback is always on; `MCG_REACT_VALIDATE=off` disables checking clean tables.
+    """
+    mode = os.environ.get("MCG_SUBAGENT", "static").strip().lower()
+    if mode != "react" or not os.environ.get("ANTHROPIC_API_KEY"):
+        return None
+    try:
+        from mcg_swarm.subagent.sdk_runner import ClaudeSDKAgentRunner
+        from mcg_swarm.subagent.table_check import TableCheckPolicy, TableValidator
+        return TableValidator(
+            ClaudeSDKAgentRunner(), TableCheckPolicy(validate=_validate_enabled()))
+    except Exception as e:
+        _warn_once("MCG_SUBAGENT=react table validator unavailable (%s); skipping.", e)
+        return None
 
 
 def analyze_band(path, band, header, llm=None) -> SegmentReport:
@@ -70,5 +93,5 @@ def analyze_band(path, band, header, llm=None) -> SegmentReport:
 
 __all__ = [
     "Subagent", "BandTask", "StaticSubagent", "HeaderVerification",
-    "build_subagent", "analyze_band",
+    "build_subagent", "build_table_validator", "analyze_band",
 ]

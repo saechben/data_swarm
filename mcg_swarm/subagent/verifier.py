@@ -33,10 +33,15 @@ class SegmentReportPatch(BaseModel):
     anomalies: list[str] = []
 
 
-def _apply_patch(report: SegmentReport, patch: dict) -> SegmentReport:
+def apply_column_patch(columns: list, patch: dict) -> list:
+    """Return a new column list with the patch's dtype/unit/role corrections applied.
+
+    Matches by column name; ignores unknown columns and invalid enum values. Shared by
+    the band-level verifier (SegmentReport) and the table-level check (CanonicalTable).
+    """
     by_name = {c["name"]: c for c in patch.get("columns", [])}
     new_cols = []
-    for col in report.columns:
+    for col in columns:
         p = by_name.get(col.name)
         if p:
             updates = {}
@@ -49,6 +54,11 @@ def _apply_patch(report: SegmentReport, patch: dict) -> SegmentReport:
             if updates:
                 col = col.model_copy(update=updates)
         new_cols.append(col)
+    return new_cols
+
+
+def _apply_patch(report: SegmentReport, patch: dict) -> SegmentReport:
+    new_cols = apply_column_patch(report.columns, patch)
     anomalies = list(report.anomalies) + list(patch.get("anomalies", []))
     return report.model_copy(update={"columns": new_cols, "anomalies": anomalies})
 

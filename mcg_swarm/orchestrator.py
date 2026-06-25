@@ -33,7 +33,7 @@ def _stub(handle, table_id: str, errors: list[str]) -> CanonicalTable:
     )
 
 
-def orchestrate_table(
+def _orchestrate_core(
     path: str,
     handle,
     table_id: str,
@@ -149,3 +149,26 @@ def orchestrate_table(
 
     except Exception as exc:  # never let a subagent failure escape
         return _stub(handle, table_id, [f"orchestration error: {exc}"])
+
+
+def orchestrate_table(
+    path: str,
+    handle,
+    table_id: str,
+    llm=None,
+    subagent=None,
+    table_validator=None,
+    max_repairs: int = 2,
+) -> CanonicalTable:
+    """Static orchestration, then an optional table-level agent validation/recovery pass.
+
+    The static pipeline (`_orchestrate_core`) runs unchanged and produces the
+    CanonicalTable. When a `table_validator` is supplied it gets the final say: it runs
+    the agent over the whole table (always on errors; configurably on clean tables) and
+    returns a possibly-corrected table. The orchestrator stays unaware of its internals.
+    """
+    table = _orchestrate_core(
+        path, handle, table_id, llm=llm, subagent=subagent, max_repairs=max_repairs)
+    if table_validator is not None:
+        table = table_validator.review(path, handle, table)
+    return table

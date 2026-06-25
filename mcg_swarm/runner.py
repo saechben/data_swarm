@@ -3,7 +3,7 @@ import os
 from mcg_swarm.schemas import WorkbookExtraction
 from mcg_swarm.splitter import split_workbook, TableHandle
 from mcg_swarm.orchestrator import orchestrate_table
-from mcg_swarm.subagent import build_subagent
+from mcg_swarm.subagent import build_subagent, build_table_validator
 from mcg_swarm.extraction import build_index
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
@@ -27,13 +27,16 @@ def run_swarm(workbooks: dict, llm=None) -> WorkbookExtraction:
             generator_version=GENERATOR_VERSION,
             errors=[f"unreadable workbook: {e}"],
         )
-    # Construct the configured subagent once (MCG_SUBAGENT); threaded down opaquely.
+    # Construct the configured subagent (band-level) + table-level validator once
+    # (MCG_SUBAGENT); both threaded down opaquely. Either may be a no-op/None.
     subagent = build_subagent(llm=llm)
+    table_validator = build_table_validator(llm=llm)
     tables, sheets = [], []
     for i, h in enumerate(handles):
         sheets.append(h.sheet)
         tables.append(orchestrate_table(
-            path, h, table_id=f"{h.sheet}__{i}", llm=llm, subagent=subagent))
+            path, h, table_id=f"{h.sheet}__{i}", llm=llm,
+            subagent=subagent, table_validator=table_validator))
     return WorkbookExtraction(
         workbook=name,
         sheets=sheets,

@@ -57,7 +57,7 @@ messy-tab fallback and header verification.
 
 ```bash
 # from the repo root
-.venv/bin/python -m pytest -q          # 174 passed, 1 skipped
+.venv/bin/python -m pytest -q          # 180 passed, 1 skipped
 ```
 
 No network or API key is required for the deterministic path.
@@ -148,16 +148,21 @@ strategy runs. `run_swarm` selects it from the `MCG_SUBAGENT` env var:
 
 - `static` (default) — deterministic column inference + the one-shot header-verify above.
   No extra dependency; behavior unchanged.
-- `react` — an SDK-backed ReAct **validation step** that double-checks static. The agent
-  inspects the real cells with read-only probe tools (`peek_rows`, `tail_rows`,
-  `column_values`, `header_candidates`, `peek_region`) and returns column corrections.
-  Any failure falls back to the static result — it never breaks the pipeline. When the
-  agent runs is set by `MCG_REACT_MODE`:
-  - `always` (default) — validate **every** eligible table.
-  - `on_error` — validate only when static flagged a problem (anomalies, the splitter was
-    ambiguous, or a splitter/static role disagreement).
+- `react` — an SDK-backed ReAct agent that checks static at **two points**, using
+  read-only probe tools (`peek_rows`, `tail_rows`, `column_values`, `header_candidates`,
+  `peek_region`) and returning column corrections. Any agent failure falls back to the
+  static result — it never breaks the pipeline.
+  - **band level** (`subagent/escalating.py`) — during slice analysis.
+  - **table level** (`subagent/table_check.py`) — over the fully-assembled table, so it
+    sees whole-table failures (messy headers, merge conflicts, quality-gate failures).
 
-  Either way the ≤ `REACT_MAX_TABLE_ROWS` (40) size guard applies: large data tables are
+  At both points two triggers apply, additively:
+  - **failure fallback — always on:** if static looks problematic / the table came back
+    with errors, the agent runs. Not configurable.
+  - **validation — configurable:** the agent also double-checks otherwise-clean tables.
+    On by default; set `MCG_REACT_VALIDATE=off` to run the agent only on failures.
+
+  The ≤ `REACT_MAX_TABLE_ROWS` (40) size guard applies throughout: large data tables are
   never sent to the agent (static is reliable there, and it would be slow/costly).
 
 ```bash
