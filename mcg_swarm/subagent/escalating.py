@@ -20,12 +20,26 @@ REACT_MAX_TABLE_ROWS = 40
 
 @dataclass
 class EscalationPolicy:
+    """Decides whether to run the ReAct verifier for a band.
+
+    mode:
+      "always"   — validate every eligible band (double-check static), subject only to
+                   the size guard. This is the validation default when react is enabled.
+      "on_error" — validate only when static flagged a problem (anomalies, the splitter
+                   was ambiguous, or splitter/static role disagreement). Conservative.
+
+    The size guard always applies: large data tables (> max_table_rows) are never
+    validated — static is reliable there and an agent would be slow and costly.
+    """
     max_table_rows: int = REACT_MAX_TABLE_ROWS
+    mode: str = "on_error"
 
     def should_escalate(self, task: BandTask, static_report: SegmentReport) -> bool:
         n_data_rows = task.band.row_end - task.band.row_start + 1
         if n_data_rows > self.max_table_rows:
             return False
+        if self.mode == "always":
+            return True
         return (
             task.ambiguous
             or bool(static_report.anomalies)

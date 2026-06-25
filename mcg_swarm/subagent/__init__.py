@@ -47,11 +47,16 @@ def build_subagent(llm=None) -> "Subagent":
         return StaticSubagent(llm)
 
     try:
-        from mcg_swarm.subagent.escalating import EscalatingSubagent
+        from mcg_swarm.subagent.escalating import EscalatingSubagent, EscalationPolicy
         from mcg_swarm.subagent.sdk_runner import ClaudeSDKAgentRunner
         from mcg_swarm.subagent.verifier import ReActVerifier
+        # Default 'always': the agent validates every eligible table (double-checks
+        # static). Set MCG_REACT_MODE=on_error to validate only when static flags a
+        # problem.
+        mode = os.environ.get("MCG_REACT_MODE", "always").strip().lower()
         runner = ClaudeSDKAgentRunner()
-        return EscalatingSubagent(StaticSubagent(llm), ReActVerifier(runner))
+        return EscalatingSubagent(
+            StaticSubagent(llm), ReActVerifier(runner), EscalationPolicy(mode=mode))
     except Exception as e:  # SDK missing / construction failure → degrade to static
         _warn_once("MCG_SUBAGENT=react unavailable (%s); using static.", e)
         return StaticSubagent(llm)

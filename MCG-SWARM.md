@@ -57,7 +57,7 @@ messy-tab fallback and header verification.
 
 ```bash
 # from the repo root
-.venv/bin/python -m pytest -q          # 169 passed, 1 skipped
+.venv/bin/python -m pytest -q          # 174 passed, 1 skipped
 ```
 
 No network or API key is required for the deterministic path.
@@ -148,13 +148,17 @@ strategy runs. `run_swarm` selects it from the `MCG_SUBAGENT` env var:
 
 - `static` (default) — deterministic column inference + the one-shot header-verify above.
   No extra dependency; behavior unchanged.
-- `react` — a **smart fallback + verifier**. After the static pass, an SDK-backed ReAct
-  agent is invoked **only** when the table is small (≤ `REACT_MAX_TABLE_ROWS`, 40) **and**
-  something looks off (the splitter was unsure, static produced anomalies, or the splitter
-  and static disagree on a column's role). The agent inspects the real cells with
-  read-only probe tools (`peek_rows`, `tail_rows`, `column_values`, `header_candidates`,
-  `peek_region`) and returns column corrections. Any failure falls back to the static
-  result — it never breaks the pipeline.
+- `react` — an SDK-backed ReAct **validation step** that double-checks static. The agent
+  inspects the real cells with read-only probe tools (`peek_rows`, `tail_rows`,
+  `column_values`, `header_candidates`, `peek_region`) and returns column corrections.
+  Any failure falls back to the static result — it never breaks the pipeline. When the
+  agent runs is set by `MCG_REACT_MODE`:
+  - `always` (default) — validate **every** eligible table.
+  - `on_error` — validate only when static flagged a problem (anomalies, the splitter was
+    ambiguous, or a splitter/static role disagreement).
+
+  Either way the ≤ `REACT_MAX_TABLE_ROWS` (40) size guard applies: large data tables are
+  never sent to the agent (static is reliable there, and it would be slow/costly).
 
 ```bash
 pip install claude-agent-sdk          # optional; only needed for react mode
