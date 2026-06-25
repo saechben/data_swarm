@@ -57,7 +57,7 @@ messy-tab fallback and header verification.
 
 ```bash
 # from the repo root
-.venv/bin/python -m pytest -q          # 180 passed, 1 skipped
+.venv/bin/python -m pytest -q          # 186 passed, 2 skipped
 ```
 
 No network or API key is required for the deterministic path.
@@ -152,9 +152,13 @@ strategy runs. `run_swarm` selects it from the `MCG_SUBAGENT` env var:
   read-only probe tools (`peek_rows`, `tail_rows`, `column_values`, `header_candidates`,
   `peek_region`) and returning column corrections. Any agent failure falls back to the
   static result — it never breaks the pipeline.
-  - **band level** (`subagent/escalating.py`) — during slice analysis.
+  - **band level** (`subagent/escalating.py`) — during slice analysis; corrects column
+    dtype/role/unit. It cannot restructure, but any whole-table problem it *notices* (e.g.
+    a header mis-detection) is recorded as an anomaly and forwarded to the table level.
   - **table level** (`subagent/table_check.py`) — over the fully-assembled table, so it
-    sees whole-table failures (messy headers, merge conflicts, quality-gate failures).
+    sees whole-table failures (messy headers, merge conflicts, quality-gate failures). It
+    can **recover a mis-detected header**: re-pick the header row/span and rename columns,
+    then rebuild the index.
 
   At both points two triggers apply, additively:
   - **failure fallback — always on:** if static looks problematic / the table came back
@@ -162,18 +166,28 @@ strategy runs. `run_swarm` selects it from the `MCG_SUBAGENT` env var:
   - **validation — configurable:** the agent also double-checks otherwise-clean tables.
     On by default; set `MCG_REACT_VALIDATE=off` to run the agent only on failures.
 
+  The table level is **verify-before-accept**: every proposal (metadata fix *or*
+  structural rebuild) is materialised into a candidate, re-indexed, and re-run through the
+  quality gate. A candidate replaces the original only when it is provably better — fewer
+  gate errors, or (on a tie) a higher year-aware header *label score*. So the agent can
+  never regress a good table; a gate-blind header over-detection is still recovered
+  because real labels beat data-as-header, and the gate's column-name check stops the
+  agent inventing names. Header-span arithmetic from the agent is treated as a hint only
+  (several spans are tried; the best-verifying one wins).
+
   The ≤ `REACT_MAX_TABLE_ROWS` (40) size guard applies throughout: large data tables are
   never sent to the agent (static is reliable there, and it would be slow/costly).
 
 ```bash
 pip install claude-agent-sdk          # optional; only needed for react mode
-export ANTHROPIC_API_KEY=sk-...        # required for react mode
 MCG_SUBAGENT=react .venv/bin/python eval/run_benchmark.py --adapter swarm
 ```
 
-If the SDK or key is missing, `react` logs once and degrades to `static`, so enabling it
-is always safe. The probe tools are framework-agnostic (`mcg_swarm/subagent/tools.py`);
-only `sdk_runner.py` imports the Claude Agent SDK.
+`react` authenticates either via `ANTHROPIC_API_KEY` or — with no key set — via a
+logged-in `claude` CLI (subscription auth). If the SDK is absent and neither auth path is
+available, `react` logs once and degrades to `static`, so enabling it is always safe. The
+probe tools are framework-agnostic (`mcg_swarm/subagent/tools.py`); only `sdk_runner.py`
+imports the Claude Agent SDK.
 
 ---
 

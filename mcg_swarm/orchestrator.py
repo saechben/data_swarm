@@ -126,6 +126,7 @@ def _orchestrate_core(
             columns=merged.columns,
             formulas=merged.formulas,
             description=merged.description,
+            provisional_notes=list(merged.anomalies),
             extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=row_key),
         )
 
@@ -143,6 +144,7 @@ def _orchestrate_core(
             columns=merged.columns,
             formulas=merged.formulas,
             description=merged.description,
+            provisional_notes=list(merged.anomalies),
             extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=row_key),
             errors=errors,
         )

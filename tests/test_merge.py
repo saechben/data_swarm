@@ -2,10 +2,10 @@
 from mcg_swarm.merge import merge_reports
 from mcg_swarm.schemas import SegmentReport, ColumnSpec, TableFormula
 
-def _rep(band, cols, formulas=()):
+def _rep(band, cols, formulas=(), anomalies=()):
     return SegmentReport(band=band,
         columns=[ColumnSpec(name=n, dtype=d) for n, d in cols],
-        formulas=list(formulas), description=f"d{band}")
+        formulas=list(formulas), description=f"d{band}", anomalies=list(anomalies))
 
 def test_row_merge_agreement():
     r1 = _rep("A2:B100", [("Region", "string"), ("Rev", "number")])
@@ -32,6 +32,13 @@ def test_empty_reports_returns_empty_result():
         assert m.formulas == []
         assert m.description == ""
         assert m.conflicts == []
+
+def test_anomalies_propagate_deduped():
+    m = merge_reports([_rep("A2:B5", [("Gross", "number")], anomalies=["header looks off", "x"]),
+                       _rep("A6:B9", [("Gross", "number")], anomalies=["header looks off", "y"])],
+                      axis="row")
+    assert m.anomalies == ["header looks off", "x", "y"]   # order-preserving dedupe
+
 
 def test_formula_union_dedupe():
     f = TableFormula(target="Net", expression="Gross - Disc")

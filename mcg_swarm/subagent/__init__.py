@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 from typing import Protocol, runtime_checkable
 
 from mcg_swarm.schemas import SegmentReport
@@ -36,6 +37,18 @@ def _validate_enabled() -> bool:
     return os.environ.get("MCG_REACT_VALIDATE", "on").strip().lower() != "off"
 
 
+def _agent_auth_available() -> bool:
+    """Whether the Claude Agent SDK has a usable auth path.
+
+    The SDK authenticates either via ``ANTHROPIC_API_KEY`` or — when running under a
+    logged-in Claude CLI (subscription auth) — via the ``claude`` binary it spawns. We
+    accept either, so the react path works for CLI-only setups (verified live). If
+    neither is present we stay on static rather than pay a per-band timeout that only
+    fails back to static anyway.
+    """
+    return bool(os.environ.get("ANTHROPIC_API_KEY")) or shutil.which("claude") is not None
+
+
 def build_subagent(llm=None) -> "Subagent":
     """Construct the configured subagent (`MCG_SUBAGENT`, default `static`).
 
@@ -47,8 +60,9 @@ def build_subagent(llm=None) -> "Subagent":
     if mode != "react":
         return StaticSubagent(llm)
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        _warn_once("MCG_SUBAGENT=react but ANTHROPIC_API_KEY is unset; using static.")
+    if not _agent_auth_available():
+        _warn_once("MCG_SUBAGENT=react but no agent auth (ANTHROPIC_API_KEY or claude "
+                   "CLI); using static.")
         return StaticSubagent(llm)
 
     try:
@@ -73,7 +87,7 @@ def build_table_validator(llm=None):
     failure fallback is always on; `MCG_REACT_VALIDATE=off` disables checking clean tables.
     """
     mode = os.environ.get("MCG_SUBAGENT", "static").strip().lower()
-    if mode != "react" or not os.environ.get("ANTHROPIC_API_KEY"):
+    if mode != "react" or not _agent_auth_available():
         return None
     try:
         from mcg_swarm.subagent.sdk_runner import ClaudeSDKAgentRunner

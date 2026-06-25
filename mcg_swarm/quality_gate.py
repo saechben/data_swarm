@@ -217,6 +217,14 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
             # Both None → cell is genuinely empty and index agrees; not a failure.
             if live is None and queried is None:
                 continue
+            # Round-trip is a CONSISTENCY check between two reads of the same cell, so
+            # identical values always match — the dtype/tolerance compare only matters
+            # when query() normalizes representation (e.g. "1,200" -> 1200.0). Without
+            # this, a number column holding a non-numeric missing-value sentinel ('n/a')
+            # would float-coerce-fail against its own identical live read (a false
+            # positive that punishes correctly tightening a dtype to number).
+            if live == queried or str(live).strip() == str(queried).strip():
+                continue
             if not values_match(live, queried, 1e-9, dtype):
                 failures.append(
                     f"round-trip: {col!r}@{k!r} live={live!r} but query()={queried!r}"

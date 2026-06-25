@@ -9,6 +9,7 @@ class MergeResult:
     formulas: list
     description: str
     conflicts: list = field(default_factory=list)
+    anomalies: list = field(default_factory=list)
 
 
 def merge_reports(reports: list, axis: str) -> MergeResult:
@@ -34,4 +35,12 @@ def merge_reports(reports: list, axis: str) -> MergeResult:
             if key not in seen:
                 seen.add(key); formulas.append(f)
     description = " ".join(r.description for r in reports if r.description)
-    return MergeResult(columns=columns, formulas=formulas, description=description, conflicts=conflicts)
+    # Surface per-band anomalies (deduped) so downstream checks see what the band
+    # subagent flagged — e.g. a header-mis-detection it spotted but could not itself fix.
+    seen_anom, anomalies = set(), []
+    for r in reports:
+        for a in getattr(r, "anomalies", None) or []:
+            if a not in seen_anom:
+                seen_anom.add(a); anomalies.append(a)
+    return MergeResult(columns=columns, formulas=formulas, description=description,
+                       conflicts=conflicts, anomalies=anomalies)
