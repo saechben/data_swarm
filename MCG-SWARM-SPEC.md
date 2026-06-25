@@ -1,11 +1,19 @@
 # MCG Swarm — Build Spec (v2: Independent Canonical Tables)
 
+> **⚠️ Historical document (2026-06-22).** This is the original from-scratch build brief
+> that the swarm was built against. It is **kept for the contracts, data models, and
+> resolved design decisions**, which still hold — but it predates later work and is no
+> longer the source of truth for current behavior. For how the shipped system actually
+> works and runs, see **[`MCG-SWARM.md`](MCG-SWARM.md)** (usage guide); for input
+> assumptions and limits, see **[`DATA-REQUIREMENTS.md`](DATA-REQUIREMENTS.md)**.
+> Notably, the subagent has since evolved from a pure scale mechanism into an opt-in
+> two-level ReAct verifier/recovery layer (`MCG_SUBAGENT=react`) — see MCG-SWARM.md §C.
+
 **Purpose of this document.** A self-contained brief for building the MCG (Model-Card
 Generation) swarm **from scratch** in a coding session. It states what to build, the
 contracts and data models, the algorithms, the resolved design decisions, how to test
-it, and the success criteria that define "done." The authoritative design narrative is
-[`SWARM-v2-canonical-tables.md`](SWARM-v2-canonical-tables.md); this spec operationalizes
-it and bakes in the decisions made on 2026-06-22.
+it, and the success criteria that define "done." This spec operationalizes the v2
+canonical-tables design and bakes in the decisions made on 2026-06-22.
 
 Target language: **Python 3.10+**, Pydantic v2. Reuse the existing `eval/` harness as the
 in-loop tester and `eval/util.py::safe_eval` as the formula evaluator.

@@ -364,3 +364,4 @@ and a column-name/table-title collision — all documented in `DATA-REQUIREMENTS
 | `mcg_swarm/schemas.py` | Output models (`WorkbookExtraction`, `CanonicalTable`, …). |
 | `eval/adapters/swarm_adapter.py` | Wires the swarm to the eval harness. |
 | `DATA-REQUIREMENTS.md` | Authoritative assumptions, supported/unsupported cases, limits. |
+| `MCG-SWARM-SPEC.md` | Original v2 build spec (historical) — contracts/data models/decisions. |
