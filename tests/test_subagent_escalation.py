@@ -79,6 +79,42 @@ def test_large_table_never_escalates():
     assert not spy.called  # size guard wins even with trouble signals
 
 
+# --- additive triggers: fallback (always) + validation (configurable) -------
+
+def _run_validate(task, report, validate):
+    spy = SpyVerifier()
+    sub = EscalatingSubagent(FakeStatic(report), spy, EscalationPolicy(validate=validate))
+    return sub.analyze(task), spy
+
+
+def test_validate_on_checks_clean_small_table():
+    # validation runs the agent even with no trouble signals.
+    out, spy = _run_validate(_task(), _report(), validate=True)
+    assert spy.called
+    assert out.description == "verified"
+
+
+def test_validate_respects_size_guard():
+    big = _band(row_start=2, row_end=2 + REACT_MAX_TABLE_ROWS + 10)
+    out, spy = _run_validate(_task(band=big), _report(), validate=True)
+    assert not spy.called  # large tables skip validation
+
+
+def test_fallback_fires_even_with_validate_off():
+    # with validation OFF, a static problem still triggers the agent (always-on fallback).
+    out, spy = _run_validate(_task(), _report(anomalies=["boom"]), validate=False)
+    assert spy.called
+
+
+def test_validate_off_skips_clean_table():
+    out, spy = _run_validate(_task(), _report(), validate=False)
+    assert not spy.called
+
+
+def test_default_validate_is_false():
+    assert EscalationPolicy().validate is False
+
+
 def test_legacy_task_without_handle_columns_no_disagreement():
     task = BandTask(path="x", band=_band(), header=["Region", "Revenue"])  # handle_columns=None
     out, spy = _run(task, _report())  # clean, no signals

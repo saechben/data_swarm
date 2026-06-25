@@ -4,7 +4,12 @@
 what it does **not** support (with evidence from the eval corpus), and the tunable limits.
 Update this whenever an assumption changes or a new failure mode is found.
 
-_Last updated: 2026-06-23 (deterministic name/query resolver landed — semantic 99.2%, formula 81.8%, overall 98.65%, no LLM). Measured against the 19-workbook eval corpus._
+_Last updated: 2026-06-25 (opt-in ReAct subagent verified live — adds two-level agent validation + header-mis-detection recovery on top of the deterministic baseline; see §7). Prior baseline 2026-06-23: deterministic name/query resolver — semantic 99.2%, formula 81.8%, overall 98.65%, no LLM. Measured against the 19-workbook eval corpus._
+
+> **Deterministic baseline vs. opt-in agent.** Everything in §1–§6 describes the
+> **default, no-LLM** path. With `MCG_SUBAGENT=react` an opt-in agent layer recovers some
+> cases listed below as degraded (notably header over-detection) — see **§7**. The agent
+> is verify-before-accept, so it never makes a table worse than the deterministic result.
 
 ---
 
@@ -86,3 +91,35 @@ _Last updated: 2026-06-23 (deterministic name/query resolver landed — semantic
 
 - **19 workbooks total.** **14 in-scope** (conform to A1–A3). **5 excluded** for violating the one-table-per-tab / vertical assumptions: `multi_region_sales`, `quarterly_pnl`, `segment_report`, `store_ops`, `cashflow_signs`. (Files retained so the oracle adapter stays at 100%; excluded only from swarm scoring.)
 - The downstream consumer of the extraction (the pricing agent) calls `query(row, column)` / intra-table formulas through the produced scripts and **never loads the spreadsheet data into its context** — this abstraction is the swarm's purpose.
+
+---
+
+## 7. Opt-in ReAct agent layer (`MCG_SUBAGENT=react`)
+
+A deterministic-first, agent-optional layer that **verifies and recovers** on top of §1–§6.
+Off by default; the default path needs no API key or SDK. Authenticates via
+`ANTHROPIC_API_KEY` **or** a logged-in `claude` CLI (subscription auth). Verified live
+against the Claude Agent SDK on 2026-06-25. Full mechanics in [`MCG-SWARM.md`](MCG-SWARM.md) §C.
+
+**What it adds over the deterministic baseline:**
+- **Band level** — re-checks/corrects per-column `dtype`/`unit`/`role` during slice analysis.
+- **Table level** — over the fully-assembled table, can **recover a mis-detected header**:
+  re-pick the header row/span and rename columns, then rebuild the index.
+
+**Safety (verify-before-accept):** every agent proposal is re-indexed and re-run through
+the quality gate; it replaces the deterministic result only when **provably better** (fewer
+gate errors, or a tie with a higher year-aware header *label score*). The gate's column-name
+check stops the agent inventing names — it can only re-pick a real header row. **So react
+mode can never score below the deterministic baseline on a table.**
+
+**Recovers (examples, verified live):**
+- **Header-span over-detection** — a first data row folded into a multi-row header so column
+  names become data values (`['Widget','49','1200']` → recovered to `['Product','Price','Qty']`).
+  This is the gate-blind class that the deterministic gate cannot catch alone.
+- **Dtype tightening** — a numeric column inferred as `string` because of a missing-value
+  sentinel (`'n/a'`) is corrected to `number` and retained.
+
+**Still NOT recovered (unchanged from §3):** multiple tables per tab (A1), transposed
+orientation (A3), 3+ row hierarchical-header *semantics*, cross-table dependencies. The
+agent is size-gated to ≤ `REACT_MAX_TABLE_ROWS` (40) tables — large data tables are never
+sent to it. A live agent call is ~25–40s (CLI startup dominates).
