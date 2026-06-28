@@ -139,11 +139,23 @@ class ExtractionIndex:
 
         col_items = list(self._col_to_phys.items())  # [(col_name, phys_col), ...]
 
+        # OPT-2: one bounding-box read_region call (not per-cell) — per-cell opens
+        # reintroduce the large-file hang. Index into the returned grid below.
+        if not row_keys or not col_items:
+            return []
+
+        phys_rows = [self._key_to_phys[rk] for rk in row_keys]
+        phys_cols = [pc for _, pc in col_items]
+        min_row, max_row = min(phys_rows), max(phys_rows)
+        min_col, max_col = min(phys_cols), max(phys_cols)
+        grid = self.source.read_region(self.sheet, min_row, min_col, max_row, max_col)
+
         out: list[tuple] = []
         for row_key in row_keys:
             phys_row = self._key_to_phys[row_key]
+            row = grid[phys_row - min_row]
             for col_name, phys_col in col_items:
-                value = self.source.read_cell(self.sheet, phys_row, phys_col)
+                value = row[phys_col - min_col]
                 cell_ref = f"{get_column_letter(phys_col)}{phys_row}"
                 out.append((row_key, col_name, value, cell_ref))
         return out
