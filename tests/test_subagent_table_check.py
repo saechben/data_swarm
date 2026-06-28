@@ -50,8 +50,9 @@ def test_policy_validate_checks_clean_table():
     assert not TableCheckPolicy(validate=False).should_check(_table(), n_data_rows=3)
 
 
-def test_policy_size_guard():
-    assert not TableCheckPolicy(validate=True).should_check(_table(), n_data_rows=10_000)
+def test_policy_size_guard_removed():
+    # Size gate is gone — large tables are now checked (cost bounded by sampling).
+    assert TableCheckPolicy(validate=True).should_check(_table(), n_data_rows=10_000)
 
 
 # --- label score (year-aware) ----------------------------------------------

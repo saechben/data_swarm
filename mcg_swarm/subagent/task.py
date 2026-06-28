@@ -26,6 +26,7 @@ class BandTask:
     ambiguous: bool = False
     reason: Optional[str] = None
     table_region: Optional[str] = None
+    source: object = None                              # WorkbookSource; preferred over path
 
 
 def role_disagreements(static_columns, handle_columns) -> list[dict]:

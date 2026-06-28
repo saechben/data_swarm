@@ -34,7 +34,7 @@ def _stub(handle, table_id: str, errors: list[str]) -> CanonicalTable:
 
 
 def _orchestrate_core(
-    path: str,
+    source,
     handle,
     table_id: str,
     llm=None,
@@ -46,7 +46,7 @@ def _orchestrate_core(
 
     Parameters
     ----------
-    path:        Path to the workbook file.
+    source:      WorkbookSource (or path str for back-compat) for the workbook.
     handle:      TableHandle from splitter.split_workbook().
     table_id:    Unique identifier string for this table.
     llm:         Optional LLMClient; used for the §0 messy-tab header fallback and,
@@ -61,7 +61,7 @@ def _orchestrate_core(
     """
     # §0  LLM header fallback — attempt resolution before fail-loud
     if handle.ambiguous and llm is not None:
-        handle = resolve_messy_tab(path, handle, llm)  # never raises
+        handle = resolve_messy_tab(source, handle, llm)  # never raises
 
     # §1  Ambiguous handle — fail-loud stub immediately
     if handle.ambiguous:
@@ -88,7 +88,7 @@ def _orchestrate_core(
                 (band.col_start - _min_col) : (band.col_end - _min_col + 1)
             ]
             return BandTask(
-                path=path,
+                path=getattr(source, "path", None),
                 band=band,
                 header=[c.name for c in slice_],
                 handle_columns=list(slice_),
@@ -96,6 +96,7 @@ def _orchestrate_core(
                 ambiguous=getattr(handle, "ambiguous", False),
                 reason=getattr(handle, "reason", None),
                 table_region=handle.region,
+                source=source,
             )
         reports = [subagent.analyze(_band_task(b)) for b in bands]
 
@@ -114,7 +115,7 @@ def _orchestrate_core(
         # Fix 2: build index from LLM-refined merged columns so dtype/unit/role
         # changes from subagent LLM pass reach query() output.
         merged_handle = dataclasses.replace(handle, columns=merged.columns)
-        index = build_index(path, merged_handle, row_key=row_key)
+        index = build_index(source, merged_handle, row_key=row_key)
 
         # §5  Build intermediate CanonicalTable for testing
         table = CanonicalTable(
@@ -131,7 +132,7 @@ def _orchestrate_core(
         )
 
         # §6  Run quality gate
-        report = run_table_tests(path, table, index)
+        report = run_table_tests(source, table, index)
         errors = [] if report.passed else list(report.failures)
 
         # §7  Return fully-populated CanonicalTable
@@ -154,7 +155,7 @@ def _orchestrate_core(
 
 
 def orchestrate_table(
-    path: str,
+    source,
     handle,
     table_id: str,
     llm=None,
@@ -168,9 +169,13 @@ def orchestrate_table(
     CanonicalTable. When a `table_validator` is supplied it gets the final say: it runs
     the agent over the whole table (always on errors; configurably on clean tables) and
     returns a possibly-corrected table. The orchestrator stays unaware of its internals.
+
+    Parameters
+    ----------
+    source: WorkbookSource (or path str for back-compat) for the workbook.
     """
     table = _orchestrate_core(
-        path, handle, table_id, llm=llm, subagent=subagent, max_repairs=max_repairs)
+        source, handle, table_id, llm=llm, subagent=subagent, max_repairs=max_repairs)
     if table_validator is not None:
-        table = table_validator.review(path, handle, table)
+        table = table_validator.review(source, handle, table)
     return table
