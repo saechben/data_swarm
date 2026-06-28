@@ -37,7 +37,6 @@ from mcg_swarm.quality_gate import run_table_tests
 from mcg_swarm.schemas import CanonicalTable, ColumnSpec
 from mcg_swarm.source import as_source
 from mcg_swarm.splitter import TableHandle
-from mcg_swarm.subagent.escalating import REACT_MAX_TABLE_ROWS
 from mcg_swarm.subagent.tools import BandView, build_band_toolset
 from mcg_swarm.subagent.verifier import _VALID_DTYPES, _VALID_ROLES, apply_column_patch
 from mcg_swarm.size_estimate import Band
@@ -81,13 +80,15 @@ class TableRecoveryPatch(BaseModel):
 
 @dataclasses.dataclass
 class TableCheckPolicy:
-    """When to run the table-level agent check (size-guarded)."""
+    """When to run the table-level agent check.
+
+    Size gate removed: cost is bounded by sampling in the extraction layer.
+    max_passes controls how many agent repair iterations are attempted.
+    """
     validate: bool = False
-    max_table_rows: int = REACT_MAX_TABLE_ROWS
+    max_passes: int = 3
 
     def should_check(self, table: CanonicalTable, n_data_rows: int) -> bool:
-        if n_data_rows > self.max_table_rows:
-            return False
         return bool(table.errors) or self.validate
 
 
@@ -229,6 +230,18 @@ def _table_seed(table: CanonicalTable) -> str:
     return "\n".join(lines)
 
 
+def _patch_summary(patch: "TableRecoveryPatch") -> str:
+    """One-line human-readable description of what a patch proposed."""
+    parts = []
+    if patch.column_patches:
+        parts.append(f"meta:{len(patch.column_patches)}")
+    if patch.header_row is not None or patch.header_span is not None:
+        parts.append(
+            f"struct(hr={patch.header_row},hs={patch.header_span},"
+            f"cols={len(patch.columns)})")
+    return ",".join(parts) if parts else "empty"
+
+
 class TableValidator:
     """Runs the ReAct agent over an assembled CanonicalTable, verify-before-accept."""
 
@@ -238,37 +251,59 @@ class TableValidator:
 
     def review(self, source, handle, table: CanonicalTable) -> CanonicalTable:
         try:
+            from mcg_swarm.repair_log import log_repair_pass
             src = as_source(source)
-            _min_r, _min_c, max_r, _max_c = range_box(handle.region)
+            _r0, _c0, max_r, _c1 = range_box(handle.region)
             n_data_rows = max_r - handle.header_row
             if not self._policy.should_check(table, n_data_rows):
                 return table
-
-            patch = self._run_agent(src, handle, table)
-            best, best_errs = None, None
-            for cand in _candidates(table, patch):
-                try:
-                    errs = _reindex_and_check(src, cand)
-                except Exception:
-                    continue  # a malformed candidate must not sink the others
-                if not self._accepts(table, cand, errs):
-                    continue
-                if best is None or _ranks_higher(cand, errs, best, best_errs):
-                    best, best_errs = cand, errs
-            if best is not None:
-                return best.model_copy(update={"errors": best_errs})
-            return table
+            workbook = getattr(src, "path", "workbook")
+            current, attempts = table, []
+            for pass_no in range(self._policy.max_passes):
+                errs_before = list(current.errors)
+                patch = self._run_agent(src, handle, current, attempts)
+                best, best_errs = None, None
+                for cand in _candidates(current, patch):
+                    try:
+                        errs = _reindex_and_check(src, cand)
+                    except Exception:
+                        continue  # malformed candidate must not sink the others
+                    if not self._accepts(current, cand, errs):
+                        continue
+                    if best is None or _ranks_higher(cand, errs, best, best_errs):
+                        best, best_errs = cand, errs
+                accepted = best is not None
+                log_repair_pass(
+                    workbook, current.table_id, pass_no,
+                    errs_before,
+                    best_errs if accepted else errs_before,
+                    accepted,
+                    _patch_summary(patch),
+                    0.0,
+                )
+                if accepted:
+                    current = best.model_copy(update={"errors": best_errs})
+                    attempts.append(_patch_summary(patch))
+                    if not best_errs:
+                        break  # errors cleared — stop early
+                else:
+                    break  # no improvement — stop rather than burning passes
+            return current
         except Exception:
-            return table  # never break the pipeline
+            return table  # never raise; pipeline must not break
 
-    def _run_agent(self, source, handle, table) -> TableRecoveryPatch:
+    def _run_agent(self, source, handle, table, attempts) -> TableRecoveryPatch:
         min_r, min_c, max_r, max_c = range_box(handle.region)
         band = Band(
             sheet=handle.sheet, header_row=handle.header_row, region=handle.region,
             col_start=min_c, col_end=max_c,
             row_start=handle.header_row + 1, row_end=max_r)
         tools = build_band_toolset(BandView(source, band))
-        raw = self._runner.run(_table_seed(table), tools, schema=TableRecoveryPatch)
+        seed = _table_seed(table)
+        if attempts:
+            seed += ("\nPrevious passes already tried (do not repeat these): "
+                     + json.dumps(attempts))
+        raw = self._runner.run(seed, tools, schema=TableRecoveryPatch)
         return TableRecoveryPatch.model_validate(raw)
 
     @staticmethod

@@ -22,20 +22,33 @@ class FakeAgentRunner:
 
     actions: ordered ``[{"tool": name, "args": {...}}, ...]`` executed against the real
              toolset (so probes exercise the actual BandView).
-    final:   the patch dict returned; validated against ``schema`` to mirror the boundary.
+    final:   the patch dict returned when ``finals`` is None; validated against ``schema``
+             to mirror the boundary.
+    finals:  optional sequence of patch dicts returned in order across successive ``run``
+             calls; the last element is clamped (repeated) once exhausted.
+    calls:   counter incremented on every ``run`` invocation (starts at 0).
     Observations from each tool call are recorded on ``self.observations``.
     """
 
-    def __init__(self, actions: list[dict], final: dict) -> None:
+    def __init__(self, actions: list[dict], final: dict | None = None,
+                 finals: list | None = None) -> None:
         self.actions = actions
         self.final = final
+        self.finals = finals
         self.observations: list = []
+        self.calls: int = 0
 
     def run(self, seed: str, tools: list[Tool], *, schema) -> dict:
+        self.calls += 1
         by_name = {t.name: t for t in tools}
         for act in self.actions:
             tool = by_name[act["tool"]]
             self.observations.append(tool.handler(act.get("args", {})))
+        if self.finals is not None:
+            i = min(self.calls - 1, len(self.finals) - 1)
+            raw = self.finals[i]
+        else:
+            raw = self.final or {}
         if schema is not None:
-            return schema.model_validate(self.final).model_dump(exclude_none=True)
-        return dict(self.final)
+            return schema.model_validate(raw).model_dump(exclude_none=True)
+        return dict(raw)
