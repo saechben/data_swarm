@@ -591,15 +591,21 @@ git commit -m "feat(sampling): adaptive spread sampling (full small, high-N larg
 
 ---
 
-### Task 6: Quality gate uses spread sampling
+### Task 6: Spread sampling + dtype-conformance gate check
+
+**Why both in one task:** spread sampling lets the gate *read* cells across the table,
+but today no gate phase *judges* whether a column's values match its declared dtype — so
+a `number` column full of late text reads consistently and silently passes. Sampling has
+no teeth without the conformance check; the check has no reach without sampling. Together
+they turn dtype drift into a real gate error the repair loop can act on.
 
 **Files:**
-- Modify: `mcg_swarm/quality_gate.py:62-66`
+- Modify: `mcg_swarm/quality_gate.py:62-66` (use `select_sample`), add a new dtype-conformance phase after the live-cache scan (after `:138`), before `return` (`:264`)
 - Test: `tests/test_gate_sampling.py`
 
 **Interfaces:**
-- Consumes: `select_sample` (Task 5); `run_table_tests(source, ...)` (Task 4).
-- Produces: gate now samples across the table; a late-row anomaly fails the gate.
+- Consumes: `select_sample` (Task 5); `run_table_tests(source, ...)` (Task 4); the existing `sample_cells` map `(key,col)->(phys_row,phys_col,cell_ref)` and `live_cache` dict built at `quality_gate.py:100-138`; `index._col_to_phys`, `table.columns`, `table.extraction.row_key`.
+- Produces: gate samples across the table; a new failure category `"dtype-mismatch: ..."`; a `number`/`date`/`boolean` column whose sampled non-null cells don't conform fails the gate.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -612,55 +618,146 @@ from mcg_swarm.quality_gate import run_table_tests
 from mcg_swarm.schemas import CanonicalTable, ColumnSpec, ExtractionRef
 from mcg_swarm.splitter import TableHandle
 
-def test_late_row_dtype_drift_is_caught(tmp_path):
-    # Numeric in first 20 rows, text afterward — first-N sampling missed this.
+def _drift_wb(tmp_path):
     p = tmp_path / "drift.xlsx"
     wb = openpyxl.Workbook(); ws = wb.active; ws.title = "T"
     ws.append(["Id", "Days"])
-    for i in range(1, 21):  ws.append([f"r{i}", i])
-    for i in range(21, 60): ws.append([f"r{i}", "pending"])  # late text rows
+    for i in range(1, 21):  ws.append([f"r{i}", i])           # rows 1-20 numeric
+    for i in range(21, 60): ws.append([f"r{i}", "pending"])   # rows 21-59 TEXT
     wb.save(p)
-    src = OpenpyxlFileSource(str(p))
+    return OpenpyxlFileSource(str(p))
+
+def _table(handle):
+    return CanonicalTable(table_id="t", sheet="T", region="A1:B59", header_row=1,
+        columns=handle.columns, extraction=ExtractionRef(script_name="t", row_key=["Id"]))
+
+def test_late_row_dtype_drift_is_caught(tmp_path):
+    src = _drift_wb(tmp_path)
     handle = TableHandle(sheet="T", region="A1:B59", header_row=1,
         columns=[ColumnSpec(name="Id", dtype="string", role="key"),
                  ColumnSpec(name="Days", dtype="number")], header_span=1)  # WRONG dtype
     idx = build_index(src, handle, row_key=["Id"])
-    table = CanonicalTable(table_id="t", sheet="T", region="A1:B59", header_row=1,
+    rep = run_table_tests(src, _table(handle), idx)
+    assert not rep.passed
+    assert any(f.startswith("dtype-mismatch") for f in rep.failures)
+
+def test_correct_dtype_passes(tmp_path):
+    src = _drift_wb(tmp_path)
+    # Declaring the drifting column as string (its real nature) must NOT fail conformance.
+    handle = TableHandle(sheet="T", region="A1:B59", header_row=1,
+        columns=[ColumnSpec(name="Id", dtype="string", role="key"),
+                 ColumnSpec(name="Days", dtype="string")], header_span=1)
+    idx = build_index(src, handle, row_key=["Id"])
+    assert run_table_tests(src, _table(handle), idx).passed
+
+def test_sparse_sentinels_tolerated(tmp_path):
+    # A number column with a couple of 'n/a' sentinels (below the mismatch fraction) passes.
+    p = tmp_path / "ok.xlsx"
+    wb = openpyxl.Workbook(); ws = wb.active; ws.title = "T"
+    ws.append(["Id", "Days"])
+    for i in range(1, 49): ws.append([f"r{i}", i])
+    ws.append(["r49", "n/a"]); ws.append(["r50", "n/a"])      # 2/50 = 4% < 20% tolerance
+    wb.save(p)
+    src = OpenpyxlFileSource(str(p))
+    handle = TableHandle(sheet="T", region="A1:B51", header_row=1,
+        columns=[ColumnSpec(name="Id", dtype="string", role="key"),
+                 ColumnSpec(name="Days", dtype="number")], header_span=1)
+    idx = build_index(src, handle, row_key=["Id"])
+    table = CanonicalTable(table_id="t", sheet="T", region="A1:B51", header_row=1,
         columns=handle.columns, extraction=ExtractionRef(script_name="t", row_key=["Id"]))
-    rep = run_table_tests(src, table, idx)
-    assert not rep.passed  # spread sample reaches the text rows; round-trip/dtype flags it
+    assert run_table_tests(src, table, idx).passed
 ```
 
-> Implementer note: confirm RED first — under the old contiguous `keys[:25]` this passes (bug). Only after switching to `select_sample` does the late text get sampled and fail.
+> Implementer note: confirm RED first — under the old contiguous `keys[:25]` + no conformance phase, `test_late_row_dtype_drift_is_caught` is GREEN (the bug). It must go RED before your change, then GREEN after.
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_gate_sampling.py -q`
-Expected: FAIL — `assert not rep.passed` fails (old first-25 sampling never reads the text rows).
+Expected: FAIL — `test_late_row_dtype_drift_is_caught` fails its `assert not rep.passed` (no conformance phase exists; first-25 sampling never reads the text rows).
 
-- [ ] **Step 3: Switch the gate to spread sampling**
+- [ ] **Step 3a: Switch the gate to spread sampling**
 
 In `mcg_swarm/quality_gate.py`, replace line 66 (`sample_keys = keys[:sample_size]`) and its comment block (62-66) with:
 
 ```python
     from mcg_swarm.sampling import select_sample
     # Spread sample (head/middle/tail) so anomalies anywhere are caught, not just the
-    # first rows. `sample_size` arg still caps it for callers that pass one explicitly.
-    sample_keys = select_sample(keys, sample_size=sample_size if sample_size != 25 else None)
+    # first rows. An explicit non-default sample_size still caps it for small-sample callers.
+    sample_keys = select_sample(keys, sample_size=(sample_size if sample_size != 25 else None))
 ```
 
-> The `sample_size != 25` guard preserves explicit small-sample callers while letting the default (25) fall through to the env-driven spread default (~300). If you prefer, change the `run_table_tests` default to `sample_size=None` and pass `None` through to `select_sample` — pick one and keep it consistent.
+- [ ] **Step 3b: Add the dtype-conformance phase**
+
+Near the top of `mcg_swarm/quality_gate.py`, add the conformance helper and constant:
+
+```python
+import datetime as _dt
+
+DTYPE_MISMATCH_TOL = 0.2   # > this fraction of non-null sampled cells off-type => fail
+
+def _conforms(value, dtype: str) -> bool:
+    if value in (None, ""):
+        return True
+    if dtype == "string":
+        return True
+    if dtype == "boolean":
+        return isinstance(value, bool)
+    if dtype == "date":
+        return isinstance(value, _dt.datetime)
+    if dtype == "number":
+        if isinstance(value, bool):
+            return False
+        if isinstance(value, (int, float)):
+            return True
+        try:
+            float(str(value).replace(",", "").strip())
+            return True
+        except (TypeError, ValueError):
+            return False
+    return True
+```
+
+Then add a new phase AFTER the live-cache batch scan completes (after the `if needed:` block ends, ~`quality_gate.py:138`) and before Phase 4 / the `return`:
+
+```python
+    # ── Phase 5: dtype conformance ──────────────────────────────────────
+    # The structural checks above never validate that a column's VALUES match its
+    # declared dtype. Sample each non-key column's cells (already in live_cache via the
+    # round-trip needed-set) and flag a column whose non-null cells are mostly off-type.
+    key_names = set(table.extraction.row_key or [])
+    for col in table.columns:
+        if col.name in key_names or col.dtype == "string":
+            continue
+        phys_col = index._col_to_phys.get(col.name)
+        if phys_col is None:
+            continue
+        total = bad = 0
+        for k in sample_keys:
+            pr = index._key_to_phys.get(k)
+            if pr is None:
+                continue
+            val = live_cache.get((pr, phys_col))
+            if val in (None, ""):
+                continue
+            total += 1
+            if not _conforms(val, col.dtype):
+                bad += 1
+        if total >= 5 and (bad / total) > DTYPE_MISMATCH_TOL:
+            failures.append(
+                f"dtype-mismatch: column {col.name!r} declared {col.dtype} but "
+                f"{bad}/{total} sampled non-null cells are not {col.dtype}")
+```
 
 - [ ] **Step 4: Run tests**
 
 Run: `pytest tests/test_gate_sampling.py -q && pytest -q`
-Expected: new test PASS; full suite green. If a pre-existing gate test asserted the contiguous-25 bounding box, update it to the spread behavior.
+Expected: all three new tests PASS; full suite green. If a pre-existing gate test asserted the contiguous-25 bounding box or relied on a mistyped column passing, update it to the spread + conformance behavior.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add mcg_swarm/quality_gate.py tests/test_gate_sampling.py
-git commit -m "feat(gate): spread sampling catches anomalies beyond the first rows"
+git commit -m "feat(gate): spread sampling + dtype-conformance check turns drift into a gate error"
 ```
 
 ---
@@ -674,7 +771,7 @@ git commit -m "feat(gate): spread sampling catches anomalies beyond the first ro
 - Test: `tests/test_repair_log.py`
 
 **Interfaces:**
-- Produces: `categorize_failures(failures: list[str]) -> dict[str, int]` (categories: `coverage_gap`, `column_name`, `column_integrity`, `row_integrity`, `round_trip`, `computed`, `other`); `log_repair_pass(workbook, table_id, pass_no, errors_before, errors_after, accepted, patch_summary, latency_s) -> None` (emits a `logging` INFO record and, when `MCG_REPAIR_LOG` is set, appends one JSON line).
+- Produces: `categorize_failures(failures: list[str]) -> dict[str, int]` (categories: `coverage_gap`, `column_name`, `column_integrity`, `row_integrity`, `round_trip`, `dtype_mismatch`, `computed`, `other`); `log_repair_pass(workbook, table_id, pass_no, errors_before, errors_after, accepted, patch_summary, latency_s) -> None` (emits a `logging` INFO record and, when `MCG_REPAIR_LOG` is set, appends one JSON line).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -690,12 +787,14 @@ def test_categorize_by_prefix():
         "column-integrity: 'B' index col=C but live header says col=D",
         "row-integrity: key 'k' -> row 5",
         "round-trip: 'V'@'k' live=1 but query()=2",
+        "dtype-mismatch: column 'Days' declared number but 18/38 sampled non-null cells are not number",
         "computed mismatch Total@k: live=3 calc=4",
         "something weird",
     ]
     cats = categorize_failures(fails)
     assert cats == {"coverage_gap": 1, "column_name": 1, "column_integrity": 1,
-                    "row_integrity": 1, "round_trip": 1, "computed": 1, "other": 1}
+                    "row_integrity": 1, "round_trip": 1, "dtype_mismatch": 1,
+                    "computed": 1, "other": 1}
 
 def test_jsonl_written(tmp_path, monkeypatch):
     out = tmp_path / "repair.jsonl"
@@ -731,13 +830,15 @@ _PREFIXES = [
     ("column-integrity", "column_integrity"),
     ("row-integrity", "row_integrity"),
     ("round-trip", "round_trip"),
+    ("dtype-mismatch", "dtype_mismatch"),
     ("computed", "computed"),
 ]
 
 
 def categorize_failures(failures) -> dict:
     cats = {"coverage_gap": 0, "column_name": 0, "column_integrity": 0,
-            "row_integrity": 0, "round_trip": 0, "computed": 0, "other": 0}
+            "row_integrity": 0, "round_trip": 0, "dtype_mismatch": 0,
+            "computed": 0, "other": 0}
     for f in failures:
         s = str(f)
         for prefix, key in _PREFIXES:
