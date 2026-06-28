@@ -39,7 +39,7 @@ flowchart TD
 
   candidates --> reindex["_reindex_and_check(src, cand)<br/>build_index + run_table_tests per candidate<br/>cost: O(sample_size) spread-sampled row reads<br/>table_check.py:125"]
 
-  reindex --> accepts{"_accepts(original, cand, cand_errs)<br/>fewer errors → True<br/>tie: label score wins<br/>table_check.py:310"}
+  reindex --> accepts{"_accepts(current, cand, cand_errs)<br/>fewer errors than current → True<br/>tie: label score wins<br/>table_check.py:310"}
 
   accepts -->|rejected| log_rej["log_repair_pass(..., accepted=False)<br/>repair_log.py<br/>table_check.py:276"]
   log_rej --> break_rej["break — no improvement,<br/>stop burning passes<br/>table_check.py:290"]
