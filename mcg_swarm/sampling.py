@@ -23,6 +23,9 @@ def select_sample(row_keys, *, full_threshold=None, sample_size=None):
     n = len(row_keys)
     if n <= full_threshold or n <= sample_size:
         return list(row_keys)
+    # Guard against sample_size=1 causing ZeroDivisionError (reachable via MCG_SAMPLE_SIZE=1).
+    if sample_size <= 1:
+        return [row_keys[0], row_keys[-1]]
     # Even stride across the whole range; force-include first and last; dedupe; keep order.
     idxs = {0, n - 1}
     step = (n - 1) / (sample_size - 1)

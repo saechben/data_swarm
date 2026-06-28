@@ -16,3 +16,8 @@ def test_large_is_spread_and_bounded():
 def test_threshold_boundary():
     keys = list(range(300))
     assert select_sample(keys, full_threshold=300, sample_size=300) == keys  # == threshold -> all
+
+def test_sample_size_one_does_not_crash():
+    keys = list(range(1000))
+    s = select_sample(keys, full_threshold=300, sample_size=1)
+    assert s == [0, 999]

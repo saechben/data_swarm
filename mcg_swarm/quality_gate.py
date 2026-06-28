@@ -138,7 +138,8 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
             needed.add((pr, pc))
 
     # ONE workbook open — scan only the bounding box of sample rows.
-    # sample_keys are the first N contiguous keys so the bounding box is small
+    # sample_keys come from select_sample (head/middle/tail spread), so on large tables
+    # the scan bounding box can span most of the sheet height — see OPTIMIZATIONS.md #1.
     # (rows header_row .. max(sample_phys_rows), all cols in region).
     live_cache: dict[tuple[int, int], object] = {}
     if needed:
