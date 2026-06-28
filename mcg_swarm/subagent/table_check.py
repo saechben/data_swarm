@@ -34,6 +34,7 @@ from pydantic import BaseModel
 from eval.util import range_box
 from mcg_swarm.extraction import build_index
 from mcg_swarm.quality_gate import run_table_tests
+from mcg_swarm.repair_log import log_repair_pass
 from mcg_swarm.schemas import CanonicalTable, ColumnSpec
 from mcg_swarm.source import as_source
 from mcg_swarm.splitter import TableHandle
@@ -251,7 +252,6 @@ class TableValidator:
 
     def review(self, source, handle, table: CanonicalTable) -> CanonicalTable:
         try:
-            from mcg_swarm.repair_log import log_repair_pass
             src = as_source(source)
             _r0, _c0, max_r, _c1 = range_box(handle.region)
             n_data_rows = max_r - handle.header_row

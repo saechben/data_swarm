@@ -157,25 +157,79 @@ def test_max_passes_respected(tmp_path):
     assert runner.calls == 1
 
 
-# --- Multi-pass: accepted candidate continues loop --------------------------
+# --- Multi-pass: accept + CONTINUE across two real agent passes -------------
 
-def test_multi_pass_each_call_distinct(tmp_path):
-    """First pass yields an accepted metadata change; second pass is a no-op → stops."""
-    src, handle, table = _setup(tmp_path)
-    # Pass 0: agent proposes unit="USD" on column "A" — column A has no unit, so this
-    # IS a real change. _accepts checks: same error count (0 vs 0) + label score same
-    # → rejected (tie not broken positively). Loop stops after 1 call.
+def _two_drift_setup(tmp_path):
+    """Workbook with TWO number-declared columns whose cells are actually text.
+
+    The dtype-conformance gate flags BOTH columns → two `dtype-mismatch:` errors, so
+    should_check is True. Fixing one column per pass drives 2 → 1 → 0 errors, exercising
+    accept-and-continue and that `attempts` threading survives the second pass.
+    Pattern reused from tests/test_gate_sampling.py (late-row dtype drift).
+    """
+    p = tmp_path / "drift2.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "T"
+    ws.append(["Id", "Days", "Cost"])
+    # Majority text in both number-declared columns → both exceed the mismatch tolerance.
+    for i in range(1, 41):
+        ws.append([f"r{i:02d}", "pending", "tbd"])
+    wb.save(p)
+    src = OpenpyxlFileSource(str(p))
+    handle = TableHandle(
+        sheet="T",
+        region="A1:C41",
+        header_row=1,
+        columns=[
+            ColumnSpec(name="Id", dtype="string", role="key"),
+            ColumnSpec(name="Days", dtype="number"),  # declared number, cells are text
+            ColumnSpec(name="Cost", dtype="number"),  # declared number, cells are text
+        ],
+        header_span=1,
+    )
+    table = CanonicalTable(
+        table_id="t",
+        sheet="T",
+        region="A1:C41",
+        header_row=1,
+        columns=handle.columns,
+        extraction=ExtractionRef(script_name="t", row_key=["Id"]),
+    )
+    return src, handle, table
+
+
+def test_two_pass_accept_continue_clears_errors(tmp_path):
+    """Pass 0 fixes Days (2→1 errors, accept+continue); pass 1 fixes Cost (1→0, accept+break).
+
+    Pins: accept-then-CONTINUE, monotonic error-count improvement across passes, that
+    `current` is updated between passes, and that `attempts` threading doesn't break pass 1.
+    """
+    src, handle, table = _two_drift_setup(tmp_path)
+    # Seed the table with its real gate errors — this is the fallback path: the static
+    # pipeline produced a table WITH errors, and _accepts compares candidates against
+    # that truthful baseline. (A table object's `errors` is the gate result, not empty.)
+    from mcg_swarm.subagent.table_check import _reindex_and_check
+    base_errs = _reindex_and_check(src, table)
+    assert len(base_errs) == 2  # both drifted columns flagged → should_check fires
+    table = table.model_copy(update={"errors": base_errs})
+
     runner = FakeAgentRunner(
         actions=[],
         finals=[
-            {"column_patches": [{"name": "A", "unit": "USD"}]},
-            {},
+            {"column_patches": [{"name": "Days", "dtype": "string"}]},  # pass 0: 2 → 1
+            {"column_patches": [{"name": "Cost", "dtype": "string"}]},  # pass 1: 1 → 0
         ],
     )
-    TableValidator(runner, TableCheckPolicy(validate=True, max_passes=3)).review(
+    out = TableValidator(runner, TableCheckPolicy(validate=True, max_passes=3)).review(
         src, handle, table
     )
-    assert runner.calls >= 1  # loop invoked at least once
+    assert runner.calls == 2          # accept on pass 0 CONTINUED to a real pass 1
+    assert out.errors == []           # both errors cleared
+    days = next(c for c in out.columns if c.name == "Days")
+    cost = next(c for c in out.columns if c.name == "Cost")
+    assert days.dtype == "string"     # pass 0 fix adopted
+    assert cost.dtype == "string"     # pass 1 fix adopted (current was threaded forward)
 
 
 def test_rejected_patch_breaks_loop(tmp_path):
