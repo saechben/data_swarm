@@ -237,6 +237,7 @@ def test_gate_handles_region_with_empty_cells(tmp_path):
     import openpyxl as xl
     from mcg_swarm.schemas import CanonicalTable, ExtractionRef, ColumnSpec
     from mcg_swarm.extraction import ExtractionIndex
+    from mcg_swarm.source import OpenpyxlFileSource
 
     wb = xl.Workbook()
     ws = wb.active
@@ -286,8 +287,8 @@ def test_gate_handles_region_with_empty_cells(tmp_path):
         extraction=ExtractionRef(script_name="idx", row_key=["Key"]),
     )
 
-    # Build index: ExtractionIndex already uses values_only=True (no EmptyCell bug there)
-    idx = ExtractionIndex(path, "Data", "A1:D4", 2, columns, ["Key"])
+    # Build index: ExtractionIndex reads via WorkbookSource (no EmptyCell bug there)
+    idx = ExtractionIndex(OpenpyxlFileSource(path), "Data", "A1:D4", 2, columns, ["Key"])
 
     # This must NOT raise AttributeError on EmptyCell — should return a passing report
     rep = run_table_tests(path, table, idx)

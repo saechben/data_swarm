@@ -115,8 +115,7 @@ def _orchestrate_core(
         # Fix 2: build index from LLM-refined merged columns so dtype/unit/role
         # changes from subagent LLM pass reach query() output.
         merged_handle = dataclasses.replace(handle, columns=merged.columns)
-        # TODO(task3/4): drop .path shim
-        index = build_index(getattr(source, "path", source), merged_handle, row_key=row_key)
+        index = build_index(source, merged_handle, row_key=row_key)
 
         # §5  Build intermediate CanonicalTable for testing
         table = CanonicalTable(
