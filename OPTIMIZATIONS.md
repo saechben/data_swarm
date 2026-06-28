@@ -58,6 +58,19 @@ band and every table validation is a blocking `claude_agent_sdk.query` call of
 **Effort:** medium. **Payoff:** large in ReAct mode (near-linear latency cut up to
 the worker cap); modest in static mode.
 
+> **Cost note (feat/robust-extraction).** The quality gate now runs inside a
+> bounded repair loop (up to `MCG_REPAIR_MAX_PASSES`, default 3) per table, and
+> each gate call uses spread-sampling (`mcg_swarm/sampling.py` `select_sample`):
+> for tables larger than `MCG_SAMPLE_FULL_THRESHOLD` (default 300 rows), it reads
+> a stride-sampled set of ~`MCG_SAMPLE_SIZE` (default 300) rows spread across
+> head, middle, and tail — so one gate pass is O(sample\_size) random reads, but
+> on very large tables that still means up to **passes × sample\_size** row reads
+> per table (max 3 × 300 = 900 today). In static (no-ReAct) mode this stays fast;
+> in ReAct mode it stacks on top of the existing serial cost.
+> The `WorkbookSource` port (`mcg_swarm/source.py`) is the seam where a future
+> streaming or columnar reader removes this I/O cost without touching extraction
+> logic — see optimization #4.
+
 ---
 
 ## 2. Band fan-out is capped at a constant (K_MAX=4) and serial
