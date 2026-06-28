@@ -37,6 +37,17 @@ def _validate_enabled() -> bool:
     return os.environ.get("MCG_REACT_VALIDATE", "on").strip().lower() != "off"
 
 
+def _max_passes() -> int:
+    """Max repair passes for the table validator (MCG_REPAIR_MAX_PASSES, default 3).
+
+    Reads env at call time, clamped to >= 1. Tolerant of bad values (returns 3).
+    """
+    try:
+        return max(1, int(os.environ.get("MCG_REPAIR_MAX_PASSES", "3").strip()))
+    except (TypeError, ValueError):
+        return 3
+
+
 def _agent_auth_available() -> bool:
     """Whether the Claude Agent SDK has a usable auth path.
 
@@ -93,7 +104,7 @@ def build_table_validator(llm=None):
         from mcg_swarm.subagent.sdk_runner import ClaudeSDKAgentRunner
         from mcg_swarm.subagent.table_check import TableCheckPolicy, TableValidator
         return TableValidator(
-            ClaudeSDKAgentRunner(), TableCheckPolicy(validate=_validate_enabled()))
+            ClaudeSDKAgentRunner(), TableCheckPolicy(validate=_validate_enabled(), max_passes=_max_passes()))
     except Exception as e:
         _warn_once("MCG_SUBAGENT=react table validator unavailable (%s); skipping.", e)
         return None
