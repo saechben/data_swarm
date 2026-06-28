@@ -2,6 +2,7 @@
 """In-loop quality gate: coverage (resolution-only) + index integrity + round-trip + computed-column checks."""
 from __future__ import annotations
 
+import datetime as _dt
 from dataclasses import dataclass, field
 
 from openpyxl.utils import coordinate_to_tuple, get_column_letter
@@ -9,6 +10,31 @@ from openpyxl.utils import coordinate_to_tuple, get_column_letter
 from eval.util import range_box, values_match
 from mcg_swarm.formulas import build_env, evaluate
 from mcg_swarm.source import as_source
+
+DTYPE_MISMATCH_TOL = 0.2  # > this fraction of non-null sampled cells off-type => fail
+
+
+def _conforms(value, dtype: str) -> bool:
+    """Return True if *value* is consistent with the declared *dtype*."""
+    if value in (None, ""):
+        return True
+    if dtype == "string":
+        return True
+    if dtype == "boolean":
+        return isinstance(value, bool)
+    if dtype == "date":
+        return isinstance(value, _dt.datetime)
+    if dtype == "number":
+        if isinstance(value, bool):
+            return False
+        if isinstance(value, (int, float)):
+            return True
+        try:
+            float(str(value).replace(",", "").strip())
+            return True
+        except (TypeError, ValueError):
+            return False
+    return True
 
 
 @dataclass
@@ -60,10 +86,11 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
 
     # ------------------------------------------------------------------
     # Build deterministic sample (used by phases 2b, 3, 4).
-    # Use CONTIGUOUS first-N keys so the iter_rows bounding box stays small
-    # (avoids scanning the full table just to verify a last-row sample).
+    # Spread sample (head/middle/tail) so anomalies anywhere are caught, not just the
+    # first rows. An explicit non-default sample_size still caps it for small-sample callers.
     # ------------------------------------------------------------------
-    sample_keys = keys[:sample_size]
+    from mcg_swarm.sampling import select_sample
+    sample_keys = select_sample(keys, sample_size=(sample_size if sample_size != 25 else None))
 
     # ------------------------------------------------------------------
     # Phases 2 + 3 combined: ONE workbook open for all live-file checks.
@@ -130,6 +157,34 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
                 pos = (actual_row, scan_min_col + c_off)
                 if pos in needed:
                     live_cache[pos] = val
+
+    # ── Phase 5: dtype conformance ──────────────────────────────────────
+    # The structural checks above never validate that a column's VALUES match its
+    # declared dtype. Sample each non-key column's cells (already in live_cache via the
+    # round-trip needed-set) and flag a column whose non-null cells are mostly off-type.
+    key_names = set(table.extraction.row_key or [])
+    for col in table.columns:
+        if col.name in key_names or col.dtype == "string":
+            continue
+        phys_col = index._col_to_phys.get(col.name)
+        if phys_col is None:
+            continue
+        total = bad = 0
+        for k in sample_keys:
+            pr = index._key_to_phys.get(k)
+            if pr is None:
+                continue
+            val = live_cache.get((pr, phys_col))
+            if val in (None, ""):
+                continue
+            total += 1
+            if not _conforms(val, col.dtype):
+                bad += 1
+        if total >= 5 and (bad / total) > DTYPE_MISMATCH_TOL:
+            failures.append(
+                f"dtype-mismatch: column {col.name!r} declared {col.dtype} but "
+                f"{bad}/{total} sampled non-null cells are not {col.dtype}"
+            )
 
     # ── Phase 2a: column-name gate ──────────────────────────────────────
     # Build composite live_col_map from all header_span rows using bottom-first rule.
