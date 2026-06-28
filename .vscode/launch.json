@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Swarm demo: multiple subagents (run_swarm, static, fast)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/demo_walkthrough.py",
+      "args": ["multi"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "Swarm demo: ReAct fixes static error (run_swarm, LIVE ~60s)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/demo_walkthrough.py",
+      "args": ["fix"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+        "MCG_SUBAGENT": "react",
+        "MCG_REACT_VALIDATE": "on"
+      }
+    },
+    {
+      "name": "Swarm demo: both scenarios (run_swarm, LIVE ~60s)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/demo_walkthrough.py",
+      "args": ["both"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+        "MCG_SUBAGENT": "react",
+        "MCG_REACT_VALIDATE": "on"
+      }
+    }
+  ]
+}
