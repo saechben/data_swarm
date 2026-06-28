@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-import openpyxl
 from pydantic import BaseModel
 
 from mcg_swarm.schemas import ColumnSpec, SegmentReport
+from mcg_swarm.source import as_source
 from mcg_swarm.splitter import _infer_dtype
 from mcg_swarm.subagent.task import BandTask
 
@@ -29,7 +29,7 @@ class HeaderVerification(BaseModel):
     columns: list[_ColumnPatch] = []
 
 
-def _analyze_band_single_open(path, band, header):
+def _analyze_band_single_open(source, band, header):
     """Open workbook ONCE to infer column types AND detect first-row formulas.
 
     Replaces the two separate opens in _deterministic_columns + _detect_formulas
@@ -42,19 +42,12 @@ def _analyze_band_single_open(path, band, header):
     # skip here to avoid a second workbook open.  As a result, the formulas list
     # stays empty in this fast path.  This is informational-only: formula detection
     # does not affect scored capabilities.
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        ws = wb[band.sheet]
-        # Read up to 20 rows for dtype sampling
-        sample_rows = list(ws.iter_rows(
-            min_row=band.row_start,
-            max_row=min(band.row_end, band.row_start + 19),
-            min_col=band.col_start,
-            max_col=band.col_end,
-            values_only=True,
-        ))
-    finally:
-        wb.close()
+    src = as_source(source)
+    # Read up to 20 rows for dtype sampling
+    sample_rows = src.read_region(band.sheet, band.row_start,
+                                  band.col_start,
+                                  min(band.row_end, band.row_start + 19),
+                                  band.col_end)
 
     cols = []
     for j, name in enumerate(header):
@@ -64,9 +57,9 @@ def _analyze_band_single_open(path, band, header):
     return cols, [], anomalies
 
 
-def run_static(path, band, header, llm=None) -> SegmentReport:
+def run_static(source, band, header, llm=None) -> SegmentReport:
     """Deterministic column inference + optional one-shot LLM header-verify."""
-    columns, formulas, anomalies = _analyze_band_single_open(path, band, header)
+    columns, formulas, anomalies = _analyze_band_single_open(source, band, header)
     desc = f"Band {band.region} with columns: {', '.join(c.name for c in columns)}."
     if llm is not None:
         try:
@@ -94,4 +87,5 @@ class StaticSubagent:
         self._llm = llm
 
     def analyze(self, task: BandTask) -> SegmentReport:
-        return run_static(task.path, task.band, task.header, self._llm)
+        source = task.source if task.source is not None else task.path
+        return run_static(source, task.band, task.header, self._llm)

@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Optional
-import openpyxl
 from dataclasses import replace
 from pydantic import BaseModel, model_validator
+from mcg_swarm.source import as_source
 from mcg_swarm.splitter import TableHandle
 from mcg_swarm.schemas import ColumnSpec
 
@@ -28,23 +28,19 @@ class MessyTabResolution(BaseModel):
         return self
 
 
-def _preview(path: str, sheet: str, n: int = 30) -> list[list]:
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        ws = wb[sheet]
-        return [list(r) for r in ws.iter_rows(min_row=1, max_row=n, values_only=True)]
-    finally:
-        wb.close()
+def _preview(source, sheet: str, n: int = 30) -> list[list]:
+    src = as_source(source)
+    return [list(r) for r in src.read_region(sheet, 1, None, n, None)]
 
 
-def resolve_messy_tab(path: str, handle: TableHandle, llm) -> TableHandle:
+def resolve_messy_tab(source, handle: TableHandle, llm) -> TableHandle:
     """
     Attempt to resolve an ambiguous TableHandle using an LLM preview.
 
     Never raises. Returns handle still-ambiguous on low confidence or error.
     """
     try:
-        preview = _preview(path, handle.sheet)
+        preview = _preview(source, handle.sheet)
         res = llm.complete(
             system=(
                 "You analyze a messy spreadsheet tab and identify the single clean table: "

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-import openpyxl
 from openpyxl.utils import coordinate_to_tuple, get_column_letter
 
 from eval.util import range_box, values_match
 from mcg_swarm.formulas import build_env, evaluate
+from mcg_swarm.source import as_source
 
 
 @dataclass
@@ -19,7 +19,7 @@ class TableTestReport:
 
 
 
-def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTestReport:
+def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestReport:
     """
     Run deterministic in-loop quality checks on an extracted table.
 
@@ -121,21 +121,15 @@ def run_table_tests(path: str, table, index, sample_size: int = 25) -> TableTest
         scan_max_row = max(need_rows)
         scan_min_col = min(need_cols_list)
         scan_max_col = max(need_cols_list)
-        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-        try:
-            ws = wb[table.sheet]
-            for r_off, row_vals in enumerate(ws.iter_rows(
-                min_row=scan_min_row, max_row=scan_max_row,
-                min_col=scan_min_col, max_col=scan_max_col,
-                values_only=True,
-            )):
-                actual_row = scan_min_row + r_off
-                for c_off, val in enumerate(row_vals):
-                    pos = (actual_row, scan_min_col + c_off)
-                    if pos in needed:
-                        live_cache[pos] = val
-        finally:
-            wb.close()
+        src = as_source(source)
+        rows = src.read_region(table.sheet, scan_min_row, scan_min_col,
+                               scan_max_row, scan_max_col)
+        for r_off, row_vals in enumerate(rows):
+            actual_row = scan_min_row + r_off
+            for c_off, val in enumerate(row_vals):
+                pos = (actual_row, scan_min_col + c_off)
+                if pos in needed:
+                    live_cache[pos] = val
 
     # ── Phase 2a: column-name gate ──────────────────────────────────────
     # Build composite live_col_map from all header_span rows using bottom-first rule.

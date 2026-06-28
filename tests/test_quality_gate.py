@@ -1,6 +1,7 @@
 # tests/test_testing.py
 import openpyxl
 from mcg_swarm.quality_gate import run_table_tests, TableTestReport
+from mcg_swarm.source import OpenpyxlFileSource
 from mcg_swarm.splitter import split_workbook
 from mcg_swarm.extraction import build_index
 from mcg_swarm.schemas import CanonicalTable, ExtractionRef
@@ -33,7 +34,7 @@ def test_passes_on_clean_table(tmp_path):
     p = _wb(tmp_path, [["Region", "Revenue"], ["EMEA", 100], ["APAC", 200]])
     h = split_workbook(p)[0]
     idx = build_index(p, h, row_key=["Region"])
-    rep = run_table_tests(p, _canon(h), idx)
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
     assert rep.passed and rep.failures == []
 
 
@@ -44,7 +45,7 @@ def test_detects_roundtrip_mismatch(tmp_path):
     idx = build_index(p, h, row_key=["Region"])
     # corrupt: Revenue now points to Region's physical column
     idx._col_to_phys["Revenue"] = idx._col_to_phys["Region"]
-    rep = run_table_tests(p, _canon(h), idx)
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
     # column-integrity catches it: Revenue col in index != Revenue col in live header
     assert not rep.passed and rep.failures
 
@@ -64,7 +65,7 @@ def test_detects_numeric_column_swap(tmp_path):
         idx._col_to_phys["Units"],
         idx._col_to_phys["Revenue"],
     )
-    rep = run_table_tests(p, _canon(h), idx)
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
     assert not rep.passed, f"Expected failure but got no failures: {rep.failures}"
     assert any("column-integrity" in f for f in rep.failures), (
         f"Expected column-integrity failure, got: {rep.failures}"
@@ -84,7 +85,7 @@ def test_passes_single_row(tmp_path):
     p = _wb(tmp_path, [["ID", "Score"], [1, 99]])
     h = split_workbook(p)[0]
     idx = build_index(p, h, row_key=["ID"])
-    rep = run_table_tests(p, _canon(h), idx, sample_size=1)
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx, sample_size=1)
     assert rep.passed
 
 
@@ -100,7 +101,7 @@ def test_row_integrity_detects_key_remap(tmp_path):
     idx = build_index(p, h, row_key=["Name"])
     # Remap Alice to Bob's physical row
     idx._key_to_phys["Alice"] = idx._key_to_phys["Bob"]
-    rep = run_table_tests(p, _canon(h), idx)
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
     assert not rep.passed, "Expected failure when key maps to wrong physical row"
     assert any("row-integrity" in f for f in rep.failures), (
         f"Expected row-integrity failure, got: {rep.failures}"
@@ -135,7 +136,7 @@ def test_gate_flags_duplicate_columns(tmp_path):
         extraction=ExtractionRef(script_name="idx", row_key=["Region"]),
     )
 
-    rep = run_table_tests(p, table_with_dup, idx)
+    rep = run_table_tests(OpenpyxlFileSource(p), table_with_dup, idx)
 
     assert not rep.passed, "Expected failure for duplicate column names"
     assert any("duplicate" in f.lower() or "column-name" in f.lower() for f in rep.failures), (
@@ -167,7 +168,7 @@ def test_roundtrip_detects_query_divergence(tmp_path):
         return result
 
     with patch.object(idx, "query", side_effect=bad_query):
-        rep = run_table_tests(p, table, idx)
+        rep = run_table_tests(OpenpyxlFileSource(p), table, idx)
 
     assert not rep.passed, f"Expected round-trip failure but passed: {rep.failures}"
     assert any("round-trip" in f for f in rep.failures), (
@@ -204,7 +205,7 @@ def test_gate_flags_column_name_mismatch_vs_live_header(tmp_path):
         extraction=ExtractionRef(script_name="idx", row_key=["Region"]),
     )
 
-    rep = run_table_tests(p, table_wrong_name, idx)
+    rep = run_table_tests(OpenpyxlFileSource(p), table_wrong_name, idx)
 
     assert not rep.passed, "Expected failure for column name mismatch vs live header"
     assert any(
@@ -291,7 +292,7 @@ def test_gate_handles_region_with_empty_cells(tmp_path):
     idx = ExtractionIndex(OpenpyxlFileSource(path), "Data", "A1:D4", 2, columns, ["Key"])
 
     # This must NOT raise AttributeError on EmptyCell — should return a passing report
-    rep = run_table_tests(path, table, idx)
+    rep = run_table_tests(OpenpyxlFileSource(path), table, idx)
 
     assert isinstance(rep, TableTestReport), f"Expected TableTestReport, got {type(rep)}"
     assert rep.passed, f"Expected gate to pass for correct table, failures: {rep.failures}"

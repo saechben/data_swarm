@@ -61,8 +61,7 @@ def _orchestrate_core(
     """
     # §0  LLM header fallback — attempt resolution before fail-loud
     if handle.ambiguous and llm is not None:
-        # TODO(task3/4): drop .path shim
-        handle = resolve_messy_tab(getattr(source, "path", source), handle, llm)  # never raises
+        handle = resolve_messy_tab(source, handle, llm)  # never raises
 
     # §1  Ambiguous handle — fail-loud stub immediately
     if handle.ambiguous:
@@ -89,7 +88,7 @@ def _orchestrate_core(
                 (band.col_start - _min_col) : (band.col_end - _min_col + 1)
             ]
             return BandTask(
-                path=getattr(source, "path", source),  # TODO(task3/4): drop .path shim — BandTask.path renamed to source in Task 4
+                path=getattr(source, "path", None),
                 band=band,
                 header=[c.name for c in slice_],
                 handle_columns=list(slice_),
@@ -97,6 +96,7 @@ def _orchestrate_core(
                 ambiguous=getattr(handle, "ambiguous", False),
                 reason=getattr(handle, "reason", None),
                 table_region=handle.region,
+                source=source,
             )
         reports = [subagent.analyze(_band_task(b)) for b in bands]
 
@@ -132,8 +132,7 @@ def _orchestrate_core(
         )
 
         # §6  Run quality gate
-        # TODO(task3/4): drop .path shim
-        report = run_table_tests(getattr(source, "path", source), table, index)
+        report = run_table_tests(source, table, index)
         errors = [] if report.passed else list(report.failures)
 
         # §7  Return fully-populated CanonicalTable
@@ -178,6 +177,5 @@ def orchestrate_table(
     table = _orchestrate_core(
         source, handle, table_id, llm=llm, subagent=subagent, max_repairs=max_repairs)
     if table_validator is not None:
-        # TODO(task3/4): drop .path shim
-        table = table_validator.review(getattr(source, "path", source), handle, table)
+        table = table_validator.review(source, handle, table)
     return table

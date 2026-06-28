@@ -35,6 +35,7 @@ from eval.util import range_box
 from mcg_swarm.extraction import build_index
 from mcg_swarm.quality_gate import run_table_tests
 from mcg_swarm.schemas import CanonicalTable, ColumnSpec
+from mcg_swarm.source import as_source
 from mcg_swarm.splitter import TableHandle
 from mcg_swarm.subagent.escalating import REACT_MAX_TABLE_ROWS
 from mcg_swarm.subagent.tools import BandView, build_band_toolset
@@ -119,13 +120,14 @@ def _ranks_higher(cand, cand_errs, best, best_errs) -> bool:
 
 # --- reindex + gate (verify) -----------------------------------------------
 
-def _reindex_and_check(path: str, table: CanonicalTable) -> list[str]:
+def _reindex_and_check(source, table: CanonicalTable) -> list[str]:
     """Rebuild the index for *table* and return the quality-gate failures it produces."""
+    src = as_source(source)
     handle = TableHandle(
         sheet=table.sheet, region=table.region, header_row=table.header_row,
         columns=list(table.columns), header_span=table.header_span)
-    index = build_index(path, handle, row_key=list(table.extraction.row_key))
-    return list(run_table_tests(path, table, index).failures)
+    index = build_index(src, handle, row_key=list(table.extraction.row_key))
+    return list(run_table_tests(src, table, index).failures)
 
 
 def _first_key(columns) -> list[str]:
@@ -234,18 +236,19 @@ class TableValidator:
         self._runner = runner
         self._policy = policy or TableCheckPolicy()
 
-    def review(self, path: str, handle, table: CanonicalTable) -> CanonicalTable:
+    def review(self, source, handle, table: CanonicalTable) -> CanonicalTable:
         try:
+            src = as_source(source)
             _min_r, _min_c, max_r, _max_c = range_box(handle.region)
             n_data_rows = max_r - handle.header_row
             if not self._policy.should_check(table, n_data_rows):
                 return table
 
-            patch = self._run_agent(path, handle, table)
+            patch = self._run_agent(src, handle, table)
             best, best_errs = None, None
             for cand in _candidates(table, patch):
                 try:
-                    errs = _reindex_and_check(path, cand)
+                    errs = _reindex_and_check(src, cand)
                 except Exception:
                     continue  # a malformed candidate must not sink the others
                 if not self._accepts(table, cand, errs):
@@ -258,13 +261,13 @@ class TableValidator:
         except Exception:
             return table  # never break the pipeline
 
-    def _run_agent(self, path, handle, table) -> TableRecoveryPatch:
+    def _run_agent(self, source, handle, table) -> TableRecoveryPatch:
         min_r, min_c, max_r, max_c = range_box(handle.region)
         band = Band(
             sheet=handle.sheet, header_row=handle.header_row, region=handle.region,
             col_start=min_c, col_end=max_c,
             row_start=handle.header_row + 1, row_end=max_r)
-        tools = build_band_toolset(BandView(path, band))
+        tools = build_band_toolset(BandView(source, band))
         raw = self._runner.run(_table_seed(table), tools, schema=TableRecoveryPatch)
         return TableRecoveryPatch.model_validate(raw)
 

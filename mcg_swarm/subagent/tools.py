@@ -17,10 +17,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-import openpyxl
-
 from eval.util import range_box
 from mcg_swarm.size_estimate import Band
+from mcg_swarm.source import as_source
 
 
 @dataclass
@@ -34,22 +33,16 @@ class Tool:
 class BandView:
     """Read-only, once-snapshotted view over a band's cells (region-clamped probes)."""
 
-    def __init__(self, path: str, band: Band, rows_above_header: int = 2) -> None:
+    def __init__(self, source, band: Band, rows_above_header: int = 2) -> None:
         self.band = band
         # Snapshot a few rows above the header (to surface title banners / multi-row
         # headers) through the last data row, across the band's columns — one open.
         self._top = max(1, band.header_row - rows_above_header)   # abs first snapshot row
         self._left = band.col_start                               # abs first snapshot col
         self._ncols = band.col_end - band.col_start + 1
-        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-        try:
-            ws = wb[band.sheet]
-            self._grid = [list(r) for r in ws.iter_rows(
-                min_row=self._top, max_row=band.row_end,
-                min_col=band.col_start, max_col=band.col_end,
-                values_only=True)]
-        finally:
-            wb.close()
+        src = as_source(source)
+        self._grid = [list(r) for r in src.read_region(
+            band.sheet, self._top, band.col_start, band.row_end, band.col_end)]
 
     # -- internal helpers ---------------------------------------------------
 

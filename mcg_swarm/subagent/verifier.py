@@ -12,6 +12,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from mcg_swarm.schemas import SegmentReport
+from mcg_swarm.source import as_source
 from mcg_swarm.subagent.agent_runner import AgentRunner
 from mcg_swarm.subagent.task import BandTask, build_digest
 from mcg_swarm.subagent.tools import BandView, build_band_toolset
@@ -71,7 +72,7 @@ class ReActVerifier:
 
     def verify(self, task: BandTask, static_report: SegmentReport) -> SegmentReport:
         try:
-            view = BandView(task.path, task.band)
+            view = BandView(task.source if task.source is not None else as_source(task.path), task.band)
             tools = build_band_toolset(view)
             seed = build_digest(task, static_report).to_prompt()
             patch = self._runner.run(seed, tools, schema=SegmentReportPatch)
