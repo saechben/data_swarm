@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import openpyxl
 from openpyxl.utils import get_column_letter
 from mcg_swarm.schemas import ColumnSpec
+from mcg_swarm.source import WorkbookSource, as_source
 
 
 @dataclass
@@ -146,8 +147,7 @@ def _composite_col_names(header_rows: list[tuple], first_col: int, last_col: int
     return names
 
 
-def detect_table(ws) -> TableHandle:
-    rows = list(ws.iter_rows(values_only=True))
+def detect_table(rows: list[tuple], sheet_name: str) -> TableHandle:
     # find first non-empty row that is mostly strings and has a data row after it
     header_idx = None
     banner_rows: set[int] = set()
@@ -160,7 +160,7 @@ def detect_table(ws) -> TableHandle:
             header_idx = i
             break
     if header_idx is None:
-        return TableHandle(ws.title, "A1:A1", 1, [], ambiguous=True,
+        return TableHandle(sheet_name, "A1:A1", 1, [], ambiguous=True,
                            reason="no header row with data below")
     header = rows[header_idx]
 
@@ -253,15 +253,19 @@ def detect_table(ws) -> TableHandle:
     ambiguous = header_idx > 0 and any(
         k not in banner_rows and any(c not in (None, "") for c in rows[k])
         for k in range(header_idx))
-    return TableHandle(ws.title, region, header_idx + 1, cols,
+    return TableHandle(sheet_name, region, header_idx + 1, cols,
                        ambiguous=ambiguous,
                        reason="content above header row" if ambiguous else "",
                        header_span=header_span)
 
 
-def split_workbook(path: str) -> list[TableHandle]:
-    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-    try:
-        return [detect_table(wb[name]) for name in wb.sheetnames]
-    finally:
-        wb.close()
+def split_workbook(source) -> list[TableHandle]:
+    """Split workbook into TableHandles.
+
+    Accepts a path string, ``{"main": path}`` dict, or any ``WorkbookSource``.
+    """
+    src = as_source(source)
+    return [
+        detect_table(src.read_region(name), name)
+        for name in src.sheet_names()
+    ]

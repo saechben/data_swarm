@@ -5,20 +5,23 @@ from mcg_swarm.splitter import split_workbook, TableHandle
 from mcg_swarm.orchestrator import orchestrate_table
 from mcg_swarm.subagent import build_subagent, build_table_validator
 from mcg_swarm.extraction import build_index
+from mcg_swarm.source import as_source
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
 
 
-def run_swarm(workbooks: dict, llm=None) -> WorkbookExtraction:
+def run_swarm(workbooks, llm=None) -> WorkbookExtraction:
     """Fan-out across all tabs and return a WorkbookExtraction.
 
+    Accepts a path string, ``{"main": path}`` dict, or any ``WorkbookSource``.
     One bad tab never fails the file — its errors land on its CanonicalTable.
     resolve_messy_tab is handled internally by orchestrate_table (Task 11).
     """
-    path = workbooks["main"]
-    name = os.path.basename(path)
+    source = as_source(workbooks)            # dict/path/source all OK
+    name = getattr(source, "path", "workbook")
+    name = os.path.basename(name) if isinstance(name, str) else "workbook"
     try:
-        handles = split_workbook(path)
+        handles = split_workbook(source)
     except Exception as e:
         return WorkbookExtraction(
             workbook=name,
@@ -35,7 +38,7 @@ def run_swarm(workbooks: dict, llm=None) -> WorkbookExtraction:
     for i, h in enumerate(handles):
         sheets.append(h.sheet)
         tables.append(orchestrate_table(
-            path, h, table_id=f"{h.sheet}__{i}", llm=llm,
+            source, h, table_id=f"{h.sheet}__{i}", llm=llm,
             subagent=subagent, table_validator=table_validator))
     return WorkbookExtraction(
         workbook=name,
