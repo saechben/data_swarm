@@ -33,3 +33,11 @@ def test_extracted_value_provenance():
 def test_extra_fields_forbidden():
     with pytest.raises(Exception):
         ColumnSpec(name="x", dtype="number", bogus=1)
+
+def test_table_formula_context_field():
+    from mcg_swarm.schemas import TableFormula
+    f = TableFormula(target="Total", expression="A+B", context="Total is A plus B")
+    assert f.context == "Total is A plus B"
+    # backward-compatible: context is optional and defaults to None
+    g = TableFormula(target="Total", expression="A+B")
+    assert g.context is None

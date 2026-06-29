@@ -21,6 +21,7 @@ class TableFormula(_Base):
     expression: str
     operands: list[OperandBinding] = Field(default_factory=list)
     ast: Optional[dict] = None
+    context: Optional[str] = None
 
 class ExtractionRef(_Base):
     script_name: str
