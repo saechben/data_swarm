@@ -39,6 +39,9 @@ def _build_real_runner():
     against current SDK docs.
     """
     from agent_runtime.claude_sdk_runner import ClaudeSDKAgentRunner
+    # demo-only: maximal host power (Bash + bypassPermissions) so the walkthrough runs
+    # unattended. Do NOT copy this combo into a production composition root — choose the
+    # host_tools / permission_mode the app actually needs there.
     return ClaudeSDKAgentRunner(
         host_tools=("Bash", "Read", "Grep"), permission_mode="bypassPermissions")
 
