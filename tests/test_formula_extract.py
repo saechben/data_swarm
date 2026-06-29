@@ -105,3 +105,15 @@ def test_extract_no_formulas_returns_empty():
     handle, index = _make_index(src)
     formulas, notes = extract_formulas(src, index, list(handle.columns))
     assert formulas == [] and notes == []
+
+
+def test_orchestrator_populates_formulas_endtoend():
+    from mcg_swarm.splitter import split_workbook
+    from mcg_swarm.orchestrator import _orchestrate_core
+    src = vertical_fake()
+    handle = split_workbook(src)[0]
+    table = _orchestrate_core(src, handle, table_id="t0")
+    rev = [f for f in table.formulas if f.target == "Revenue"]
+    assert rev and rev[0].expression == "Units*Price"
+    assert rev[0].context
+    assert table.errors == []   # gate stays green (formula recomputes correctly)
