@@ -9,6 +9,7 @@ from openpyxl.utils import get_column_letter
 
 from mcg_swarm.schemas import ColumnSpec, TableFormula
 from mcg_swarm.formula_translate import translate_formula
+from mcg_swarm.formulas import parse_ast
 
 
 def _gloss(target: str, operands, expression: str) -> str:
@@ -40,7 +41,14 @@ def extract_formulas(source, index, columns: list, scan_limit: int = 20) -> tupl
         formulas: list = []
         notes: list = []
 
-        for abs_row, row in zip(scan_rows, grid):
+        # Index grid by absolute row to decouple sparse scan_rows from the dense
+        # block read (grid covers scan_rows[0]..scan_rows[-1] contiguously).
+        base = scan_rows[0]
+        for abs_row in scan_rows:
+            offset_row = abs_row - base
+            if not (0 <= offset_row < len(grid)):
+                continue
+            row = grid[offset_row]
             for offset, val in enumerate(row):
                 if not (isinstance(val, str) and val.startswith("=")):
                     continue
@@ -55,8 +63,14 @@ def extract_formulas(source, index, columns: list, scan_limit: int = 20) -> tupl
                     if key in seen:
                         continue
                     seen.add(key)
+                    # Populate ast for translated formulas (spec §6 step 4).
+                    try:
+                        ast_dict = parse_ast(expression)
+                    except Exception:
+                        ast_dict = None
                     formulas.append(TableFormula(
                         target=target, expression=expression, operands=operands,
+                        ast=ast_dict,
                         context=_gloss(target, operands, expression)))
                     spec = by_col.get(target)
                     if isinstance(spec, ColumnSpec):

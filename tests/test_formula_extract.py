@@ -119,6 +119,51 @@ def test_orchestrator_populates_formulas_endtoend():
     assert table.errors == []   # gate stays green (formula recomputes correctly)
 
 
+def test_per_formula_isolation_bad_formula_does_not_wipe_good():
+    """Critical regression: one untranslatable formula in a column must NOT abort
+    extraction of other columns in the same table. The translatable column must
+    still appear as computed, and the untranslatable column as captured-untranslated,
+    and NO whole-table 'formula extraction error' note may be emitted."""
+    from mcg_swarm.formula_extract import extract_formulas
+
+    # 4-col table: Units | Price | Revenue (=A*B, translatable) | Flag (=A>B, untranslatable)
+    values = {
+        (1, 1): "Units", (1, 2): "Price", (1, 3): "Revenue", (1, 4): "Flag"
+    }
+    formulas_in = {}
+    for r in range(2, 5):
+        values[(r, 1)] = r
+        values[(r, 2)] = 10
+        values[(r, 3)] = r * 10          # cached value for Revenue
+        values[(r, 4)] = 0               # cached value for Flag
+        formulas_in[(r, 3)] = f"=A{r}*B{r}"   # translatable
+        formulas_in[(r, 4)] = f"=A{r}>B{r}"   # untranslatable comparison
+
+    src = FakeSource("Sheet1", values, formulas_in)
+    handle, index = _make_index(src)
+    columns = list(handle.columns)
+    formulas, notes = extract_formulas(src, index, columns)
+
+    # No whole-table abort
+    assert not any("formula extraction error" in n for n in notes), \
+        f"extraction aborted with error: {notes}"
+
+    # Revenue is translated (computed role, has operands)
+    revenue = next((f for f in formulas if f.target == "Revenue"), None)
+    assert revenue is not None, "Revenue formula not found"
+    assert revenue.expression == "Units*Price"
+    assert len(revenue.operands) > 0
+    rev_col = next(c for c in columns if c.name == "Revenue")
+    assert rev_col.role == "computed"
+
+    # Flag is captured-untranslated (empty operands, reason present)
+    flag = next((f for f in formulas if f.target == "Flag"), None)
+    assert flag is not None, "Flag formula not captured"
+    assert flag.operands == []
+    flag_col = next(c for c in columns if c.name == "Flag")
+    assert flag_col.role != "computed"
+
+
 def test_real_transposed_workbook_captures_without_crash():
     """formula_chain_pnl is transposed (=B2*B3). Phase 1 captures these as
     untranslated (same-row guard) and must never crash or mark them computed."""

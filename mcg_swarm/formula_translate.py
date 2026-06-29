@@ -9,11 +9,10 @@ import re
 from typing import Optional
 
 from mcg_swarm.schemas import OperandBinding
-from mcg_swarm.formulas import parse_ast, FORMULA_FUNCS
+from mcg_swarm.formulas import parse_ast
 
 _A1 = re.compile(r"\$?([A-Z]{1,3})\$?([0-9]+)")
 _SUM_RANGE = re.compile(r"SUM\(\s*\$?([A-Z]{1,3})\$?([0-9]+)\s*:\s*\$?([A-Z]{1,3})\$?([0-9]+)\s*\)")
-_ALLOWED_FUNCS = set(FORMULA_FUNCS) | {"IF"}
 
 
 def _col_to_idx(letters: str) -> int:
@@ -30,6 +29,8 @@ def translate_formula(excel: str, formula_row: int, col_by_letter: dict) -> tupl
         expr = expr[1:]
     if "!" in expr:
         return None, [], "cross-sheet reference"
+    # Excel ^ means exponent; Python ** is supported by both eval_expr and parse_ast.
+    expr = expr.replace("^", "**")
 
     idx_to_letter = {_col_to_idx(L): L for L in col_by_letter}
     operands: dict[str, OperandBinding] = {}
@@ -69,23 +70,29 @@ def translate_formula(excel: str, formula_row: int, col_by_letter: dict) -> tupl
     except _Bail as b:
         return None, [], str(b)
 
-    # 3) Validate the rewritten expression: must parse, every Name must be an
-    #    operand, every Call must be an allowed function. Catches named ranges
-    #    (bare identifiers) and disallowed functions.
+    # 3) Validate the rewritten expression: must parse, every Call bails (Phase 1
+    #    supports arithmetic only; SUM is already expanded by the regex above),
+    #    every Name must be a registered operand. Call is checked first because
+    #    ast.walk yields a Call before its child Name nodes, preventing the
+    #    misleading "unknown reference: ROUND" message.
     try:
         tree = _ast.parse(expr, mode="eval")
     except SyntaxError:
         return None, [], "unparseable expression"
     for node in _ast.walk(tree):
+        if isinstance(node, _ast.Call):
+            name = node.func.id if isinstance(node.func, _ast.Name) else "expression"
+            return None, [], f"unsupported function: {name} (Phase 1)"
         if isinstance(node, _ast.Name) and node.id not in operands:
             return None, [], f"unknown reference: {node.id}"
-        if isinstance(node, _ast.Call):
-            if not (isinstance(node.func, _ast.Name) and node.func.id in _ALLOWED_FUNCS):
-                return None, [], "disallowed function"
     if not operands:
         return None, [], "no in-table column references"
 
-    parse_ast(expr)  # sanity: serialisable (raises only on unsupported nodes)
+    # Belt-and-suspenders: guard parse_ast so no unsupported node type can escape.
+    try:
+        ast_result = parse_ast(expr)
+    except Exception:
+        return None, [], "unsupported expression"
     return expr, list(operands.values()), None
 
 

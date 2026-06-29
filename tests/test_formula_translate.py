@@ -49,3 +49,44 @@ def test_out_of_table_column_bails():
     expr, ops, reason = translate_formula("=A2*Z2", 2, COL)
     assert expr is None and ops == []
     assert reason
+
+
+# --- Regression tests for final-review fixes ---
+
+def test_caret_scalar_exponent_translates():
+    """Excel ^ means exponent; =A2^2 must translate to Units**2."""
+    expr, ops, reason = translate_formula("=A2^2", 2, COL)
+    assert reason is None
+    assert expr == "Units**2"
+    assert {o.name for o in ops} == {"Units"}
+
+
+def test_caret_column_exponent_translates():
+    """=A2^B2 must translate to Units**Price."""
+    expr, ops, reason = translate_formula("=A2^B2", 2, COL)
+    assert reason is None
+    assert expr == "Units**Price"
+    assert {o.name for o in ops} == {"Units", "Price"}
+
+
+def test_round_bails_with_function_reason_not_unknown_reference():
+    """ROUND is a function call; bail reason must contain 'function', not 'unknown reference'."""
+    expr, ops, reason = translate_formula("=ROUND(A2*B2,2)", 2, COL)
+    assert expr is None and ops == []
+    assert reason is not None
+    assert "function" in reason
+    assert "unknown reference" not in reason
+
+
+def test_comparison_bails_cleanly_no_exception():
+    """=A2>B2 is a comparison; must bail cleanly (no exception raised)."""
+    expr, ops, reason = translate_formula("=A2>B2", 2, COL)
+    assert expr is None and ops == []
+    assert reason is not None
+
+
+def test_excel_string_concat_bails_cleanly_no_exception():
+    """=A2&B2 is Excel string-concat (becomes bitwise & in Python); must bail cleanly."""
+    expr, ops, reason = translate_formula("=A2&B2", 2, COL)
+    assert expr is None and ops == []
+    assert reason is not None
