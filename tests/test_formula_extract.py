@@ -51,3 +51,57 @@ def test_index_geometry_accessors():
     cols = index.physical_columns()
     assert cols["Units"] == 1 and cols["Price"] == 2 and cols["Revenue"] == 3
     assert index.data_row_numbers() == [2, 3, 4]
+
+
+def _make_index(src, row_key=None):
+    from mcg_swarm.splitter import split_workbook
+    from mcg_swarm.extraction import build_index
+    handle = split_workbook(src)[0]
+    index = build_index(src, handle, row_key=row_key or [])
+    return handle, index
+
+
+def test_extract_vertical_formula_translates_and_upgrades_role():
+    from mcg_swarm.formula_extract import extract_formulas
+    src = vertical_fake()
+    handle, index = _make_index(src)
+    columns = list(handle.columns)
+    formulas, notes = extract_formulas(src, index, columns)
+    rev = next(f for f in formulas if f.target == "Revenue")
+    assert rev.expression == "Units*Price"
+    assert {o.name for o in rev.operands} == {"Units", "Price"}
+    assert rev.context and "Revenue" in rev.context
+    # role upgraded in place on the passed ColumnSpec
+    assert next(c for c in columns if c.name == "Revenue").role == "computed"
+
+
+def test_extract_cross_sheet_captured_untranslated():
+    from mcg_swarm.formula_extract import extract_formulas
+    values = {(1, 1): "A", (1, 2): "B", (1, 3): "C"}
+    formulas_in = {}
+    for r in range(2, 5):
+        values[(r, 1)] = r
+        values[(r, 2)] = 2
+        values[(r, 3)] = 99               # arbitrary cached value
+        formulas_in[(r, 3)] = f"='Inputs'!A1*A{r}"   # cross-sheet -> untranslatable
+    src = FakeSource("Sheet1", values, formulas_in)
+    handle, index = _make_index(src)
+    columns = list(handle.columns)
+    formulas, notes = extract_formulas(src, index, columns)
+    c = next(f for f in formulas if f.target == "C")
+    assert c.operands == []                       # not translated
+    assert c.context                              # reason present
+    assert next(col for col in columns if col.name == "C").role != "computed"
+    assert any("C" in n for n in notes)           # provisional note recorded
+
+
+def test_extract_no_formulas_returns_empty():
+    from mcg_swarm.formula_extract import extract_formulas
+    values = {(1, 1): "A", (1, 2): "B"}
+    for r in range(2, 5):
+        values[(r, 1)] = r
+        values[(r, 2)] = r * 2
+    src = FakeSource("Sheet1", values, {})
+    handle, index = _make_index(src)
+    formulas, notes = extract_formulas(src, index, list(handle.columns))
+    assert formulas == [] and notes == []
