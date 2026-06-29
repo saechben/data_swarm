@@ -1,41 +1,32 @@
-"""Tests for build_subagent selection + graceful fallback (no SDK/key needed)."""
-import pytest
-
-from mcg_swarm.subagent import build_subagent, StaticSubagent
+"""build_subagent / build_table_validator wiring: runner injected, no env, no SDK."""
+from mcg_swarm.subagent import build_subagent, build_table_validator, StaticSubagent
 from mcg_swarm.subagent.escalating import EscalatingSubagent
+from mcg_swarm.subagent.table_check import TableValidator
+from mcg_swarm.subagent.agent_runner import FakeAgentRunner
+from mcg_swarm.config import SwarmConfig
 
 
-def test_default_is_static(monkeypatch):
-    monkeypatch.delenv("MCG_SUBAGENT", raising=False)
-    assert isinstance(build_subagent(), StaticSubagent)
+def _fake_runner():
+    return FakeAgentRunner(actions=[], final={})
 
 
-def test_react_without_any_auth_falls_back(monkeypatch):
-    # No API key AND no claude CLI on PATH → no usable agent auth → static.
-    monkeypatch.setenv("MCG_SUBAGENT", "react")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.setattr("mcg_swarm.subagent.shutil.which", lambda _name: None)
-    assert isinstance(build_subagent(), StaticSubagent)
+def test_no_runner_is_static():
+    assert isinstance(build_subagent(runner=None), StaticSubagent)
 
 
-def test_react_uses_cli_auth_without_key(monkeypatch):
-    # The Claude Agent SDK authenticates via the logged-in `claude` CLI, so react must
-    # engage even with no ANTHROPIC_API_KEY when the CLI is present (verified live).
-    pytest.importorskip("claude_agent_sdk")
-    monkeypatch.setenv("MCG_SUBAGENT", "react")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.setattr("mcg_swarm.subagent.shutil.which", lambda _name: "/usr/bin/claude")
-    assert isinstance(build_subagent(), EscalatingSubagent)
+def test_runner_gives_escalating():
+    sub = build_subagent(runner=_fake_runner())
+    assert isinstance(sub, EscalatingSubagent)
 
 
-def test_react_with_key_but_sdk_missing_falls_back(monkeypatch):
-    try:
-        import claude_agent_sdk  # noqa: F401
-        pytest.skip("Claude Agent SDK installed; missing-SDK fallback not exercised here")
-    except ImportError:
-        pass
-    monkeypatch.setenv("MCG_SUBAGENT", "react")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-not-real")
-    sub = build_subagent()
-    assert isinstance(sub, StaticSubagent)
-    assert not isinstance(sub, EscalatingSubagent)
+def test_validator_none_without_runner():
+    assert build_table_validator(runner=None) is None
+
+
+def test_validator_present_with_runner():
+    assert isinstance(build_table_validator(runner=_fake_runner()), TableValidator)
+
+
+def test_config_threads_validate_into_escalation():
+    sub = build_subagent(runner=_fake_runner(), config=SwarmConfig(validate=False))
+    assert sub._policy.validate is False
