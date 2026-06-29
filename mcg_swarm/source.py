@@ -14,6 +14,9 @@ class WorkbookSource(Protocol):
                     min_col: Optional[int] = None, max_row: Optional[int] = None,
                     max_col: Optional[int] = None) -> list[tuple]: ...
     def read_cell(self, sheet: str, row: int, col: int) -> Any: ...
+    def read_formula_region(self, sheet: str, min_row: Optional[int] = None,
+                            min_col: Optional[int] = None, max_row: Optional[int] = None,
+                            max_col: Optional[int] = None) -> list[tuple]: ...
 
 
 class OpenpyxlFileSource:
@@ -47,6 +50,18 @@ class OpenpyxlFileSource:
         finally:
             wb.close()
 
+    def read_formula_region(self, sheet, min_row=None, min_col=None, max_row=None, max_col=None):
+        # data_only=False exposes formula strings; values_only=True avoids touching
+        # cell.coordinate on EmptyCell objects (read-only mode crash, commit b77195b).
+        wb = openpyxl.load_workbook(self.path, data_only=False, read_only=True)
+        try:
+            ws = wb[sheet]
+            return [r for r in ws.iter_rows(
+                min_row=min_row, max_row=max_row,
+                min_col=min_col, max_col=max_col, values_only=True)]
+        finally:
+            wb.close()
+
 
 class SnapshotSource:
     """Serves read_cell from an in-memory snapshot so callers that read cell-by-cell —
@@ -72,6 +87,9 @@ class SnapshotSource:
         if sheet == self._sheet and (row, col) in self._cells:
             return self._cells[(row, col)]
         return self._inner.read_cell(sheet, row, col)
+
+    def read_formula_region(self, sheet, min_row=None, min_col=None, max_row=None, max_col=None):
+        return self._inner.read_formula_region(sheet, min_row, min_col, max_row, max_col)
 
 
 def as_source(x) -> WorkbookSource:

@@ -14,6 +14,7 @@ from mcg_swarm.size_estimate import plan_bands
 from mcg_swarm.subagent import BandTask, StaticSubagent
 from mcg_swarm.merge import merge_reports
 from mcg_swarm.extraction import build_index
+from mcg_swarm.formula_extract import extract_formulas
 from mcg_swarm.quality_gate import run_table_tests
 from mcg_swarm.header_llm import resolve_messy_tab
 from eval.util import range_box
@@ -117,6 +118,14 @@ def _orchestrate_core(
         merged_handle = dataclasses.replace(handle, columns=merged.columns)
         index = build_index(source, merged_handle, row_key=row_key)
 
+        # §4.5  Extract in-cell formulas: translate same-row arithmetic, upgrade
+        # role='computed' on translated targets (in place on merged.columns, which
+        # `index` shares), capture the rest as provisional notes. Never raises.
+        extracted_formulas, formula_notes = extract_formulas(
+            source, index, merged.columns)
+        all_formulas = list(merged.formulas) + extracted_formulas
+        all_notes = list(merged.anomalies) + formula_notes
+
         # §5  Build intermediate CanonicalTable for testing
         table = CanonicalTable(
             table_id=table_id,
@@ -125,9 +134,9 @@ def _orchestrate_core(
             header_row=handle.header_row,
             header_span=getattr(handle, "header_span", 1),
             columns=merged.columns,
-            formulas=merged.formulas,
+            formulas=all_formulas,
             description=merged.description,
-            provisional_notes=list(merged.anomalies),
+            provisional_notes=all_notes,
             extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=row_key),
         )
 
@@ -143,9 +152,9 @@ def _orchestrate_core(
             header_row=handle.header_row,
             header_span=getattr(handle, "header_span", 1),
             columns=merged.columns,
-            formulas=merged.formulas,
+            formulas=all_formulas,
             description=merged.description,
-            provisional_notes=list(merged.anomalies),
+            provisional_notes=all_notes,
             extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=row_key),
             errors=errors,
         )
