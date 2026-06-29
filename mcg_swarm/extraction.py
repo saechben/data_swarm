@@ -1,8 +1,11 @@
 # mcg_swarm/extraction.py
 from __future__ import annotations
+import logging
 from openpyxl.utils import get_column_letter
 from eval.util import range_box
 from mcg_swarm.schemas import ExtractedValue
+
+_log = logging.getLogger(__name__)
 
 
 def _composite_col_map(grid: list, hdr_off: int, header_span: int,
@@ -30,7 +33,18 @@ def _composite_col_map(grid: list, hdr_off: int, header_span: int,
                 name = str(val)
                 break
         if name is not None:
-            col_map[name] = min_col + j
+            abs_col = min_col + j
+            if name in col_map:
+                # Duplicate header name: the later column overwrites the earlier,
+                # making the earlier column unreachable via query() and silently
+                # shifting which physical cell `name` resolves to. Surface it.
+                _log.warning(
+                    "duplicate header name %r: column %s overwrites column %s "
+                    "(earlier column becomes unreachable via query())",
+                    name, get_column_letter(abs_col),
+                    get_column_letter(col_map[name]),
+                )
+            col_map[name] = abs_col
     return col_map
 
 

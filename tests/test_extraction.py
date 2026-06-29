@@ -171,3 +171,13 @@ def test_read_all_none_values_preserved(tmp_path):
     by_key_col = {(rk, cn): val for rk, cn, val, _ in rows}
     assert by_key_col[("EMEA", "Revenue")] is None
     assert by_key_col[("APAC", "Revenue")] == 200
+
+
+def test_duplicate_header_warns(caplog):
+    from mcg_swarm.extraction import _composite_col_map
+    grid = [["Region", "Total", "Total"]]
+    with caplog.at_level("WARNING", logger="mcg_swarm.extraction"):
+        m = _composite_col_map(grid, 0, 1, 1)
+    # later column wins (last-write), and the collision is surfaced, not silent
+    assert m == {"Region": 1, "Total": 3}
+    assert any("duplicate header name 'Total'" in r.message for r in caplog.records)
