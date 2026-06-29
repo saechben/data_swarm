@@ -4,13 +4,14 @@ from mcg_swarm.schemas import WorkbookExtraction
 from mcg_swarm.splitter import split_workbook, TableHandle
 from mcg_swarm.orchestrator import orchestrate_table
 from mcg_swarm.subagent import build_subagent, build_table_validator
+from mcg_swarm.config import SwarmConfig
 from mcg_swarm.extraction import build_index
 from mcg_swarm.source import as_source
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
 
 
-def run_swarm(workbooks, llm=None) -> WorkbookExtraction:
+def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmConfig()) -> WorkbookExtraction:
     """Fan-out across all tabs and return a WorkbookExtraction.
 
     Accepts a path string, ``{"main": path}`` dict, or any ``WorkbookSource``.
@@ -30,10 +31,10 @@ def run_swarm(workbooks, llm=None) -> WorkbookExtraction:
             generator_version=GENERATOR_VERSION,
             errors=[f"unreadable workbook: {e}"],
         )
-    # Construct the configured subagent (band-level) + table-level validator once
-    # (MCG_SUBAGENT); both threaded down opaquely. Either may be a no-op/None.
-    subagent = build_subagent(llm=llm)
-    table_validator = build_table_validator(llm=llm)
+    # The application injects the ReAct runner (built against its provider/transport).
+    # runner is None → static-only band subagent and no table validator.
+    subagent = build_subagent(llm=llm, runner=runner, config=config)
+    table_validator = build_table_validator(runner=runner, config=config)
     tables, sheets = [], []
     for i, h in enumerate(handles):
         sheets.append(h.sheet)
