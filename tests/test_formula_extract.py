@@ -37,3 +37,17 @@ def test_read_formula_region_empty_cells_no_crash(tmp_path):
     src = OpenpyxlFileSource(str(p))
     rows = src.read_formula_region("Sheet1", 1, 1, 2, 3)  # must not raise
     assert rows[1][0] == 1 and rows[1][1] is None
+
+
+from fake_source import FakeSource, vertical_fake
+
+
+def test_index_geometry_accessors():
+    from mcg_swarm.splitter import split_workbook
+    from mcg_swarm.extraction import build_index
+    src = vertical_fake()
+    handle = split_workbook(src)[0]
+    index = build_index(src, handle, row_key=[])
+    cols = index.physical_columns()
+    assert cols["Units"] == 1 and cols["Price"] == 2 and cols["Revenue"] == 3
+    assert index.data_row_numbers() == [2, 3, 4]

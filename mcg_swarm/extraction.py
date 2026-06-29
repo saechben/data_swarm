@@ -137,6 +137,14 @@ class ExtractionIndex:
                 ))
         return out
 
+    def physical_columns(self) -> dict:
+        """Column name -> absolute 1-based physical column (copy; safe to mutate)."""
+        return dict(self._col_to_phys)
+
+    def data_row_numbers(self) -> list:
+        """Sorted absolute 1-based physical row numbers of data rows."""
+        return sorted(set(self._key_to_phys.values()))
+
     def read_all(self, max_rows: int | None = None) -> list[tuple]:
         """Open the workbook ONCE and return all (row_key, col_name, value, cell_ref) tuples.
 
