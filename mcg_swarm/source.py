@@ -48,6 +48,32 @@ class OpenpyxlFileSource:
             wb.close()
 
 
+class SnapshotSource:
+    """Serves read_cell from an in-memory snapshot so callers that read cell-by-cell —
+    e.g. ExtractionIndex.query() during the quality gate — avoid a workbook open per call.
+
+    Backed by a {(row, col): value} dict for one sheet (typically the gate's already-read
+    `live_cache`). read_region and any out-of-snapshot read_cell delegate to the wrapped
+    source, so behaviour outside the snapshot window is unchanged. The snapshot is a
+    point-in-time view: correct for the duration of one validation run."""
+
+    def __init__(self, inner: WorkbookSource, sheet: str, cells: dict) -> None:
+        self._inner = inner
+        self._sheet = sheet
+        self._cells = cells
+
+    def sheet_names(self) -> list[str]:
+        return self._inner.sheet_names()
+
+    def read_region(self, sheet, min_row=None, min_col=None, max_row=None, max_col=None):
+        return self._inner.read_region(sheet, min_row, min_col, max_row, max_col)
+
+    def read_cell(self, sheet, row, col):
+        if sheet == self._sheet and (row, col) in self._cells:
+            return self._cells[(row, col)]
+        return self._inner.read_cell(sheet, row, col)
+
+
 def as_source(x) -> WorkbookSource:
     """Normalize a path str, {'main': path} dict, or WorkbookSource into a WorkbookSource."""
     if isinstance(x, WorkbookSource) and not isinstance(x, (str, dict)):

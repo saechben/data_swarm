@@ -9,7 +9,7 @@ from openpyxl.utils import coordinate_to_tuple, get_column_letter
 
 from eval.util import range_box, values_match
 from mcg_swarm.formulas import build_env, evaluate
-from mcg_swarm.source import as_source
+from mcg_swarm.source import as_source, SnapshotSource
 
 DTYPE_MISMATCH_TOL = 0.2  # > this fraction of non-null sampled cells off-type => fail
 
@@ -159,33 +159,44 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
                 if pos in needed:
                     live_cache[pos] = val
 
-    # ── Phase 5: dtype conformance ──────────────────────────────────────
+    # ── Phase 5: dtype conformance (validated through the REAL query() path) ─
     # The structural checks above never validate that a column's VALUES match its
-    # declared dtype. Sample each non-key column's cells (already in live_cache via the
-    # round-trip needed-set) and flag a column whose non-null cells are mostly off-type.
+    # declared dtype. Crucially, we validate the value the agent will actually receive:
+    # each sampled cell is read via index.query() — the same function downstream consumers
+    # call — not the raw batch read. query() opens the file per cell (O(rows) in read-only
+    # mode), so for the bounded sample we point it at a SnapshotSource backed by live_cache:
+    # one read, query()'s real resolution + dtype tagging exercised, and no per-cell
+    # workbook opens (the OPT-2 large-file hang). The independent fresh-read oracle that
+    # proves snapshot == live cell stays in Phase 3 round-trip.
     key_names = set(table.extraction.row_key or [])
-    for col in table.columns:
-        if col.name in key_names or col.dtype == "string":
-            continue
-        phys_col = index._col_to_phys.get(col.name)
-        if phys_col is None:
-            continue
-        total = bad = 0
-        for k in sample_keys:
-            pr = index._key_to_phys.get(k)
-            if pr is None:
+    _orig_src = index.source
+    index.source = SnapshotSource(_orig_src, index.sheet, live_cache)
+    try:
+        for col in table.columns:
+            if col.name in key_names or col.dtype == "string":
                 continue
-            val = live_cache.get((pr, phys_col))
-            if val in (None, ""):
+            if col.name not in index._col_to_phys:
                 continue
-            total += 1
-            if not _conforms(val, col.dtype):
-                bad += 1
-        if total >= 5 and (bad / total) > DTYPE_MISMATCH_TOL:
-            failures.append(
-                f"dtype-mismatch: column {col.name!r} declared {col.dtype} but "
-                f"{bad}/{total} sampled non-null cells are not {col.dtype}"
-            )
+            total = bad = 0
+            for k in sample_keys:
+                if k not in index._key_to_phys:
+                    continue
+                try:
+                    val = index.query(k, col.name).value
+                except Exception:
+                    continue
+                if val in (None, ""):
+                    continue
+                total += 1
+                if not _conforms(val, col.dtype):
+                    bad += 1
+            if total >= 5 and (bad / total) > DTYPE_MISMATCH_TOL:
+                failures.append(
+                    f"dtype-mismatch: column {col.name!r} declared {col.dtype} but "
+                    f"{bad}/{total} sampled non-null cells are not {col.dtype}"
+                )
+    finally:
+        index.source = _orig_src
 
     # ── Phase 2a: column-name gate ──────────────────────────────────────
     # Build composite live_col_map from all header_span rows using bottom-first rule.
