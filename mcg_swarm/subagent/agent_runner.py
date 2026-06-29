@@ -2,7 +2,7 @@
 
 A runner receives the seed prompt and the framework-agnostic tool list, drives an
 agent loop, and returns the final structured patch (validated against `schema`). The
-real implementation lives in `sdk_runner.py`; `FakeAgentRunner` here makes the verifier
+real implementation lives in `agent_runtime.claude_sdk_runner`; `FakeAgentRunner` here
 testable fully offline by replaying a scripted sequence of tool calls.
 """
 from __future__ import annotations

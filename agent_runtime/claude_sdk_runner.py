@@ -1,17 +1,19 @@
-"""ClaudeSDKAgentRunner — the ONLY module that imports the agent framework.
+"""ClaudeSDKAgentRunner — an application-side AgentRunner backed by the Claude Agent SDK.
 
-Adapts our framework-agnostic `Tool` objects into Claude Agent SDK tools, runs the agent
-loop with an allow-listed toolset and a turn budget, and collects the final structured
-result via a `finalize` tool whose input schema IS the verifier's patch schema (so the
-result is validated tool input, not brittle free-text JSON).
+Adapts the swarm's framework-agnostic `Tool` objects into SDK tools, runs the agent loop
+with an allow-listed toolset and a turn budget, and collects the final structured result
+via a `finalize` tool whose input schema IS the verifier's patch schema.
+
+Host investigation capabilities (e.g. 'Bash', 'Read', 'Grep') are configured here, on the
+runner, via `host_tools` + `permission_mode`. They are merged into the allow-list so the
+agent can investigate when things go wrong — but the table mutation still exits only via
+`finalize` → schema validation → verify-before-accept (the swarm's gate is untouched).
 
 The `claude_agent_sdk` import is lazy: constructing `ClaudeSDKAgentRunner` raises
-ImportError when the SDK is absent, which `build_subagent` catches to fall back to static.
-Any runtime failure is caught by `ReActVerifier`, which then keeps the static result.
+ImportError when the SDK is absent; the application decides degradation (inject None).
 
-NOTE: SDK signatures evolve — verify against current docs
-(https://platform.claude.com/llms.txt) before relying on the live path. This module is
-deliberately isolated so such churn never touches the tools, the digest, or the swarm.
+NOTE: SDK signatures evolve — verify `permission_mode` values and option names against
+current docs (https://platform.claude.com/llms.txt) before relying on the live path.
 """
 from __future__ import annotations
 
@@ -30,13 +32,25 @@ _SYSTEM = (
 )
 
 
+def build_allowed_tools(tools, host_tools=()):
+    """Final SDK allow-list: swarm domain tools + finalize + injected host built-ins."""
+    return (
+        [f"mcp__band__{t.name}" for t in tools]
+        + ["mcp__band__finalize"]
+        + list(host_tools)
+    )
+
+
 class ClaudeSDKAgentRunner:
     """AgentRunner backed by the Claude Agent SDK."""
 
-    def __init__(self, model: str = "claude-haiku-4-5-20251001", max_turns: int = 8) -> None:
-        import claude_agent_sdk as _sdk  # noqa: F401  (lazy: ImportError → static fallback)
+    def __init__(self, model: str = "claude-haiku-4-5-20251001", max_turns: int = 8,
+                 host_tools=(), permission_mode: str | None = None) -> None:
+        import claude_agent_sdk as _sdk  # noqa: F401  (lazy: ImportError → app injects None)
         self._model = model
         self._max_turns = max_turns
+        self._host_tools = tuple(host_tools)
+        self._permission_mode = permission_mode
 
     def run(self, seed: str, tools: list[Tool], *, schema) -> dict:
         return asyncio.run(self._run_async(seed, tools, schema))
@@ -64,14 +78,17 @@ class ClaudeSDKAgentRunner:
 
         sdk_tools = [_adapt(t) for t in tools] + [_finalize]
         server = create_sdk_mcp_server(name="band", version="1.0.0", tools=sdk_tools)
-        allowed = [f"mcp__band__{t.name}" for t in tools] + ["mcp__band__finalize"]
-        options = ClaudeAgentOptions(
+        allowed = build_allowed_tools(tools, self._host_tools)
+        opt_kwargs = dict(
             system_prompt=_SYSTEM,
             mcp_servers={"band": server},
             allowed_tools=allowed,
             max_turns=self._max_turns,
             model=self._model,
         )
+        if self._permission_mode is not None:
+            opt_kwargs["permission_mode"] = self._permission_mode
+        options = ClaudeAgentOptions(**opt_kwargs)
 
         async for _msg in query(prompt=seed, options=options):
             pass  # we only need the side effect: the agent's finalize tool call
