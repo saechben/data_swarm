@@ -15,3 +15,6 @@ eval/results/
 .DS_Store
 
 .env
+
+# explain-project generated artifacts
+.explain-project/
