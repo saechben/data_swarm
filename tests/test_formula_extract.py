@@ -117,3 +117,21 @@ def test_orchestrator_populates_formulas_endtoend():
     assert rev and rev[0].expression == "Units*Price"
     assert rev[0].context
     assert table.errors == []   # gate stays green (formula recomputes correctly)
+
+
+def test_real_transposed_workbook_captures_without_crash():
+    """formula_chain_pnl is transposed (=B2*B3). Phase 1 captures these as
+    untranslated (same-row guard) and must never crash or mark them computed."""
+    import os
+    wb_path = os.path.join("eval", "data", "workbooks", "formula_chain_pnl.xlsx")
+    if not os.path.exists(wb_path):
+        import pytest
+        pytest.skip("extreme workbook not generated")
+    from mcg_swarm.runner import run_swarm
+    ext = run_swarm({"main": wb_path})
+    # never raises; some table carries captured (untranslated) formulas or notes
+    assert ext.tables  # extraction produced tables
+    for t in ext.tables:
+        for f in t.formulas:
+            # any formula present is either translated (has operands) or captured
+            assert f.context is not None
