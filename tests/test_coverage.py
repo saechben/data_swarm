@@ -60,3 +60,11 @@ def test_clean_table_no_findings():
     grid = [("Region", "Rev"), ("NA", 1), ("EU", 2)]
     h = TableHandle("S", "A1:B3", 1)
     assert scan_handle(grid, h, "S") == []
+
+
+def test_transpose_suspected_flagged():
+    # empty corner + label column A + period-like header row -> transpose hint
+    grid = [("", "Q1", "Q2"), ("Revenue", 100, 120), ("COGS", 40, 48)]
+    h = TableHandle("S", "A1:C3", 1)
+    cats = _cats(scan_handle(grid, h, "S"))
+    assert "transpose-suspected" in cats
