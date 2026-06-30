@@ -22,8 +22,14 @@ def categorize_failures(failures) -> dict:
     cats = {"coverage_gap": 0, "column_name": 0, "column_integrity": 0,
             "row_integrity": 0, "round_trip": 0, "dtype_mismatch": 0,
             "computed": 0, "other": 0}
+    known = {k for _, k in _PREFIXES}
     for f in failures:
-        s = str(f)
+        cat = getattr(f, "category", None)
+        if cat is not None:                       # Finding: categorize by .category
+            key = cat.replace("-", "_")
+            cats[key if key in known else "other"] += 1
+            continue
+        s = str(f)                                # legacy string: categorize by prefix
         for prefix, key in _PREFIXES:
             if s.startswith(prefix):
                 cats[key] += 1

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class _Base(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -10,6 +10,38 @@ class ColumnSpec(_Base):
     dtype: Literal["number", "string", "boolean", "date"]
     unit: Optional[str] = None
     role: Literal["key", "value", "computed"] = "value"
+
+_GATE_PREFIXES = [
+    ("coverage gap", "coverage-gap"),
+    ("column-name", "column-name"),
+    ("column-integrity", "column-integrity"),
+    ("row-integrity", "row-integrity"),
+    ("round-trip", "round-trip"),
+    ("dtype-mismatch", "dtype-mismatch"),
+    ("computed", "computed"),
+]
+
+
+class Finding(_Base):
+    category: str
+    severity: Literal["error", "warning", "info"]
+    scope: Literal["workbook", "sheet", "table", "column", "cell"]
+    message: str
+    source: Literal["static", "gate", "agent"]
+    ref: Optional[str] = None
+    agent_action: Optional[str] = None
+    resolution: Literal["fixed", "open", "rejected"] = "open"
+
+
+def finding_from_gate_failure(msg: str) -> "Finding":
+    """Map a legacy gate failure string to a Finding (category by prefix)."""
+    category = "other"
+    for prefix, cat in _GATE_PREFIXES:
+        if msg.startswith(prefix):
+            category = cat
+            break
+    return Finding(category=category, severity="error", scope="table",
+                   message=msg, source="gate")
 
 class OperandBinding(_Base):
     name: str
@@ -41,6 +73,16 @@ class CanonicalTable(_Base):
     extraction: ExtractionRef
     provisional_notes: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+    findings: list[Finding] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _derive_views(self):
+        if self.findings:
+            self.errors = [f.message for f in self.findings if f.severity == "error"]
+            self.provisional_notes = [
+                f.message for f in self.findings if f.severity in ("warning", "info")
+            ]
+        return self
 
 class WorkbookExtraction(_Base):
     workbook: str
@@ -48,6 +90,13 @@ class WorkbookExtraction(_Base):
     tables: list[CanonicalTable] = Field(default_factory=list)
     generator_version: str
     errors: list[str] = Field(default_factory=list)
+    findings: list[Finding] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _derive_errors(self):
+        if self.findings:
+            self.errors = [f.message for f in self.findings if f.severity == "error"]
+        return self
 
 class SegmentReport(_Base):
     band: str

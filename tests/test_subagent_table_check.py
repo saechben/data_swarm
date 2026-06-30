@@ -150,3 +150,37 @@ def test_validator_returns_original_on_runner_error(tmp_path):
 
     out = TableValidator(Boom(), TableCheckPolicy(validate=True)).review(p, handle, _table())
     assert out.columns[1].dtype == "string"      # unchanged, no raise
+
+
+# --- findings/errors consistency on repair-accept ---------------------------
+
+def test_repair_that_clears_errors_leaves_no_stale_error_findings(tmp_path):
+    """After a repair that clears gate errors, findings must agree with errors.
+
+    Regression for: model_copy(update={"errors": best_errs}) bypassing the
+    model_validator — returning errors==[] while stale error-severity findings
+    remained in findings. Now both are rebuilt together.
+    """
+    p = _wb(tmp_path)
+    handle = split_workbook(p)[0]
+    # Table starts with a gate error (dtype wrong)
+    runner = FakeAgentRunner(actions=[], final={"column_patches": [
+        {"name": "Revenue", "dtype": "number"}]})
+    out = TableValidator(runner, TableCheckPolicy(validate=False)).review(
+        p, handle, _table(errors=["stale: investigate"]))
+    # Both errors and findings must agree: no error-severity findings after repair
+    assert out.errors == []
+    assert [f for f in out.findings if f.severity == "error"] == []
+    # Invariant: errors exactly mirrors error-severity finding messages
+    assert out.errors == [f.message for f in out.findings if f.severity == "error"]
+
+
+def test_findings_errors_invariant_on_validator_accepted_table(tmp_path):
+    """errors must always equal [f.message for f in findings if f.severity=='error']."""
+    p = _wb(tmp_path)
+    handle = split_workbook(p)[0]
+    runner = FakeAgentRunner(actions=[], final={"column_patches": [
+        {"name": "Revenue", "dtype": "number"}]})
+    out = TableValidator(runner, TableCheckPolicy(validate=False)).review(
+        p, handle, _table(errors=["stale: investigate"]))
+    assert out.errors == [f.message for f in out.findings if f.severity == "error"]
