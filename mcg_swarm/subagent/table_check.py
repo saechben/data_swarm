@@ -35,7 +35,7 @@ from eval.util import range_box
 from mcg_swarm.extraction import build_index
 from mcg_swarm.quality_gate import run_table_tests
 from mcg_swarm.repair_log import log_repair_pass
-from mcg_swarm.schemas import CanonicalTable, ColumnSpec
+from mcg_swarm.schemas import CanonicalTable, ColumnSpec, finding_from_gate_failure
 from mcg_swarm.source import as_source
 from mcg_swarm.splitter import TableHandle
 from mcg_swarm.subagent.tools import BandView, build_band_toolset
@@ -282,7 +282,17 @@ class TableValidator:
                     0.0,
                 )
                 if accepted:
-                    current = best.model_copy(update={"errors": best_errs})
+                    # Rebuild findings to stay consistent with best_errs:
+                    # keep non-error findings (detection/anomaly/warning/info),
+                    # replace error-severity findings with freshly-mapped gate failures.
+                    non_error_findings = [
+                        f for f in best.findings if f.severity != "error"
+                    ]
+                    gate_findings = [finding_from_gate_failure(e) for e in best_errs]
+                    _rebuilt = non_error_findings + gate_findings
+                    current = best.model_copy(
+                        update={"errors": best_errs, "findings": _rebuilt}
+                    )
                     attempts.append(_patch_summary(patch))
                     if not best_errs:
                         break  # errors cleared — stop early

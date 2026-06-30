@@ -2,7 +2,7 @@
 Tier-1 orchestrator: split → plan_bands → analyze_band → merge → build_index → test → return.
 
 Contract:
-- NEVER raises. All failures are captured in CanonicalTable.errors.
+- NEVER raises. All failures are captured as CanonicalTable.findings (errors is a derived view).
 - NEVER marks a failing table as passing (errors == [] iff run_table_tests passed).
 - Ambiguous handles return an error stub immediately.
 """

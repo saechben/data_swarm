@@ -45,3 +45,21 @@ def test_finding_from_gate_failure_categorizes():
     assert f.severity == "error" and f.source == "gate"
     f2 = finding_from_gate_failure("computed mismatch Sum@1: live=None calc=13")
     assert f2.category == "computed"
+
+
+def test_warning_severity_lands_in_provisional_notes():
+    """A warning-severity Finding should appear in provisional_notes, not errors."""
+    t = _table(findings=[
+        Finding(category="anomaly", severity="warning", scope="table",
+                message="suspicious gap", source="static"),
+    ])
+    assert t.provisional_notes == ["suspicious gap"]
+    assert t.errors == []
+
+
+def test_finding_from_gate_failure_passthrough():
+    """finding_from_gate_failure must set scope='table' and preserve the message verbatim."""
+    msg = "some unexpected gate failure: details here"
+    f = finding_from_gate_failure(msg)
+    assert f.scope == "table"
+    assert f.message == msg

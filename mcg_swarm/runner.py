@@ -8,7 +8,6 @@ from mcg_swarm.config import SwarmConfig
 from mcg_swarm.extraction import build_index
 from mcg_swarm.source import as_source
 from mcg_swarm.coverage import scan_handle
-from mcg_swarm.schemas import Finding
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
 
