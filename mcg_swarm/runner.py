@@ -7,6 +7,8 @@ from mcg_swarm.subagent import build_subagent, build_table_validator
 from mcg_swarm.config import SwarmConfig
 from mcg_swarm.extraction import build_index
 from mcg_swarm.source import as_source
+from mcg_swarm.coverage import scan_handle
+from mcg_swarm.schemas import Finding
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
 
@@ -35,17 +37,26 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     # runner is None → static-only band subagent and no table validator.
     subagent = build_subagent(llm=llm, runner=runner, config=config)
     table_validator = build_table_validator(runner=runner, config=config)
-    tables, sheets = [], []
+    tables, sheets, wb_findings = [], [], []
     for i, h in enumerate(handles):
         sheets.append(h.sheet)
+        try:
+            grid = source.read_region(h.sheet)
+            scan = scan_handle(grid, h, h.sheet)
+        except Exception:
+            scan = []  # never let detection break extraction
+        table_findings = [f for f in scan if f.scope != "sheet"]
+        wb_findings.extend(f for f in scan if f.scope == "sheet")
         tables.append(orchestrate_table(
             source, h, table_id=f"{h.sheet}__{i}", llm=llm,
-            subagent=subagent, table_validator=table_validator))
+            subagent=subagent, table_validator=table_validator,
+            detect_findings=table_findings))
     return WorkbookExtraction(
         workbook=name,
         sheets=sheets,
         tables=tables,
         generator_version=GENERATOR_VERSION,
+        findings=wb_findings,
     )
 
 
