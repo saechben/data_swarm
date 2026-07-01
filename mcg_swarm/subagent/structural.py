@@ -18,7 +18,7 @@ from typing import Literal
 from openpyxl.utils import range_boundaries
 from pydantic import BaseModel
 
-from mcg_swarm.coverage import coverage_score, scan_handle
+from mcg_swarm.coverage import coverage_score, nonempty_cells, region_cells, scan_handle
 from mcg_swarm.orchestrator import orchestrate_table
 
 
@@ -175,16 +175,46 @@ class StructuralReviewer:
                   f"gaps {base[2]}->{cand[2]}")
         fixed = [f.model_copy(update={"resolution": "fixed", "agent_action": action})
                  for f in sheet_scope]
-        per_handle, residual = [], []
+
+        # Union of all candidate regions — used to distinguish cross-handle artifacts
+        # from genuine still-uncovered blocks.
+        union_covered: set[tuple[int, int]] = set()
         for h in candidate:
+            union_covered |= region_cells(h.region)
+        ne = nonempty_cells(grid)
+
+        def _is_artifact(f) -> bool:
+            """True iff this uncovered-data finding's block is fully covered by the
+            union of all candidate regions (a sibling handle covers it, so it is a
+            cross-scan false positive, not a genuine dropped table)."""
+            if "!" not in f.ref:
+                return False  # can't parse ref — treat as genuine/keep
+            a1range = f.ref.split("!", 1)[1]
+            block_cells = region_cells(a1range) & ne
+            return bool(block_cells) and block_cells <= union_covered
+
+        per_handle, residual = [], []
+        for h in candidate:                     # Fix 1: extend/append both inside loop
             s = scan_handle(grid, h, h.sheet)
             per_handle.append([f for f in s if f.scope != "sheet"])
-            # Exclude uncovered-data from residual: per-handle scans in a multi-handle
-        # acceptance cross-flag each other's region — false positives already resolved
-        # by the fixed annotations above.
-        residual.extend(f for f in s
-                        if f.scope == "sheet" and f.category != "uncovered-data")
-        return SheetReview(list(candidate), per_handle, fixed + residual, recut=True)
+            for f in s:
+                if f.scope == "sheet":
+                    # Fix 2: keep uncovered-data only when it is a genuine leftover
+                    # (block NOT fully covered by the union), not a cross-handle artifact.
+                    if f.category == "uncovered-data" and _is_artifact(f):
+                        continue
+                    residual.append(f)
+
+        # Deduplicate by ref: a genuine leftover block is detected by every handle's
+        # scan; keep only the first occurrence so it appears exactly once.
+        seen_refs: set[str] = set()
+        deduped: list = []
+        for f in residual:
+            if f.ref not in seen_refs:
+                seen_refs.add(f.ref)
+                deduped.append(f)
+
+        return SheetReview(list(candidate), per_handle, fixed + deduped, recut=True)
 
     def _reject(self, handle, sheet_scope, table_scope) -> SheetReview:
         action = ("agent proposed a re-cut that did not strictly improve coverage without "
