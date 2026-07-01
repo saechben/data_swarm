@@ -52,10 +52,10 @@ class ClaudeSDKAgentRunner:
         self._host_tools = tuple(host_tools)
         self._permission_mode = permission_mode
 
-    def run(self, seed: str, tools: list[Tool], *, schema) -> dict:
-        return asyncio.run(self._run_async(seed, tools, schema))
+    def run(self, seed: str, tools: list[Tool], *, schema, system: str | None = None) -> dict:
+        return asyncio.run(self._run_async(seed, tools, schema, system))
 
-    async def _run_async(self, seed: str, tools: list[Tool], schema) -> dict:
+    async def _run_async(self, seed: str, tools: list[Tool], schema, system: str | None = None) -> dict:
         from claude_agent_sdk import (
             ClaudeAgentOptions, create_sdk_mcp_server, query, tool,
         )
@@ -80,7 +80,7 @@ class ClaudeSDKAgentRunner:
         server = create_sdk_mcp_server(name="band", version="1.0.0", tools=sdk_tools)
         allowed = build_allowed_tools(tools, self._host_tools)
         opt_kwargs = dict(
-            system_prompt=_SYSTEM,
+            system_prompt=system or _SYSTEM,
             mcp_servers={"band": server},
             allowed_tools=allowed,
             max_turns=self._max_turns,
