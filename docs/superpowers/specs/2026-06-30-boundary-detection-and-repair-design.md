@@ -1,7 +1,7 @@
 # Boundary Detection & Repair — Design
 
 **Date:** 2026-06-30
-**Status:** Approved (brainstorming) — pending spec review
+**Status:** Phase 1 (detection) MERGED 2026-06-30. Phase 2 (agent alteration) implemented per docs/superpowers/plans/2026-07-01-boundary-detection-phase2.md — vertical re-cuts only; transpose stays detection-only.
 **Topic:** Eliminate silent corruption of cases the static splitter gets wrong. Detect every boundary/structure problem deterministically (the guarantee); let the ReAct layer optionally repair them behind verify-before-accept (the stretch).
 
 ## Problem
