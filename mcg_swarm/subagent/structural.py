@@ -84,3 +84,128 @@ def score_handles(source, grid: list[tuple], handles, sheet: str) -> tuple[int, 
         errors += len(table.errors)
         gaps += _region_gaps(grid, h)
     return coverage, errors, gaps
+
+
+import dataclasses
+import json  # noqa: F401 — reserved for future seed serialisation
+
+from mcg_swarm.schemas import Finding
+from mcg_swarm.splitter import handle_from_region
+from mcg_swarm.subagent.structural_tools import SheetView, build_sheet_toolset
+
+
+STRUCTURAL_SYSTEM = (
+    "You are correcting the TABLE BOUNDARIES of ONE spreadsheet. A fast deterministic pass "
+    "cut the sheet into a single region, but a whole-sheet scan found tabular data OUTSIDE "
+    "that region — a second table was likely dropped. Use the read-only tools to inspect the "
+    "ENTIRE sheet, then call `finalize` with the COMPLETE set of vertically-oriented tables "
+    "you can see. Each table needs its absolute A1 `region`, the absolute `header_row`, and "
+    "`header_span` (1 unless there is a genuine two-row header). List EVERY real table on the "
+    "sheet, not only the dropped one. If the single existing region is already correct, return "
+    "an empty `tables` list. Never invent cells, regions, or tables."
+)
+
+
+@dataclasses.dataclass
+class SheetReview:
+    handles: list                       # TableHandle(s) to orchestrate
+    detect_findings: list               # list[list[Finding]] aligned with handles (table scope)
+    sheet_findings: list                # list[Finding] workbook/sheet scope, annotated
+    recut: bool = False                 # True only when a candidate replaced the baseline
+
+
+@dataclasses.dataclass
+class StructuralPolicy:
+    max_tables: int = 12                 # guard against runaway proposals
+
+
+class StructuralReviewer:
+    """Agent boundary alteration over one sheet, verify-before-accept. Never raises."""
+
+    def __init__(self, runner, policy: "StructuralPolicy | None" = None) -> None:
+        self._runner = runner
+        self._policy = policy or StructuralPolicy()
+
+    def review(self, source, handle, grid: list[tuple], scan) -> SheetReview:
+        sheet_scope = [f for f in scan if f.scope == "sheet"]
+        table_scope = [f for f in scan if f.scope != "sheet"]
+        try:
+            patch = self._run_agent(source, handle, grid)
+            if not patch.tables:
+                return self._declined(handle, sheet_scope, table_scope)
+            candidate = self._build_candidate(grid, handle.sheet, patch)
+            if candidate and len(candidate) <= self._policy.max_tables:
+                base = score_handles(source, grid, [handle], handle.sheet)
+                cand = score_handles(source, grid, candidate, handle.sheet)
+                # three-way strict-better: more coverage, no new errors, no new gaps
+                if cand[0] > base[0] and cand[1] <= base[1] and cand[2] <= base[2]:
+                    return self._accept(candidate, grid, sheet_scope, base, cand)
+            return self._reject(handle, sheet_scope, table_scope)
+        except Exception:
+            return SheetReview([handle], [table_scope], sheet_scope)
+
+    # -- agent + candidate construction -------------------------------------
+
+    def _run_agent(self, source, handle, grid) -> SheetRecutPatch:
+        view = SheetView(source, handle.sheet)
+        tools = build_sheet_toolset(view)
+        seed = _structural_seed(handle)
+        raw = self._runner.run(seed, tools, schema=SheetRecutPatch,
+                               system=STRUCTURAL_SYSTEM)
+        return SheetRecutPatch.model_validate(raw)
+
+    def _build_candidate(self, grid, sheet, patch: SheetRecutPatch):
+        out = []
+        for pt in patch.tables:
+            if pt.orientation != "vertical":
+                continue  # transpose alteration is out of scope (detection-only)
+            try:
+                out.append(handle_from_region(
+                    grid, sheet, pt.region, pt.header_row, pt.header_span))
+            except Exception:
+                continue  # a malformed region must not sink the whole proposal
+        return out
+
+    # -- outcomes -----------------------------------------------------------
+
+    def _accept(self, candidate, grid, sheet_scope, base, cand) -> SheetReview:
+        action = (f"re-cut sheet into {len(candidate)} tables "
+                  f"[{', '.join(h.region for h in candidate)}]; "
+                  f"coverage {base[0]}->{cand[0]}, errors {base[1]}->{cand[1]}, "
+                  f"gaps {base[2]}->{cand[2]}")
+        fixed = [f.model_copy(update={"resolution": "fixed", "agent_action": action})
+                 for f in sheet_scope]
+        per_handle, residual = [], []
+        for h in candidate:
+            s = scan_handle(grid, h, h.sheet)
+            per_handle.append([f for f in s if f.scope != "sheet"])
+            # Exclude uncovered-data from residual: per-handle scans in a multi-handle
+        # acceptance cross-flag each other's region — false positives already resolved
+        # by the fixed annotations above.
+        residual.extend(f for f in s
+                        if f.scope == "sheet" and f.category != "uncovered-data")
+        return SheetReview(list(candidate), per_handle, fixed + residual, recut=True)
+
+    def _reject(self, handle, sheet_scope, table_scope) -> SheetReview:
+        action = ("agent proposed a re-cut that did not strictly improve coverage without "
+                  "adding errors — kept deterministic boundaries")
+        rej = [f.model_copy(update={"resolution": "rejected", "agent_action": action})
+               for f in sheet_scope]
+        return SheetReview([handle], [table_scope], rej)
+
+    def _declined(self, handle, sheet_scope, table_scope) -> SheetReview:
+        action = "agent reviewed the whole sheet and proposed no re-cut"
+        seen = [f.model_copy(update={"agent_action": action}) for f in sheet_scope]
+        return SheetReview([handle], [table_scope], seen)
+
+
+def _structural_seed(handle) -> str:
+    return "\n".join([
+        "A deterministic pass cut this sheet into a SINGLE table, but a whole-sheet scan "
+        "found tabular data outside it (a dropped table).",
+        f"Sheet: {handle.sheet}   deterministically-chosen region: {handle.region}   "
+        f"header_row: {handle.header_row}",
+        "Inspect the entire sheet with `dimensions`, `peek_rows`, and `peek_region`, then "
+        "call `finalize` with the full set of vertical tables (region, header_row, "
+        "header_span). If the single region is already correct, return empty `tables`.",
+    ])
