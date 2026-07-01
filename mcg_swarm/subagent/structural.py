@@ -87,7 +87,6 @@ def score_handles(source, grid: list[tuple], handles, sheet: str) -> tuple[int, 
 
 
 import dataclasses
-import json  # noqa: F401 — reserved for future seed serialisation
 
 from mcg_swarm.schemas import Finding
 from mcg_swarm.splitter import handle_from_region
@@ -173,25 +172,42 @@ class StructuralReviewer:
                   f"[{', '.join(h.region for h in candidate)}]; "
                   f"coverage {base[0]}->{cand[0]}, errors {base[1]}->{cand[1]}, "
                   f"gaps {base[2]}->{cand[2]}")
-        fixed = [f.model_copy(update={"resolution": "fixed", "agent_action": action})
-                 for f in sheet_scope]
 
-        # Union of all candidate regions — used to distinguish cross-handle artifacts
-        # from genuine still-uncovered blocks.
+        # Union of all candidate regions — used to distinguish covered blocks from
+        # genuine still-uncovered leftovers.
         union_covered: set[tuple[int, int]] = set()
         for h in candidate:
             union_covered |= region_cells(h.region)
         ne = nonempty_cells(grid)
 
-        def _is_artifact(f) -> bool:
-            """True iff this uncovered-data finding's block is fully covered by the
-            union of all candidate regions (a sibling handle covers it, so it is a
-            cross-scan false positive, not a genuine dropped table)."""
+        def _covered_by_union(f) -> bool:
+            """True when the finding's block is a non-empty subset of union_covered.
+
+            Used in two places:
+            1. fixed partition: an uncovered-data finding is marked fixed ONLY when
+               its block IS covered (the re-cut genuinely addresses it).
+            2. residual loop: skip a per-handle uncovered-data emission when the
+               block IS covered (cross-handle artifact, not a genuine leftover).
+            Findings with no parseable ref ("!" absent) return False so they fall
+            through to the default-mark-fixed path for non-uncovered-data findings.
+            """
             if "!" not in f.ref:
-                return False  # can't parse ref — treat as genuine/keep
+                return False  # can't parse ref — fall through to defaults
             a1range = f.ref.split("!", 1)[1]
             block_cells = region_cells(a1range) & ne
             return bool(block_cells) and block_cells <= union_covered
+
+        # Partition sheet_scope: only mark fixed when the block is genuinely covered.
+        # uncovered-data whose block is NOT in union_covered is a real still-dropped
+        # table — exclude it from fixed (it will be re-surfaced as open by the
+        # residual loop below, so it appears exactly once with resolution="open").
+        # Non-uncovered-data findings and those with no parseable ref keep the
+        # original mark-fixed behaviour.
+        fixed = [
+            f.model_copy(update={"resolution": "fixed", "agent_action": action})
+            for f in sheet_scope
+            if f.category != "uncovered-data" or "!" not in f.ref or _covered_by_union(f)
+        ]
 
         per_handle, residual = [], []
         for h in candidate:                     # Fix 1: extend/append both inside loop
@@ -199,9 +215,9 @@ class StructuralReviewer:
             per_handle.append([f for f in s if f.scope != "sheet"])
             for f in s:
                 if f.scope == "sheet":
-                    # Fix 2: keep uncovered-data only when it is a genuine leftover
+                    # Keep uncovered-data only when it is a genuine leftover
                     # (block NOT fully covered by the union), not a cross-handle artifact.
-                    if f.category == "uncovered-data" and _is_artifact(f):
+                    if f.category == "uncovered-data" and _covered_by_union(f):
                         continue
                     residual.append(f)
 

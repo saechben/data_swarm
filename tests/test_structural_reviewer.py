@@ -163,6 +163,14 @@ def test_accepted_recut_preserves_genuine_leftover():
         f"open leftover must reference the A9:B10 block; got refs={refs}"
     )
 
+    # Lock the partial-coverage fix: no ref may appear with BOTH fixed and open.
+    fixed_refs = {f.ref for f in review.sheet_findings if f.resolution == "fixed"}
+    open_refs = {f.ref for f in review.sheet_findings if f.resolution == "open"}
+    overlap = fixed_refs & open_refs
+    assert not overlap, (
+        f"same ref cannot have both fixed and open resolution; overlap={overlap}"
+    )
+
 
 def test_non_last_handle_residual_captured():
     """Genuine sheet-scope residual from a non-last handle must reach sheet_findings.
