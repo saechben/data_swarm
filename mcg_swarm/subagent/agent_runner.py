@@ -14,7 +14,7 @@ from mcg_swarm.subagent.tools import Tool
 
 @runtime_checkable
 class AgentRunner(Protocol):
-    def run(self, seed: str, tools: list[Tool], *, schema) -> dict: ...
+    def run(self, seed: str, tools: list[Tool], *, schema, system: str | None = None) -> dict: ...
 
 
 class FakeAgentRunner:
@@ -38,7 +38,7 @@ class FakeAgentRunner:
         self.observations: list = []
         self.calls: int = 0
 
-    def run(self, seed: str, tools: list[Tool], *, schema) -> dict:
+    def run(self, seed: str, tools: list[Tool], *, schema, system: str | None = None) -> dict:
         self.calls += 1
         by_name = {t.name: t for t in tools}
         for act in self.actions:

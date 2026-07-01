@@ -50,6 +50,17 @@ def build_table_validator(runner=None, config: SwarmConfig = SwarmConfig()):
     )
 
 
+def build_structural_reviewer(runner=None, config: SwarmConfig = SwarmConfig()):
+    """Construct the sheet-level structural reviewer, or `None`.
+
+    None when no runner is injected or `config.alter_boundaries` is False (detection-only).
+    """
+    if runner is None or not config.alter_boundaries:
+        return None
+    from mcg_swarm.subagent.structural import StructuralReviewer
+    return StructuralReviewer(runner)
+
+
 def analyze_band(path, band, header, llm=None) -> SegmentReport:
     """Back-compat shim: build a minimal BandTask (no handle signals) and run static analysis."""
     task = BandTask(path=path, band=band, header=list(header))
@@ -58,5 +69,5 @@ def analyze_band(path, band, header, llm=None) -> SegmentReport:
 
 __all__ = [
     "Subagent", "BandTask", "StaticSubagent", "HeaderVerification",
-    "build_subagent", "build_table_validator", "analyze_band",
+    "build_subagent", "build_table_validator", "build_structural_reviewer", "analyze_band",
 ]
