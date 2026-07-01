@@ -2,7 +2,7 @@ from __future__ import annotations
 import datetime as _dt
 from dataclasses import dataclass, field
 import openpyxl
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import get_column_letter, range_boundaries
 from mcg_swarm.schemas import ColumnSpec
 from mcg_swarm.source import WorkbookSource, as_source
 
@@ -269,3 +269,34 @@ def split_workbook(source) -> list[TableHandle]:
         detect_table(src.read_region(name), name)
         for name in src.sheet_names()
     ]
+
+
+def handle_from_region(grid: list[tuple], sheet: str, region: str,
+                       header_row: int, header_span: int = 1) -> TableHandle:
+    """Build a TableHandle honouring an explicit absolute region + header row/span.
+
+    Used to materialise an agent's re-cut proposal into a real handle. Column names come
+    from the header span (bottom-row-first composite rule); dtypes are inferred from the
+    data rows below the header. `header_row` is a 1-based absolute sheet row.
+    """
+    min_col, min_row, max_col, max_row = range_boundaries(region)
+
+    def cell(r: int, c: int):
+        row = grid[r - 1] if 0 <= r - 1 < len(grid) else ()
+        return row[c - 1] if 0 <= c - 1 < len(row) else None
+
+    header_rows = [
+        tuple(cell(header_row + k, c) for c in range(min_col, max_col + 1))
+        for k in range(header_span)
+    ]
+    data_rows = [
+        tuple(cell(r, c) for c in range(min_col, max_col + 1))
+        for r in range(header_row + header_span, max_row + 1)
+    ]
+    names = _composite_col_names(header_rows, 0, max_col - min_col)
+    cols = []
+    for j in range(max_col - min_col + 1):
+        samples = [dr[j] if j < len(dr) else None for dr in data_rows[:20]]
+        cols.append(ColumnSpec(name=names[j], dtype=_infer_dtype(samples),
+                               role="key" if j == 0 else "value"))
+    return TableHandle(sheet, region, header_row, cols, header_span=header_span)
