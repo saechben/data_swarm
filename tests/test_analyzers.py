@@ -60,3 +60,34 @@ def test_vertical_analyzer_sets_coverage():
 
 def test_vertical_analyzer_name_attr():
     assert VerticalSplitAnalyzer().name == "vertical"
+
+
+# Task 3: Registry + SwarmConfig.analyzers tests
+import pytest
+from mcg_swarm.analyzers.registry import register, build_analyzers
+from mcg_swarm.config import SwarmConfig
+
+
+def test_build_default_analyzer_set():
+    analyzers = build_analyzers(("vertical",))
+    assert len(analyzers) == 1
+    assert analyzers[0].name == "vertical"
+
+
+def test_build_analyzers_unknown_name_raises():
+    with pytest.raises(KeyError):
+        build_analyzers(("does_not_exist",))
+
+
+def test_register_and_build_custom():
+    class _Fake:
+        name = "fake"
+        def analyze(self, grid, sheet):
+            return []
+    register("fake", _Fake)
+    built = build_analyzers(("vertical", "fake"))
+    assert [a.name for a in built] == ["vertical", "fake"]
+
+
+def test_swarmconfig_has_default_analyzers():
+    assert SwarmConfig().analyzers == ("vertical",)
