@@ -18,3 +18,7 @@ eval/results/
 
 # explain-project generated artifacts
 .explain-project/
+
+private
+local
+.kiro
