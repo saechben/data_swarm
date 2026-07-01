@@ -31,3 +31,32 @@ class _Dummy:
 def test_sheet_analyzer_protocol_runtime_check():
     assert isinstance(_Dummy(), SheetAnalyzer)
     assert not isinstance(object(), SheetAnalyzer)
+
+
+# Task 2: VerticalSplitAnalyzer tests
+from mcg_swarm.analyzers.vertical import VerticalSplitAnalyzer
+from mcg_swarm.splitter import detect_table
+from mcg_swarm.coverage import coverage_score
+
+_GRID = [("Region", "Sales"), ("North", 10), ("South", 20)]
+
+
+def test_vertical_analyzer_wraps_detect_table():
+    a = VerticalSplitAnalyzer()
+    cands = a.analyze(_GRID, "Sheet1")
+    assert len(cands) == 1
+    c = cands[0]
+    assert c.method == "vertical"
+    assert len(c.handles) == 1
+    assert c.handles[0] == detect_table(_GRID, "Sheet1")
+
+
+def test_vertical_analyzer_sets_coverage():
+    a = VerticalSplitAnalyzer()
+    c = a.analyze(_GRID, "Sheet1")[0]
+    assert c.coverage == coverage_score(_GRID, [c.handles[0].region])
+    assert c.coverage > 0
+
+
+def test_vertical_analyzer_name_attr():
+    assert VerticalSplitAnalyzer().name == "vertical"
