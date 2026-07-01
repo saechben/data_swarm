@@ -19,3 +19,4 @@ class SwarmConfig:
 
     validate: bool = True
     repair_max_passes: int = 3
+    alter_boundaries: bool = True
