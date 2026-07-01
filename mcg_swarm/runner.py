@@ -23,7 +23,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     name = getattr(source, "path", "workbook")
     name = os.path.basename(name) if isinstance(name, str) else "workbook"
     try:
-        handles = split_workbook(source)
+        handles = split_workbook(source, config=config)
     except Exception as e:
         return WorkbookExtraction(
             workbook=name,
