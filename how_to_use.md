@@ -326,4 +326,3 @@ dedup keeps the (higher-confidence) vertical label as a single candidate — no 
 consult, no `contested-layout`/`arbiter-choice` finding, and extraction identical to a
 deterministic-only run. This is the built-in "agreed by both approaches" signal: agreement
 is silent and cheap; only genuine disagreement escalates to the Stage-2 arbiter.
-```

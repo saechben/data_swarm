@@ -120,3 +120,15 @@ def test_unknown_name_still_raises_before_instantiation():
     import pytest
     with pytest.raises(KeyError):
         build_analyzers(("vertical", "no_such_lens"))
+
+
+def test_materialize_caps_table_count_with_finding():
+    src = _GridSource(_STACKED)
+    patch = SheetLayoutPatch(tables=[
+        {"region": "A1:B3", "header_row": 1},
+        {"region": "A5:B7", "header_row": 5}])
+    out = _materialize(patch, src.read_region("S"), "S", src,
+                       AgenticLensPolicy(max_tables=1))
+    assert len(out) == 1 and len(out[0].handles) == 1
+    assert out[0].handles[0].region == "A1:B3"
+    assert any("capped" in f.message for f in out[0].findings)

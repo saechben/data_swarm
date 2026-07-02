@@ -49,15 +49,25 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
     """
     Run deterministic in-loop quality checks on an extracted table.
 
-    Four phases:
+    Five phases (plus a reverse-coverage check folded into phase 2a):
     1. Coverage (resolution-only, O(keys+cols), zero file I/O):
-       Every column in index.column_names() must exist in _col_to_phys and every
-       row key in index.row_keys() must exist in _key_to_phys.  No per-cell reads.
+       Every column in table.columns must be resolvable via the index
+       (present in _col_to_phys) — a schema-vs-index coverage check, not a
+       tautological comparison of the index against itself.  Also flags
+       row-key collisions (index.duplicate_row_keys: an earlier row shadowed
+       by a later one with the same key), blank-key rows (index.blank_key_rows:
+       a data row with an empty key cell, unreachable by any meaningful key),
+       and an empty index (zero row keys resolved — the table cannot be
+       queried at all).  No per-cell reads.
 
     2. Index integrity (one workbook open total, O(cols) + O(sample) reads):
-       (a) Column-integrity: reads the live header row and asserts name->physical_col
-           matches _col_to_phys for each column.  Catches numeric->numeric column remaps.
-       (b) Row-integrity: for each sampled key, reads the key-column cell at the
+       (a) Column-name gate: reads the live header row(s) and asserts every
+           declared column name is present, flags duplicate declared names,
+           and — the reverse direction — flags any live header in the region
+           that is NOT declared in table.columns (a silently dropped column).
+       (b) Column-integrity: asserts name->physical_col matches _col_to_phys
+           for each column.  Catches numeric->numeric column remaps.
+       (c) Row-integrity: for each sampled key, reads the key-column cell at the
            index-resolved physical row and asserts it equals the key.
 
     3. Round-trip (bounded sample, ≤ sample_size × cols file reads):
@@ -67,6 +77,13 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
     4. Computed columns (same sample):
        For columns with role="computed" and a matching TableFormula, re-evaluate
        the formula and compare against the live cell.
+
+    5. Dtype conformance (same sample, via the real index.query() path):
+       For non-key, non-string columns, re-resolve each sampled cell through
+       index.query() (backed by a snapshot of the already-read cells, so no
+       extra workbook opens) and assert the value conforms to the column's
+       declared dtype, failing only when the non-conforming fraction exceeds
+       DTYPE_MISMATCH_TOL on a large-enough sample.
     """
     failures: list[str] = []
 

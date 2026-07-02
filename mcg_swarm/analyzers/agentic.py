@@ -65,6 +65,7 @@ def _materialize(patch: SheetLayoutPatch, grid, sheet: str, source,
                    "(one orientation per proposal in v1)"))
         tables = [t for t in tables if t.orientation == "vertical"]
         if not tables:
+            # defensive only: unreachable while orientation is a two-value Literal
             return []
     orientation = tables[0].orientation
     view = TransposedView(source) if orientation == "transposed" else None
