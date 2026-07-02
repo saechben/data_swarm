@@ -53,7 +53,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     # analyzers internally; this call is purely for validation.
     build_analyzers(config.analyzers)
     try:
-        sheet_analyses = analyze_workbook(source, config=config)
+        sheet_analyses = analyze_workbook(source, config=config, runner=runner)
     except Exception as e:
         return WorkbookExtraction(
             workbook=name,

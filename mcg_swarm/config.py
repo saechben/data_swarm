@@ -17,9 +17,12 @@ class SwarmConfig:
     repair_max_passes: max table-level repair passes (was MCG_REPAIR_MAX_PASSES, default 3).
     analyzers:         active sheet-analyzer lenses, by registry id. Default ("vertical",)
                        reproduces the pre-modular behavior exactly.
+    arbitrate:         let an injected runner arbitrate genuine lens disagreement (Stage 2).
+                       No-op without a runner or without competing lenses.
     """
 
     validate: bool = True
     repair_max_passes: int = 3
     alter_boundaries: bool = True
     analyzers: tuple[str, ...] = ("vertical",)
+    arbitrate: bool = True
