@@ -1,5 +1,7 @@
 """Phase A neutrality: the analyzer-based split_workbook reproduces the pre-refactor
 per-sheet detect_table output exactly when analyzers=("vertical",)."""
+import pytest
+
 from mcg_swarm.splitter import split_workbook, detect_table
 from mcg_swarm.config import SwarmConfig
 
@@ -41,3 +43,10 @@ def test_split_workbook_default_config_is_neutral():
     src = _FakeSource(_SHEETS)
     # No config arg → default SwarmConfig() → analyzers=("vertical",)
     assert split_workbook(src) == [detect_table(g, n) for n, g in _SHEETS.items()]
+
+
+def test_run_swarm_unknown_analyzer_raises():
+    from mcg_swarm.runner import run_swarm
+    src = _FakeSource(_SHEETS)
+    with pytest.raises(KeyError):
+        run_swarm(src, config=SwarmConfig(analyzers=("does_not_exist",)))
