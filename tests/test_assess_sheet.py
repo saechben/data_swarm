@@ -73,3 +73,21 @@ def test_assess_sheet_single_candidate_identity():
 def test_assess_sheet_empty_raises():
     with pytest.raises(ValueError):
         assess_sheet([], source=_SRC, grid=_TWO_TABLES, sheet="S")
+
+
+def test_rank_scores_viewed_candidate_through_its_view():
+    """#5: a viewed candidate's handles are in view coordinates — score them there."""
+    from mcg_swarm.views import TransposedView
+
+    horizontal = {"S": [("Region", "North", "South"), ("Sales", 10, 20)]}
+    src = _GridSource(horizontal)
+    raw_grid = src.read_region("S")
+
+    view = TransposedView(src)
+    vhandle = detect_table(view.read_region("S"), "S")
+    viewed = LayoutCandidate(method="transposed", handles=(vhandle,), view=view)
+
+    ranked = rank_candidates([viewed], source=src, grid=raw_grid, sheet="S")
+    cov, errors, _gaps = ranked[0][1]
+    assert cov == 6            # all 6 non-empty cells, counted in VIEW coordinates
+    assert errors == 0         # scored through the view, the table is clean

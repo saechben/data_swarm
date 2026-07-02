@@ -5,7 +5,7 @@ candidates becomes an ambiguous stub handle (today's no-header behavior).
 """
 from __future__ import annotations
 
-from mcg_swarm.analyzers.assess import assess
+from mcg_swarm.analyzers.assess import assess_sheet
 from mcg_swarm.analyzers.base import LayoutCandidate, SheetAnalysis
 from mcg_swarm.analyzers.registry import build_analyzers
 from mcg_swarm.config import SwarmConfig
@@ -33,7 +33,7 @@ def analyze_sheet(analyzers, grid: list[tuple], sheet: str, source=None) -> Shee
                 ref=f"{sheet}!A1"))
     if candidates:
         try:
-            winner = assess(candidates)
+            winner = assess_sheet(candidates, source=source, grid=grid, sheet=sheet)
         except Exception as e:  # malformed candidate from a lens — degrade, don't crash
             findings.append(Finding(
                 category="analyzer-error", severity="warning", scope="sheet",

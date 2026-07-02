@@ -129,3 +129,27 @@ def test_lens_can_construct_view_over_source():
     sa = out[0]
     assert type(sa.view).__name__ == "TransposedView"
     assert sa.handles[0].region == "A1:B3"      # view coordinates (3 rows after transpose)
+
+
+def test_pipeline_uses_rich_ranking_for_multi_candidate():
+    """#5: with competing lenses, the pipeline picks by score_handles, not raw coverage."""
+    from mcg_swarm.splitter import handle_from_region
+    from mcg_swarm.analyzers.base import LayoutCandidate
+
+    two = [("Region", "Sales"), ("North", 10), ("South", 20),
+           (None, None),
+           ("Dept", "Cost"), ("Eng", 100), ("Ops", 50)]
+
+    class _PairLens:
+        name = "pairlens"
+        def analyze(self, grid, sheet, source=None):
+            top = handle_from_region(grid, sheet, "A1:B3", 1)
+            bottom = handle_from_region(grid, sheet, "A5:B7", 5)
+            return [LayoutCandidate(method="pairlens", handles=(top, bottom),
+                                    coverage=1.0)]
+    register("pairlens", _PairLens)
+
+    sa = analyze_sheet(build_analyzers(("vertical", "pairlens")), two, "S",
+                       source=_GridSource({"S": two}))
+    assert sa.method == "pairlens"        # 12-cell coverage beats vertical's 6
+    assert len(sa.handles) == 2
