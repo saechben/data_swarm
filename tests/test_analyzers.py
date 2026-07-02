@@ -25,7 +25,7 @@ def test_layout_candidate_is_frozen():
 
 class _Dummy:
     name = "dummy"
-    def analyze(self, grid, sheet):
+    def analyze(self, grid, sheet, source=None):
         return []
 
 
@@ -119,7 +119,7 @@ def test_build_analyzers_unknown_name_raises():
 def test_register_and_build_custom():
     class _Fake:
         name = "fake"
-        def analyze(self, grid, sheet):
+        def analyze(self, grid, sheet, source=None):
             return []
     register("fake", _Fake)
     built = build_analyzers(("vertical", "fake"))

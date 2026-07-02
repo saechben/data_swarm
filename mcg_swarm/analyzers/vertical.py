@@ -14,7 +14,7 @@ class VerticalSplitAnalyzer:
 
     name = "vertical"
 
-    def analyze(self, grid: list[tuple], sheet: str) -> list[LayoutCandidate]:
+    def analyze(self, grid: list[tuple], sheet: str, source=None) -> list[LayoutCandidate]:
         handle = detect_table(grid, sheet)
         total = len(nonempty_cells(grid))
         covered = coverage_score(grid, [handle.region])

@@ -20,12 +20,12 @@ def _fallback_candidate(sheet: str) -> LayoutCandidate:
     return LayoutCandidate(method="fallback", handles=(stub,))
 
 
-def analyze_sheet(analyzers, grid: list[tuple], sheet: str) -> SheetAnalysis:
+def analyze_sheet(analyzers, grid: list[tuple], sheet: str, source=None) -> SheetAnalysis:
     candidates: list[LayoutCandidate] = []
     findings: list[Finding] = []
     for a in analyzers:
         try:
-            candidates.extend(a.analyze(grid, sheet))
+            candidates.extend(a.analyze(grid, sheet, source=source))
         except Exception as e:  # lens failure is a finding, never a crash (spec §5)
             findings.append(Finding(
                 category="analyzer-error", severity="warning", scope="sheet",
@@ -54,5 +54,5 @@ def analyze_workbook(source, config: SwarmConfig | None = None) -> list[SheetAna
         config = SwarmConfig()
     src = as_source(source)
     analyzers = build_analyzers(config.analyzers)
-    return [analyze_sheet(analyzers, src.read_region(name), name)
+    return [analyze_sheet(analyzers, src.read_region(name), name, source=src)
             for name in src.sheet_names()]
