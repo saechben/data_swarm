@@ -155,8 +155,6 @@ def build_indices(path, extraction: WorkbookExtraction) -> dict:
     Transposed tables (extracted through a TransposedView) are rebuilt through
     the same view kind so their view-coordinate regions resolve correctly.
     """
-    from mcg_swarm.source import as_source
-
     out = {}
     for t in extraction.tables:
         if t.errors:  # don't build an index for a failed table
