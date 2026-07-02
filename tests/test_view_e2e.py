@@ -40,3 +40,59 @@ def test_build_indices_rebuilds_through_view():
     idx = build_indices(src, ex)[table.table_id]  # build_indices as_sources its arg
     assert idx.query("North", "Sales").value == 10
     assert idx.query("South", "Sales").value == 20   # non-diagonal: axis genuinely correct
+
+
+from mcg_swarm.analyzers.base import LayoutCandidate
+from mcg_swarm.analyzers.registry import register
+from mcg_swarm.config import SwarmConfig
+from mcg_swarm.coverage import coverage_score, nonempty_cells
+from mcg_swarm.runner import run_swarm
+
+
+class _TransposeLens:
+    """Test-only skeleton of Phase C's transpose lens: unconditionally presents
+    the sheet through a TransposedView. Registered under a test-unique name."""
+
+    name = "transpose_e2e"
+
+    def analyze(self, grid, sheet, source=None):
+        if source is None:
+            return []
+        view = TransposedView(source)
+        vgrid = view.read_region(sheet)
+        handle = detect_table(vgrid, sheet)
+        total = len(nonempty_cells(vgrid))
+        cov = coverage_score(vgrid, [handle.region]) / total if total else 0.0
+        return [LayoutCandidate(method="transpose_e2e", handles=(handle,),
+                                coverage=cov, view=view)]
+
+
+register("transpose_e2e", _TransposeLens)
+
+
+def test_run_swarm_extracts_transposed_sheet_through_view():
+    """The full seam: lens builds view -> run_swarm orchestrates through it ->
+    orientation persists -> adapter-path rebuild queries the right axis."""
+    src = _GridSource(_HORIZONTAL)
+    ex = run_swarm(src, config=SwarmConfig(analyzers=("transpose_e2e",)))
+
+    assert len(ex.tables) == 1
+    t = ex.tables[0]
+    assert t.orientation == "transposed"
+    assert not t.errors
+    assert [c.name for c in t.columns] == ["Region", "Sales"]
+
+    idx = build_indices(src, ex)[t.table_id]
+    assert idx.query("North", "Sales").value == 10
+    assert idx.query("South", "Sales").value == 20
+
+
+def test_vertical_workbook_unaffected_by_transpose_lens_availability():
+    """Default config never touches the registered e2e lens: byte-parity guard."""
+    vertical = {"S": [("Region", "Sales"), ("North", 10), ("South", 20)]}
+    ex = run_swarm(_GridSource(vertical))          # default SwarmConfig()
+    t = ex.tables[0]
+    assert t.orientation == "vertical"
+    assert not t.errors
+    idx = build_indices(_GridSource(vertical), ex)[t.table_id]
+    assert idx.query("North", "Sales").value == 10
