@@ -37,6 +37,10 @@ class SheetAnalysis:
               must read through `view or source`.
     method:   which analyzer won ("fallback" = no candidate; ambiguous stub).
     findings: lens failures + winning candidate's findings (sheet scope).
+    contested: the winner emerged from genuine lens disagreement (run_swarm
+               live-re-validates it against the baseline before commitment).
+    baseline_handles/baseline_view: the vertical-lens candidate's
+               interpretation, when one was present.
     """
 
     sheet: str
@@ -44,6 +48,9 @@ class SheetAnalysis:
     view: Any = None
     method: str = "vertical"
     findings: tuple[Finding, ...] = ()
+    contested: bool = False
+    baseline_handles: tuple[TableHandle, ...] = ()
+    baseline_view: Any = None
 
 
 @runtime_checkable

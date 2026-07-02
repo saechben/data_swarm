@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from mcg_swarm.schemas import WorkbookExtraction
+from mcg_swarm.schemas import WorkbookExtraction, Finding
 from mcg_swarm.splitter import TableHandle
 from mcg_swarm.analyzers.pipeline import analyze_workbook
 from mcg_swarm.analyzers.registry import build_analyzers
@@ -13,6 +13,35 @@ from mcg_swarm.coverage import scan_handle
 from mcg_swarm.views import TransposedView
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
+
+
+def _view_orientation(view, sheet: str):
+    """Map a lens view to a persistable orientation.
+
+    None → "vertical". Views declare theirs via an `orientation` attribute
+    (TransposedView → "transposed"). An unknown view kind persists "vertical"
+    plus a warning Finding: extraction still reads through the view, so the
+    adapter rebuild may misread — surfacing beats silence.
+    Returns (orientation, Finding | None).
+    """
+    if view is None:
+        return "vertical", None
+    orient = getattr(view, "orientation", None)
+    if orient in ("vertical", "transposed"):
+        return orient, None
+    return "vertical", Finding(
+        category="unknown-view", severity="warning", scope="sheet",
+        source="static", ref=f"{sheet}!A1",
+        message=(f"view {type(view).__name__} declares no known orientation; "
+                 "persisted 'vertical' — adapter rebuilds may misread this sheet"))
+
+
+def _interpretation(handles, view) -> tuple:
+    """Layout identity for the Stage-4 winner-vs-baseline comparison — same
+    notion as assess._signature: regions + header placement + view kind."""
+    return (type(view).__name__ if view is not None else "",
+            tuple(sorted((h.region, h.header_row, h.header_span)
+                         for h in handles)))
 
 
 def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmConfig()) -> WorkbookExtraction:
@@ -32,7 +61,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     # analyzers internally; this call is purely for validation.
     build_analyzers(config.analyzers)
     try:
-        sheet_analyses = analyze_workbook(source, config=config)
+        sheet_analyses = analyze_workbook(source, config=config, runner=runner)
     except Exception as e:
         return WorkbookExtraction(
             workbook=name,
@@ -51,10 +80,60 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
         sheets.append(sa.sheet)
         wb_findings.extend(sa.findings)
         sheet_src = sa.view or source
-        orient = "transposed" if isinstance(sa.view, TransposedView) else "vertical"
+        orient, view_finding = _view_orientation(sa.view, sa.sheet)
+        if view_finding is not None:
+            wb_findings.append(view_finding)
 
         if not sa.handles:
             continue  # zero-handle winner (e.g. all-diagram sheet): findings already recorded
+
+        if (sa.contested and sa.baseline_handles
+                and _interpretation(sa.handles, sa.view)
+                != _interpretation(sa.baseline_handles, sa.baseline_view)):
+            # Stage 4 (spec §4.5): a contested non-baseline winner must prove
+            # itself against the vertical baseline on the LIVE pipeline before
+            # commitment — snapshot scores can miss live-only behavior (band
+            # verifier, table validator). Mirrors the Layer-2 re-cut pattern.
+            base_src = sa.baseline_view or source
+            base_orient, base_vf = _view_orientation(sa.baseline_view, sa.sheet)
+            if base_vf is not None:
+                wb_findings.append(base_vf)
+
+            def _run(src_, handles_, orient_):
+                multi = len(handles_) > 1
+                return [orchestrate_table(
+                            src_, sh,
+                            table_id=f"{sa.sheet}__{i}_{j}" if multi else f"{sa.sheet}__{i}",
+                            llm=llm, subagent=subagent,
+                            table_validator=table_validator,
+                            detect_findings=[], orientation=orient_)
+                        for j, sh in enumerate(handles_)]
+
+            try:
+                cand_tables = _run(sheet_src, sa.handles, orient)
+                base_tables = _run(base_src, sa.baseline_handles, base_orient)
+                cand_err = sum(len(t.errors) for t in cand_tables)
+                base_err = sum(len(t.errors) for t in base_tables)
+            except Exception:
+                cand_tables, base_tables = None, None  # never break extraction
+
+            if cand_tables is not None and cand_err <= base_err:
+                tables.extend(cand_tables)
+                wb_findings.append(Finding(
+                    category="contested-layout", severity="info", scope="sheet",
+                    source="static", ref=f"{sa.sheet}!A1",
+                    message=(f"lens disagreement: committed {sa.method!r} "
+                             f"(live errors {cand_err} vs baseline {base_err})")))
+            else:
+                if base_tables is None:  # the A/B itself failed → conservative
+                    base_tables = _run(base_src, sa.baseline_handles, base_orient)
+                tables.extend(base_tables)
+                wb_findings.append(Finding(
+                    category="contested-layout", severity="warning", scope="sheet",
+                    source="static", ref=f"{sa.sheet}!A1",
+                    message=(f"lens disagreement: {sa.method!r} raised live "
+                             "errors; kept vertical baseline")))
+            continue  # tables + findings committed for this sheet
 
         if len(sa.handles) > 1:
             # Multi-table interpretation from a lens: orchestrate each handle.

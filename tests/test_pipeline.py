@@ -2,10 +2,11 @@
 import pytest
 
 from mcg_swarm.analyzers.pipeline import analyze_workbook, analyze_sheet
-from mcg_swarm.analyzers.base import SheetAnalysis
+from mcg_swarm.analyzers.base import SheetAnalysis, LayoutCandidate
 from mcg_swarm.analyzers.registry import register, build_analyzers
 from mcg_swarm.config import SwarmConfig
 from mcg_swarm.splitter import split_workbook, detect_table
+from mcg_swarm.subagent.agent_runner import FakeAgentRunner
 from tests.test_views import _GridSource
 
 _SHEETS = {
@@ -159,3 +160,94 @@ def test_pipeline_uses_rich_ranking_for_multi_candidate():
                        source=_GridSource({"S": two}))
     assert sa.method == "pairlens"        # 12-cell coverage beats vertical's 6
     assert len(sa.handles) == 2
+
+
+# --- B2b: runner/arbiter threading -----------------------------------------
+
+_STACKED = [("Region", "Sales"), ("North", 10), ("South", 20),
+            (None, None),
+            ("Dept", "Cost"), ("Eng", 100), ("Ops", 50)]
+
+
+def _register_disagreeing_lenses(monkeypatch):
+    """vertical (A1:B3) vs a whole-block lens (A1:B7); patched scores make the
+    disagreement genuine (top does not dominate: more coverage but a gap)."""
+    from mcg_swarm.splitter import handle_from_region
+
+    class _BigLens:
+        name = "biglens"
+        def analyze(self, grid, sheet, source=None):
+            h = handle_from_region(grid, sheet, "A1:B7", 1)
+            return [LayoutCandidate(method="biglens", handles=(h,), coverage=1.0)]
+    register("biglens", _BigLens)
+
+    def fake(source, grid, handles, sheet):
+        regions = frozenset(h.region for h in handles)
+        return {frozenset({"A1:B7"}): (12, 0, 1),
+                frozenset({"A1:B3"}): (11, 0, 0)}[regions]
+    monkeypatch.setattr("mcg_swarm.subagent.structural.score_handles", fake)
+
+
+def test_analyze_workbook_agreement_skips_arbiter():
+    """Spec exit criterion: when lenses agree, dedup collapses them and the
+    arbiter is never consulted."""
+    class _AgreeLens:
+        name = "agreelens"
+        def analyze(self, grid, sheet, source=None):
+            from mcg_swarm.splitter import detect_table
+            return [LayoutCandidate(method="agreelens",
+                                    handles=(detect_table(grid, sheet),),
+                                    confidence=0.9)]
+    register("agreelens", _AgreeLens)
+    runner = FakeAgentRunner(actions=[], final={"choice": 0})
+    vertical = {"S": [("Region", "Sales"), ("North", 10)]}
+    out = analyze_workbook(_GridSource(vertical),
+                           config=SwarmConfig(analyzers=("vertical", "agreelens")),
+                           runner=runner)
+    assert out[0].method == "vertical"       # higher-confidence label survives dedup
+    assert out[0].contested is False
+    assert runner.calls == 0
+
+
+def test_analyze_workbook_disagreement_invokes_arbiter(monkeypatch):
+    _register_disagreeing_lenses(monkeypatch)
+    runner = FakeAgentRunner(actions=[], final={"choice": 1, "rationale": "r"})
+    out = analyze_workbook(_GridSource({"S": _STACKED}),
+                           config=SwarmConfig(analyzers=("vertical", "biglens")),
+                           runner=runner)
+    sa = out[0]
+    assert runner.calls == 1
+    assert sa.contested is True
+    assert sa.method == "vertical"           # arbiter picked index 1 (runner-up)
+    assert any(f.category == "arbiter-choice" for f in sa.findings)
+
+
+def test_arbitrate_config_gate(monkeypatch):
+    _register_disagreeing_lenses(monkeypatch)
+    runner = FakeAgentRunner(actions=[], final={"choice": 1})
+    out = analyze_workbook(_GridSource({"S": _STACKED}),
+                           config=SwarmConfig(analyzers=("vertical", "biglens"),
+                                              arbitrate=False),
+                           runner=runner)
+    assert runner.calls == 0
+    assert out[0].method == "biglens"        # deterministic top stands
+
+
+def test_sheet_analysis_carries_baseline(monkeypatch):
+    _register_disagreeing_lenses(monkeypatch)
+    out = analyze_workbook(_GridSource({"S": _STACKED}),
+                           config=SwarmConfig(analyzers=("vertical", "biglens")))
+    sa = out[0]
+    assert sa.contested is True
+    assert sa.method == "biglens"            # no runner -> deterministic top
+    assert [h.region for h in sa.baseline_handles] == ["A1:B3"]
+    assert sa.baseline_view is None
+
+
+def test_no_runner_disagreement_unchanged(monkeypatch):
+    """Graceful degradation: without a runner the deterministic top wins,
+    exactly as before this task."""
+    _register_disagreeing_lenses(monkeypatch)
+    sa = analyze_sheet(build_analyzers(("vertical", "biglens")), _STACKED, "S",
+                       source=_GridSource({"S": _STACKED}))
+    assert sa.method == "biglens" and sa.contested is True
