@@ -28,6 +28,24 @@ class LayoutCandidate:
     view: Any = None
 
 
+@dataclass(frozen=True)
+class SheetAnalysis:
+    """The assessed result for one sheet — the analyze→orchestrate contract.
+
+    handles:  winning candidate's tables, in view coordinates.
+    view:     normalizing WorkbookSource wrapper (None = identity) — downstream
+              must read through `view or source`.
+    method:   which analyzer won ("fallback" = no candidate; ambiguous stub).
+    findings: lens failures + winning candidate's findings (sheet scope).
+    """
+
+    sheet: str
+    handles: tuple[TableHandle, ...]
+    view: Any = None
+    method: str = "vertical"
+    findings: tuple[Finding, ...] = ()
+
+
 @runtime_checkable
 class SheetAnalyzer(Protocol):
     name: str
