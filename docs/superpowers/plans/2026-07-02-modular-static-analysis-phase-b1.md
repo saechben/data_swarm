@@ -353,7 +353,7 @@ def _signature(candidate: LayoutCandidate) -> tuple:
 - [ ] **Step 6: Run the full suite (behavioral gate)**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: all green (322 baseline − 0 regressions + 3 new = **325 passed, 1 skipped**). Coverage is only a ranking input with an identical per-sheet denominator, and single-candidate assessment is an identity passthrough — so this task cannot change any extraction output.
+Expected: all green (322 baseline + 6 from Task 1 + 3 new = **331 passed, 1 skipped**). Coverage is only a ranking input with an identical per-sheet denominator, and single-candidate assessment is an identity passthrough — so this task cannot change any extraction output.
 
 - [ ] **Step 7: Commit**
 
@@ -566,7 +566,7 @@ __all__ = ["LayoutCandidate", "SheetAnalysis", "SheetAnalyzer", "analyze_sheet",
 - [ ] **Step 7: Run the full suite**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: **329 passed, 1 skipped** (325 + 4 new), zero failures — every `split_workbook(p)[0]` caller and both neutrality tests must stay green (the shim reproduces the Phase-A flow exactly: same lenses, same assess, same flatten).
+Expected: **335 passed, 1 skipped** (331 + 4 new), zero failures — every `split_workbook(p)[0]` caller and both neutrality tests must stay green (the shim reproduces the Phase-A flow exactly: same lenses, same assess, same flatten).
 
 - [ ] **Step 8: Commit**
 
@@ -877,7 +877,7 @@ Expected: PASS (7 tests: 3 prior + your 2 new + Task 3's shim coverage via the o
 - [ ] **Step 5: Run the full suite (the local neutrality gate)**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: **336 passed, 1 skipped** (329 + 5 Task-4 + 2 Task-5), zero failures. Every structural/boundary/orchestrator/adapter test must stay green — the default path is `view=None`, single handle, identical control flow.
+Expected: **342 passed, 1 skipped** (335 + 5 Task-4 + 2 Task-5), zero failures. Every structural/boundary/orchestrator/adapter test must stay green — the default path is `view=None`, single handle, identical control flow.
 
 - [ ] **Step 6: Commit**
 
