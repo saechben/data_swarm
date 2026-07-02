@@ -296,3 +296,62 @@ def test_gate_handles_region_with_empty_cells(tmp_path):
 
     assert isinstance(rep, TableTestReport), f"Expected TableTestReport, got {type(rep)}"
     assert rep.passed, f"Expected gate to pass for correct table, failures: {rep.failures}"
+
+
+def test_gate_fails_duplicate_row_keys(tmp_path):
+    """THE silent-data-loss hole (verified live 2026-07-02): a shadowed key
+    passed every phase because row-integrity reads the WINNING row."""
+    p = _wb(tmp_path, [["Region", "Sales"], ["North", 10], ["South", 20],
+                       ["North", 99]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
+    assert not rep.passed
+    assert any(f.startswith("row-key collision:") for f in rep.failures)
+
+
+def test_gate_fails_blank_row_keys(tmp_path):
+    p = _wb(tmp_path, [["Region", "Sales"], ["North", 10], [None, 55]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
+    assert not rep.passed
+    assert any(f.startswith("blank row key:") for f in rep.failures)
+
+
+def test_gate_fails_empty_index(tmp_path):
+    """A table with zero resolvable rows must not pass vacuously."""
+    from mcg_swarm.splitter import handle_from_region
+    p = _wb(tmp_path, [["Region", "Sales"], ["North", 10]])
+    grid = [("Region", "Sales")]
+    h = handle_from_region(grid, "Data", "A1:B1", 1)   # header-only region
+    idx = build_index(p, h, row_key=["Region"])
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
+    assert not rep.passed
+    assert any(f.startswith("empty index:") for f in rep.failures)
+
+
+def test_gate_fails_dropped_live_column(tmp_path):
+    """Reverse coverage: a physically-present header missing from
+    table.columns is silent data loss for every consumer."""
+    p = _wb(tmp_path, [["Region", "Sales", "Cost"], ["North", 10, 5]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+    table = _canon(h)
+    trimmed = table.model_validate({**table.model_dump(),
+                                    "columns": [c for c in table.model_dump()["columns"]
+                                                if c["name"] != "Cost"]})
+    rep = run_table_tests(OpenpyxlFileSource(p), trimmed, idx)
+    assert not rep.passed
+    assert any(f.startswith("column-coverage:") for f in rep.failures)
+
+
+def test_gate_fails_schema_column_missing_from_index(tmp_path):
+    """Real Phase 1 (the old one checked the index against itself)."""
+    p = _wb(tmp_path, [["Region", "Sales"], ["North", 10]])
+    h = split_workbook(p)[0]
+    idx = build_index(p, h, row_key=["Region"])
+    del idx._col_to_phys["Sales"]
+    rep = run_table_tests(OpenpyxlFileSource(p), _canon(h), idx)
+    assert not rep.passed
+    assert any(f.startswith("coverage gap:") for f in rep.failures)

@@ -74,15 +74,26 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
     cols = index.column_names()
 
     # ------------------------------------------------------------------
-    # Phase 1: Coverage — resolution-only, no file I/O
+    # Phase 1: REAL coverage — schema vs index, and row-resolution integrity.
+    # (The previous version compared index.column_names()/row_keys() against
+    # the very dicts they are read from — a tautology that could never fail.)
     # ------------------------------------------------------------------
-    for col in cols:
-        if col not in index._col_to_phys:
-            failures.append(f"coverage gap: column {col!r} not in _col_to_phys")
-
-    for k in keys:
-        if k not in index._key_to_phys:
-            failures.append(f"coverage gap: row key {k!r} not in _key_to_phys")
+    for col in table.columns:
+        if col.name not in index._col_to_phys:
+            failures.append(
+                f"coverage gap: column {col.name!r} in table.columns but not "
+                "resolvable via the index")
+    for key, shadowed, winner in getattr(index, "duplicate_row_keys", []):
+        failures.append(
+            f"row-key collision: key {key!r} at row {shadowed} is shadowed by "
+            f"row {winner} — the earlier row is unreachable via query()")
+    for r in getattr(index, "blank_key_rows", []):
+        failures.append(
+            f"blank row key: data row {r} has an empty key cell — the row is "
+            "not reachable by a meaningful key")
+    if not keys:
+        failures.append(
+            "empty index: zero row keys resolved — the table cannot be queried")
 
     # ------------------------------------------------------------------
     # Build deterministic sample (used by phases 2b, 3, 4).
@@ -225,6 +236,15 @@ def run_table_tests(source, table, index, sample_size: int = 25) -> TableTestRep
                 f"column-name: {name!r} in table.columns not found in live header rows "
                 f"{header_row}–{header_row + header_span - 1}"
             )
+
+    # Reverse coverage: every live header in the region must be declared —
+    # a dropped column is silent data loss for every downstream consumer.
+    declared = {c.name for c in table.columns}
+    for name in live_names:
+        if name not in declared:
+            failures.append(
+                f"column-coverage: live header {name!r} in region not declared "
+                "in table.columns — column silently dropped")
 
     # ── Phase 2b: column-integrity ──────────────────────────────────────
     for col_name, idx_phys in index._col_to_phys.items():
