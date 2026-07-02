@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 import openpyxl
 from openpyxl.utils import get_column_letter, range_boundaries
 from mcg_swarm.schemas import ColumnSpec
-from mcg_swarm.source import WorkbookSource, as_source
 
 
 @dataclass
@@ -262,29 +261,13 @@ def detect_table(rows: list[tuple], sheet_name: str) -> TableHandle:
 def split_workbook(source, config=None) -> list[TableHandle]:
     """Split a workbook into TableHandles via the active analyzer lenses.
 
-    Accepts a path string, ``{"main": path}`` dict, or any ``WorkbookSource``.
-    For each sheet, every analyzer in ``config.analyzers`` emits LayoutCandidate(s);
-    ``assess`` picks the winner and its handles are flattened into the result.
-    Default config → analyzers=("vertical",) → identical to the pre-modular behavior.
+    Back-compat shim over ``analyze_workbook()``: flattens the per-sheet winning
+    handles and drops per-sheet view/method/findings. Rich callers (run_swarm)
+    use ``mcg_swarm.analyzers.pipeline.analyze_workbook`` directly.
     """
-    # Lazy imports break the splitter<->analyzers import cycle (analyzers import
-    # detect_table/TableHandle from this module at their top level).
-    from mcg_swarm.analyzers.registry import build_analyzers
-    from mcg_swarm.analyzers.assess import assess
-    from mcg_swarm.config import SwarmConfig
-
-    if config is None:
-        config = SwarmConfig()
-    src = as_source(source)
-    analyzers = build_analyzers(config.analyzers)
-
-    handles: list[TableHandle] = []
-    for name in src.sheet_names():
-        grid = src.read_region(name)
-        candidates = [c for a in analyzers for c in a.analyze(grid, name)]
-        winner = assess(candidates)
-        handles.extend(winner.handles)
-    return handles
+    # Lazy import: analyzers import TableHandle/detect_table from this module.
+    from mcg_swarm.analyzers.pipeline import analyze_workbook
+    return [h for sa in analyze_workbook(source, config) for h in sa.handles]
 
 
 def handle_from_region(grid: list[tuple], sheet: str, region: str,

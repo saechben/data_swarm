@@ -353,7 +353,7 @@ def _signature(candidate: LayoutCandidate) -> tuple:
 - [ ] **Step 6: Run the full suite (behavioral gate)**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: all green (322 baseline − 0 regressions + 3 new = **325 passed, 1 skipped**). Coverage is only a ranking input with an identical per-sheet denominator, and single-candidate assessment is an identity passthrough — so this task cannot change any extraction output.
+Expected: all green (322 baseline + 6 from Task 1 + 3 new = **331 passed, 1 skipped**). Coverage is only a ranking input with an identical per-sheet denominator, and single-candidate assessment is an identity passthrough — so this task cannot change any extraction output.
 
 - [ ] **Step 7: Commit**
 
@@ -566,7 +566,7 @@ __all__ = ["LayoutCandidate", "SheetAnalysis", "SheetAnalyzer", "analyze_sheet",
 - [ ] **Step 7: Run the full suite**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: **329 passed, 1 skipped** (325 + 4 new), zero failures — every `split_workbook(p)[0]` caller and both neutrality tests must stay green (the shim reproduces the Phase-A flow exactly: same lenses, same assess, same flatten).
+Expected: **335 passed, 1 skipped** (331 + 4 new), zero failures — every `split_workbook(p)[0]` caller and both neutrality tests must stay green (the shim reproduces the Phase-A flow exactly: same lenses, same assess, same flatten).
 
 - [ ] **Step 8: Commit**
 
@@ -877,7 +877,7 @@ Expected: PASS (7 tests: 3 prior + your 2 new + Task 3's shim coverage via the o
 - [ ] **Step 5: Run the full suite (the local neutrality gate)**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: **336 passed, 1 skipped** (329 + 5 Task-4 + 2 Task-5), zero failures. Every structural/boundary/orchestrator/adapter test must stay green — the default path is `view=None`, single handle, identical control flow.
+Expected: **342 passed, 1 skipped** (335 + 5 Task-4 + 2 Task-5), zero failures. Every structural/boundary/orchestrator/adapter test must stay green — the default path is `view=None`, single handle, identical control flow.
 
 - [ ] **Step 6: Commit**
 
@@ -900,4 +900,4 @@ Agentic arbiter over top-K on genuine disagreement (`not _dominates(top, runner_
 
 **1. Spec coverage (B1 slice):** SourceView/TransposedView + downstream wiring → Tasks 1, 5. Contract change surfacing findings/method → Task 3 (via `SheetAnalysis`; `split_workbook` kept as documented shim — deviation from spec §4.6's literal "pairs return" to preserve 15 call sites; intent honored, noted for B2). Deferred items: never-raise/stub → Task 3; dedup widening → Task 2; coverage float → Task 2. Assessor Stages 2-4, subsumption, runner gates → explicitly Plan B2. ✓
 **2. Placeholder scan:** none — every code step is complete; the only prose-directed edit (Task 5 Step 3d) names the exact substitutions and bounds them. ✓
-**3. Type consistency:** `SheetAnalysis(sheet, handles, view, method, findings)` identical in Tasks 3/5; `assess_sheet(candidates, *, source, grid, sheet)` and `rank_candidates(...)-> list[(candidate, (cov, err, gaps))]` consistent between Task 4 code and tests; `score_handles(source, grid, handles, sheet)` matches structural.py:67; `Finding` always constructed with `message`. Suite-count arithmetic: 322 → +3 (T2) → +4 (T3) → +5 (T4) → +2 (T5) = 336. ✓
+**3. Type consistency:** `SheetAnalysis(sheet, handles, view, method, findings)` identical in Tasks 3/5; `assess_sheet(candidates, *, source, grid, sheet)` and `rank_candidates(...)-> list[(candidate, (cov, err, gaps))]` consistent between Task 4 code and tests; `score_handles(source, grid, handles, sheet)` matches structural.py:67; `Finding` always constructed with `message`. Suite-count arithmetic: 322 → +6 (T1) → +3 (T2) → +4 (T3) → +5 (T4) → +2 (T5) = 342. ✓

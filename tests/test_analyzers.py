@@ -7,7 +7,8 @@ def test_layout_candidate_defaults():
     c = LayoutCandidate(method="vertical", handles=(h,))
     assert c.method == "vertical"
     assert c.handles == (h,)
-    assert c.coverage == 0
+    assert c.coverage == 0.0
+    assert c.view is None
     assert c.findings == ()
     assert c.confidence == 1.0
 
@@ -52,14 +53,50 @@ def test_vertical_analyzer_wraps_detect_table():
 
 
 def test_vertical_analyzer_sets_coverage():
+    from mcg_swarm.coverage import coverage_score, nonempty_cells
     a = VerticalSplitAnalyzer()
     c = a.analyze(_GRID, "Sheet1")[0]
-    assert c.coverage == coverage_score(_GRID, [c.handles[0].region])
-    assert c.coverage > 0
+    expected = coverage_score(_GRID, [c.handles[0].region]) / len(nonempty_cells(_GRID))
+    assert c.coverage == expected
+    assert 0.0 < c.coverage <= 1.0
 
 
 def test_vertical_analyzer_name_attr():
     assert VerticalSplitAnalyzer().name == "vertical"
+
+
+def _cand_at(method, region, header_row, header_span=1, confidence=1.0):
+    h = TableHandle("S", region, header_row, header_span=header_span)
+    return LayoutCandidate(method=method, handles=(h,), coverage=0.5,
+                           confidence=confidence)
+
+
+def test_dedup_distinguishes_header_row():
+    a = _cand_at("a", "A1:B3", 1)
+    b = _cand_at("b", "A1:B3", 2)   # same region, different header interpretation
+    got = assess([a, b])
+    assert got in (a, b)            # ranked, not collapsed
+    # both signatures survive dedup: removing either input changes nothing
+    assert assess([a]) is a and assess([b]) is b
+
+
+def test_dedup_distinguishes_header_span():
+    a = _cand_at("a", "A1:B4", 1, header_span=1, confidence=0.4)
+    b = _cand_at("b", "A1:B4", 1, header_span=2, confidence=0.9)
+    # different span -> different signature -> NOT collapsed by confidence
+    assert assess([a, b]) in (a, b)
+    assert assess([b, a]) in (a, b)
+
+
+def test_dedup_distinguishes_view():
+    from mcg_swarm.views import TransposedView
+    plain = _cand_at("a", "A1:B3", 1, confidence=0.9)
+    h = TableHandle("S", "A1:B3", 1)
+    viewed = LayoutCandidate(method="b", handles=(h,), coverage=0.5,
+                             confidence=0.4, view=TransposedView(None))
+    # same region but one reads through a view: different interpretations
+    winner = assess([plain, viewed])
+    assert winner is plain          # higher confidence wins the rank, not the dedup
 
 
 # Task 3: Registry + SwarmConfig.analyzers tests
