@@ -1,7 +1,8 @@
 from __future__ import annotations
 import os
 from mcg_swarm.schemas import WorkbookExtraction
-from mcg_swarm.splitter import split_workbook, TableHandle
+from mcg_swarm.splitter import TableHandle
+from mcg_swarm.analyzers.pipeline import analyze_workbook
 from mcg_swarm.analyzers.registry import build_analyzers
 from mcg_swarm.orchestrator import orchestrate_table
 from mcg_swarm.subagent import build_subagent, build_table_validator, build_structural_reviewer
@@ -30,7 +31,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     # analyzers internally; this call is purely for validation.
     build_analyzers(config.analyzers)
     try:
-        handles = split_workbook(source, config=config)
+        sheet_analyses = analyze_workbook(source, config=config)
     except Exception as e:
         return WorkbookExtraction(
             workbook=name,
@@ -45,11 +46,26 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     table_validator = build_table_validator(runner=runner, config=config)
     reviewer = build_structural_reviewer(runner=runner, config=config)
     tables, sheets, wb_findings = [], [], []
-    for i, h in enumerate(handles):
-        sheets.append(h.sheet)
+    for i, sa in enumerate(sheet_analyses):
+        sheets.append(sa.sheet)
+        wb_findings.extend(sa.findings)
+        sheet_src = sa.view or source
+
+        if len(sa.handles) > 1:
+            # Multi-table interpretation from a lens: orchestrate each handle.
+            # Layer-2 review presumes a single baseline handle, so it is skipped
+            # here — multi-handle winners were already assessed at analyze time.
+            for j, sh in enumerate(sa.handles):
+                tables.append(orchestrate_table(
+                    sheet_src, sh, table_id=f"{sa.sheet}__{i}_{j}", llm=llm,
+                    subagent=subagent, table_validator=table_validator,
+                    detect_findings=[]))
+            continue
+
+        h = sa.handles[0]
         try:
-            grid = source.read_region(h.sheet)
-            scan = scan_handle(grid, h, h.sheet)
+            grid = sheet_src.read_region(sa.sheet)
+            scan = scan_handle(grid, h, sa.sheet)
         except Exception:
             grid, scan = None, []  # never let detection break extraction
 
@@ -57,7 +73,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
         if (reviewer is not None and grid is not None
                 and any(f.category == "uncovered-data" for f in scan)):
             try:
-                review = reviewer.review(source, h, grid, scan)
+                review = reviewer.review(sheet_src, h, grid, scan)
             except Exception:
                 review = None  # never let alteration break extraction
 
@@ -70,13 +86,13 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
             # an accepted re-cut raise the live error count above the baseline.
             try:
                 cand_tables = [orchestrate_table(
-                        source, sh, table_id=f"{h.sheet}__{i}_{j}", llm=llm,
+                        sheet_src, sh, table_id=f"{sa.sheet}__{i}_{j}", llm=llm,
                         subagent=subagent, table_validator=table_validator,
                         detect_findings=tf)
                     for j, (sh, tf) in enumerate(
                         zip(review.handles, review.detect_findings))]
                 base_table = orchestrate_table(
-                    source, h, table_id=f"{h.sheet}__{i}", llm=llm,
+                    sheet_src, h, table_id=f"{sa.sheet}__{i}", llm=llm,
                     subagent=subagent, table_validator=table_validator,
                     detect_findings=[f for f in scan if f.scope != "sheet"])
                 cand_err = sum(len(t.errors) for t in cand_tables)
@@ -91,7 +107,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
                 # live pipeline regressed (or failed) → keep deterministic baseline,
                 # flip the detection annotation from fixed to rejected.
                 tables.append(base_table if base_table is not None else orchestrate_table(
-                    source, h, table_id=f"{h.sheet}__{i}", llm=llm,
+                    sheet_src, h, table_id=f"{sa.sheet}__{i}", llm=llm,
                     subagent=subagent, table_validator=table_validator,
                     detect_findings=[f for f in scan if f.scope != "sheet"]))
                 note = "re-cut raised live-pipeline errors; kept deterministic baseline"
@@ -111,9 +127,9 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
 
         multi = len(sheet_handles) > 1
         for j, (sh, tf) in enumerate(zip(sheet_handles, per_handle)):
-            table_id = f"{h.sheet}__{i}_{j}" if multi else f"{h.sheet}__{i}"
+            table_id = f"{sa.sheet}__{i}_{j}" if multi else f"{sa.sheet}__{i}"
             tables.append(orchestrate_table(
-                source, sh, table_id=table_id, llm=llm,
+                sheet_src, sh, table_id=table_id, llm=llm,
                 subagent=subagent, table_validator=table_validator,
                 detect_findings=tf))
     return WorkbookExtraction(
