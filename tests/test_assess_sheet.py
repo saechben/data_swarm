@@ -224,3 +224,34 @@ def test_arbiter_failure_and_out_of_range_degrade_to_top(monkeypatch):
                           grid=_TWO_STACKED, sheet="S", arbiter=_PickArbiter(7))
     assert b.winner is big
     assert any(f.category == "arbiter-error" for f in b.findings)
+
+
+def test_baseline_survives_dedup_label_steal(monkeypatch):
+    """B2b final-review #4: an identical interpretation at HIGHER confidence
+    steals the dedup label; the floor must still find the vertical baseline
+    by signature, not by label."""
+    _patch_scores(monkeypatch, {
+        frozenset({"A1:B3"}): (6, 0, 0),
+        frozenset({"A1:B7"}): (12, 1, 1),          # top, but errors > baseline
+    })
+    v = _cand("vertical", [("A1:B3", 1)])                    # confidence 1.0
+    thief = _cand("hijack", [("A1:B3", 1)], confidence=1.5)  # same signature
+    big = _cand("big", [("A1:B7", 1)])
+    a = assess_sheet_full([v, thief, big],
+                          source=_GridSource({"S": _TWO_STACKED}),
+                          grid=_TWO_STACKED, sheet="S", arbiter=None)
+    assert a.baseline is not None                  # found via signature
+    assert a.winner is a.baseline                  # floor restored it
+    assert any(f.category == "assessor-floor" for f in a.findings)
+
+
+def test_baseline_none_when_no_vertical_lens(monkeypatch):
+    _patch_scores(monkeypatch, {
+        frozenset({"A1:B7"}): (12, 0, 1),
+        frozenset({"A5:B7"}): (11, 0, 0),
+    })
+    big = _cand("big", [("A1:B7", 1)])
+    q = _cand("q", [("A5:B7", 5)])
+    a = assess_sheet_full([big, q], source=_GridSource({"S": _TWO_STACKED}),
+                          grid=_TWO_STACKED, sheet="S", arbiter=None)
+    assert a.baseline is None                      # genuinely no vertical

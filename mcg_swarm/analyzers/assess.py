@@ -116,7 +116,16 @@ def assess_sheet_full(candidates: list[LayoutCandidate], *, source, grid,
     if not candidates:
         raise ValueError("assess_sheet requires at least one candidate")
     deduped = _dedup(candidates)
+    # Baseline = the vertical lens's interpretation. Look up by label first;
+    # if _dedup handed the identical interpretation to a higher-confidence
+    # lens (label steal), recover it by signature so the floor and Stage-4
+    # never silently disable (B2b final-review #4).
     baseline = next((c for c in deduped if c.method == "vertical"), None)
+    if baseline is None:
+        v = next((c for c in candidates if c.method == "vertical"), None)
+        if v is not None:
+            vsig = _signature(v)
+            baseline = next((c for c in deduped if _signature(c) == vsig), None)
     if len(deduped) == 1:
         return Assessment(deduped[0], baseline, contested=False)
 
