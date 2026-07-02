@@ -72,3 +72,51 @@ def test_try_layout_tool_enforces_probe_budget():
     assert blocked["ok"] is False and "budget" in blocked["error"]
     assert {t.name for t in tools} >= {"dimensions", "peek_rows", "peek_region",
                                        "try_layout"}
+
+
+from mcg_swarm.analyzers.agentic import AgenticLayoutLens
+from mcg_swarm.analyzers.registry import build_analyzers
+from mcg_swarm.subagent.agent_runner import FakeAgentRunner
+
+
+def test_lens_returns_empty_without_runner_or_source():
+    src = _GridSource(_STACKED)
+    assert AgenticLayoutLens(runner=None).analyze(
+        src.read_region("S"), "S", source=src) == []
+    runner = FakeAgentRunner(actions=[], final={"tables": []})
+    assert AgenticLayoutLens(runner=runner).analyze(
+        src.read_region("S"), "S", source=None) == []
+
+
+def test_lens_full_flow_with_fake_runner():
+    """The agent probes with try_layout, then finalizes the same layout; the
+    lens materializes ONE candidate from the validated patch."""
+    tables = [{"region": "A1:B3", "header_row": 1},
+              {"region": "A5:B7", "header_row": 5}]
+    runner = FakeAgentRunner(
+        actions=[{"tool": "dimensions"},
+                 {"tool": "try_layout", "args": {"tables": tables}}],
+        final={"tables": tables, "rationale": "two stacked tables"})
+    src = _GridSource(_STACKED)
+    out = AgenticLayoutLens(runner=runner).analyze(
+        src.read_region("S"), "S", source=src)
+    assert len(out) == 1 and len(out[0].handles) == 2
+    assert out[0].method == "agentic"
+    probe = runner.observations[1]          # the try_layout observation
+    assert probe["ok"] is True and probe["errors"] == 0
+
+
+def test_build_analyzers_threads_runner_to_marked_factories():
+    runner = FakeAgentRunner(actions=[], final={"tables": []})
+    built = build_analyzers(("vertical", "agentic"), runner=runner)
+    assert built[1]._runner is runner       # agentic got the runner
+    assert not hasattr(built[0], "_runner") # vertical untouched
+    unbuilt = build_analyzers(("agentic",))  # no runner: constructs fine,
+    src = _GridSource(_STACKED)              # analyze degrades to []
+    assert unbuilt[0].analyze(src.read_region("S"), "S", source=src) == []
+
+
+def test_unknown_name_still_raises_before_instantiation():
+    import pytest
+    with pytest.raises(KeyError):
+        build_analyzers(("vertical", "no_such_lens"))

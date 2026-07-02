@@ -66,7 +66,7 @@ def analyze_workbook(source, config: SwarmConfig | None = None,
     if config is None:
         config = SwarmConfig()
     src = as_source(source)
-    analyzers = build_analyzers(config.analyzers)
+    analyzers = build_analyzers(config.analyzers, runner=runner)
     arbiter = None
     if runner is not None and config.arbitrate:
         # Lazy: the arbiter reaches into the subagent toolset stack at call time.

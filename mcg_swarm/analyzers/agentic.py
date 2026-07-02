@@ -141,3 +141,52 @@ def _build_agentic_toolset(source, grid, sheet: str, policy: AgenticLensPolicy,
          "required": ["tables"]},
         _try))
     return tools
+
+
+AGENTIC_SYSTEM = (
+    "You are mapping the COMPLETE table layout of ONE spreadsheet sheet with NO "
+    "prior structural assumptions — the sheet may hold several tables, transposed "
+    "tables, title banners, notes, or chart areas. Inspect the actual cells with "
+    "the read-only tools. Iterate with `try_layout` until your layout scores "
+    "clean (maximal coverage_cells, zero errors, zero gaps), then call `finalize` "
+    "with the SAME tables list. Every table needs its A1 `region`, absolute "
+    "`header_row`, `header_span` (1 unless a genuine multi-row header), and "
+    "`orientation`: 'vertical' when headers run across the top, 'transposed' when "
+    "they run down the first column. For transposed tables give region and "
+    "header_row in TRANSPOSED coordinates (the sheet as if rows and columns were "
+    "swapped). All tables in one proposal must share ONE orientation. Exclude "
+    "banners, notes, and chart areas from every region. Never invent cells or "
+    "tables."
+)
+
+
+def _agentic_seed(sheet: str, grid) -> str:
+    n_rows = len(grid)
+    n_cols = max((len(r) for r in grid), default=0)
+    return "\n".join([
+        f"Map the complete table layout of sheet {sheet!r} "
+        f"(~{n_rows} used rows x {n_cols} used columns).",
+        "Start with `dimensions` and `peek_rows`, probe candidate layouts with "
+        "`try_layout`, and only `finalize` a layout you have scored.",
+    ])
+
+
+class AgenticLayoutLens:
+    """The pure-agentic lens: just another SheetAnalyzer to the ensemble."""
+
+    name = "agentic"
+    needs_runner = True
+
+    def __init__(self, runner=None, policy: AgenticLensPolicy | None = None):
+        self._runner = runner
+        self._policy = policy or AgenticLensPolicy()
+
+    def analyze(self, grid, sheet: str, source=None) -> list[LayoutCandidate]:
+        if self._runner is None or source is None:
+            return []  # graceful degradation; run_swarm's validation build is runner-less
+        counter = {"probes": 0}
+        tools = _build_agentic_toolset(source, grid, sheet, self._policy, counter)
+        raw = self._runner.run(_agentic_seed(sheet, grid), tools,
+                               schema=SheetLayoutPatch, system=AGENTIC_SYSTEM)
+        patch = SheetLayoutPatch.model_validate(raw)
+        return _materialize(patch, grid, sheet, source, self._policy)
