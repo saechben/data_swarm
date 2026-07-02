@@ -132,7 +132,13 @@ def test_lens_can_construct_view_over_source():
 
 
 def test_pipeline_uses_rich_ranking_for_multi_candidate():
-    """#5: with competing lenses, the pipeline picks by score_handles, not raw coverage."""
+    """#5: with competing lenses, the pipeline picks by score_handles, not raw
+    coverage. pairlens hardcodes a LOW coverage (0.1) — below vertical's
+    computed ~0.5 — so raw-coverage ranking (plain assess()) would pick
+    vertical. Only rich ranking (assess_sheet's score_handles, which counts
+    actual covered cells: pairlens covers all 12 non-empty cells vs
+    vertical's 6) picks pairlens. This makes the test discriminate the two
+    wirings instead of passing under both."""
     from mcg_swarm.splitter import handle_from_region
     from mcg_swarm.analyzers.base import LayoutCandidate
 
@@ -146,7 +152,7 @@ def test_pipeline_uses_rich_ranking_for_multi_candidate():
             top = handle_from_region(grid, sheet, "A1:B3", 1)
             bottom = handle_from_region(grid, sheet, "A5:B7", 5)
             return [LayoutCandidate(method="pairlens", handles=(top, bottom),
-                                    coverage=1.0)]
+                                    coverage=0.1)]
     register("pairlens", _PairLens)
 
     sa = analyze_sheet(build_analyzers(("vertical", "pairlens")), two, "S",
