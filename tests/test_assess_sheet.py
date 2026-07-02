@@ -91,3 +91,13 @@ def test_rank_scores_viewed_candidate_through_its_view():
     cov, errors, _gaps = ranked[0][1]
     assert cov == 6            # all 6 non-empty cells, counted in VIEW coordinates
     assert errors == 0         # scored through the view, the table is clean
+
+
+def test_rank_candidates_requires_source():
+    """B2a final-review #4: source=None must fail loudly, not mis-score
+    every handle into orchestration errors (the pipeline's never-raise guard
+    turns the raise into a fallback stub + finding)."""
+    grid = [("Region", "Sales"), ("North", 10)]
+    c = LayoutCandidate(method="vertical", handles=(detect_table(grid, "S"),))
+    with pytest.raises(ValueError):
+        rank_candidates([c, c], source=None, grid=grid, sheet="S")

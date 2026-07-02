@@ -26,6 +26,8 @@ class TransposedView:
     the view and stays vertical-only by construction (spec §2 principle 2).
     """
 
+    orientation = "transposed"   # persisted on CanonicalTable; runner dispatches on this
+
     def __init__(self, inner: WorkbookSource) -> None:
         self._inner = inner
 

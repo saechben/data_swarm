@@ -59,6 +59,8 @@ def rank_candidates(candidates: list[LayoutCandidate], *, source, grid,
     """Stage 1 (rich): score each deduped candidate with the Layer-2 three-way
     metric and rank best-first: coverage desc, errors asc, gaps asc, confidence
     desc. Returns [(candidate, (coverage, errors, gaps)), ...]."""
+    if source is None:
+        raise ValueError("rank_candidates requires a source (got None)")
     # Lazy: structural pulls in the orchestration stack; keep analyzers light.
     from mcg_swarm.subagent.structural import score_handles
 

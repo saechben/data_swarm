@@ -83,3 +83,10 @@ def test_downstream_index_resolves_correct_axis_through_view():
     idx = build_index(view, handle, row_key=["Region"])
     assert idx.query("North", "Sales").value == 10
     assert idx.query("South", "Sales").value == 20
+
+
+def test_transposed_view_declares_orientation():
+    """Views must declare their persistable orientation as an attribute —
+    run_swarm dispatches on it instead of isinstance (B2a final-review #1)."""
+    view = TransposedView(_GridSource({"S": [("a", "b")]}))
+    assert view.orientation == "transposed"

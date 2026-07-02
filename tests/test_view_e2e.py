@@ -96,3 +96,51 @@ def test_vertical_workbook_unaffected_by_transpose_lens_availability():
     assert not t.errors
     idx = build_indices(_GridSource(vertical), ex)[t.table_id]
     assert idx.query("North", "Sales").value == 10
+
+
+def test_error_stub_persists_orientation():
+    """An ambiguous handle extracted through a view still records the view's
+    orientation on its error stub (closes the B2a-review stub-test gap)."""
+    from mcg_swarm.splitter import TableHandle
+    src = _GridSource(_HORIZONTAL)
+    view = TransposedView(src)
+    bad = TableHandle("S", "A1:A1", 1, [], ambiguous=True, reason="forced stub")
+    table = orchestrate_table(view, bad, table_id="S__stub",
+                              orientation="transposed")
+    assert table.errors                      # it IS a failure stub
+    assert table.orientation == "transposed"
+
+
+def test_unknown_view_kind_warns_and_persists_vertical():
+    """A lens view with no `orientation` attribute must not silently misread:
+    run_swarm persists 'vertical' AND emits an unknown-view warning finding."""
+    from mcg_swarm.analyzers.base import LayoutCandidate
+    from mcg_swarm.analyzers.registry import register
+    from mcg_swarm.config import SwarmConfig
+    from mcg_swarm.runner import run_swarm
+
+    class _NamelessView:
+        """Identity pass-through WorkbookSource wrapper with NO orientation attr."""
+        def __init__(self, inner): self._inner = inner
+        def sheet_names(self): return self._inner.sheet_names()
+        def read_cell(self, sheet, row, col): return self._inner.read_cell(sheet, row, col)
+        def read_region(self, sheet, min_row=None, max_row=None, min_col=None, max_col=None):
+            return self._inner.read_region(sheet, min_row, max_row, min_col, max_col)
+        def read_formula_region(self, sheet, min_row=None, max_row=None, min_col=None, max_col=None):
+            return self._inner.read_formula_region(sheet, min_row, max_row, min_col, max_col)
+
+    class _NamelessLens:
+        name = "nameless_view"
+        def analyze(self, grid, sheet, source=None):
+            view = _NamelessView(source)
+            handle = detect_table(view.read_region(sheet), sheet)
+            return [LayoutCandidate(method="nameless_view", handles=(handle,),
+                                    coverage=1.0, view=view)]
+
+    register("nameless_view", _NamelessLens)
+    vertical = {"S": [("Region", "Sales"), ("North", 10)]}
+    ex = run_swarm(_GridSource(vertical),
+                   config=SwarmConfig(analyzers=("nameless_view",)))
+    assert ex.tables[0].orientation == "vertical"
+    assert any(f.category == "unknown-view" and f.severity == "warning"
+               for f in ex.findings)

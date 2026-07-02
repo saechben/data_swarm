@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from mcg_swarm.schemas import WorkbookExtraction
+from mcg_swarm.schemas import WorkbookExtraction, Finding
 from mcg_swarm.splitter import TableHandle
 from mcg_swarm.analyzers.pipeline import analyze_workbook
 from mcg_swarm.analyzers.registry import build_analyzers
@@ -13,6 +13,27 @@ from mcg_swarm.coverage import scan_handle
 from mcg_swarm.views import TransposedView
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
+
+
+def _view_orientation(view, sheet: str):
+    """Map a lens view to a persistable orientation.
+
+    None → "vertical". Views declare theirs via an `orientation` attribute
+    (TransposedView → "transposed"). An unknown view kind persists "vertical"
+    plus a warning Finding: extraction still reads through the view, so the
+    adapter rebuild may misread — surfacing beats silence.
+    Returns (orientation, Finding | None).
+    """
+    if view is None:
+        return "vertical", None
+    orient = getattr(view, "orientation", None)
+    if orient in ("vertical", "transposed"):
+        return orient, None
+    return "vertical", Finding(
+        category="unknown-view", severity="warning", scope="sheet",
+        source="static", ref=f"{sheet}!A1",
+        message=(f"view {type(view).__name__} declares no known orientation; "
+                 "persisted 'vertical' — adapter rebuilds may misread this sheet"))
 
 
 def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmConfig()) -> WorkbookExtraction:
@@ -51,7 +72,9 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
         sheets.append(sa.sheet)
         wb_findings.extend(sa.findings)
         sheet_src = sa.view or source
-        orient = "transposed" if isinstance(sa.view, TransposedView) else "vertical"
+        orient, view_finding = _view_orientation(sa.view, sa.sheet)
+        if view_finding is not None:
+            wb_findings.append(view_finding)
 
         if not sa.handles:
             continue  # zero-handle winner (e.g. all-diagram sheet): findings already recorded
