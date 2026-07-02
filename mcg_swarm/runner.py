@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 from mcg_swarm.schemas import WorkbookExtraction
 from mcg_swarm.splitter import split_workbook, TableHandle
+from mcg_swarm.analyzers.registry import build_analyzers
 from mcg_swarm.orchestrator import orchestrate_table
 from mcg_swarm.subagent import build_subagent, build_table_validator, build_structural_reviewer
 from mcg_swarm.config import SwarmConfig
@@ -22,8 +23,14 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     source = as_source(workbooks)            # dict/path/source all OK
     name = getattr(source, "path", "workbook")
     name = os.path.basename(name) if isinstance(name, str) else "workbook"
+    # Fail fast on a misconfigured analyzer name: this is a config/programming
+    # error, not a data error, so it must raise out of run_swarm rather than
+    # being swallowed by the try/except below and misreported as an
+    # "unreadable workbook" data error. split_workbook still builds its own
+    # analyzers internally; this call is purely for validation.
+    build_analyzers(config.analyzers)
     try:
-        handles = split_workbook(source)
+        handles = split_workbook(source, config=config)
     except Exception as e:
         return WorkbookExtraction(
             workbook=name,

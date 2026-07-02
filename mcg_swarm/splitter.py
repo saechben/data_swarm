@@ -259,16 +259,32 @@ def detect_table(rows: list[tuple], sheet_name: str) -> TableHandle:
                        header_span=header_span)
 
 
-def split_workbook(source) -> list[TableHandle]:
-    """Split workbook into TableHandles.
+def split_workbook(source, config=None) -> list[TableHandle]:
+    """Split a workbook into TableHandles via the active analyzer lenses.
 
     Accepts a path string, ``{"main": path}`` dict, or any ``WorkbookSource``.
+    For each sheet, every analyzer in ``config.analyzers`` emits LayoutCandidate(s);
+    ``assess`` picks the winner and its handles are flattened into the result.
+    Default config → analyzers=("vertical",) → identical to the pre-modular behavior.
     """
+    # Lazy imports break the splitter<->analyzers import cycle (analyzers import
+    # detect_table/TableHandle from this module at their top level).
+    from mcg_swarm.analyzers.registry import build_analyzers
+    from mcg_swarm.analyzers.assess import assess
+    from mcg_swarm.config import SwarmConfig
+
+    if config is None:
+        config = SwarmConfig()
     src = as_source(source)
-    return [
-        detect_table(src.read_region(name), name)
-        for name in src.sheet_names()
-    ]
+    analyzers = build_analyzers(config.analyzers)
+
+    handles: list[TableHandle] = []
+    for name in src.sheet_names():
+        grid = src.read_region(name)
+        candidates = [c for a in analyzers for c in a.analyze(grid, name)]
+        winner = assess(candidates)
+        handles.extend(winner.handles)
+    return handles
 
 
 def handle_from_region(grid: list[tuple], sheet: str, region: str,
