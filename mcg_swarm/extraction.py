@@ -78,11 +78,21 @@ class ExtractionIndex:
         data_start_row = header_row + header_span  # absolute 1-based
 
         self._key_to_phys: dict = {}
+        self.duplicate_row_keys: list = []   # (key, shadowed_row, winning_row)
+        self.blank_key_rows: list = []       # absolute rows w/ empty key cell
         key_cols = [self._col_to_phys[k] for k in row_key] if row_key else []
         for i, row in enumerate(grid[data_start_off:], start=data_start_row):
             if row_key:
                 vals = tuple(row[kc - min_col] for kc in key_cols)
                 key = vals[0] if len(vals) == 1 else vals
+                blank = (key in (None, "") or (isinstance(key, tuple)
+                         and all(v in (None, "") for v in key)))
+                if blank:
+                    self.blank_key_rows.append(i)
+                if key in self._key_to_phys:
+                    # Last-wins overwrite (existing behavior, unchanged): record it
+                    # so the gate can fail the table instead of losing rows silently.
+                    self.duplicate_row_keys.append((key, self._key_to_phys[key], i))
             else:
                 key = i - (header_row + header_span - 1)  # positional 1-based
             self._key_to_phys[key] = i
