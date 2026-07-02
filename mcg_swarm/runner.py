@@ -27,7 +27,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     # Fail fast on a misconfigured analyzer name: this is a config/programming
     # error, not a data error, so it must raise out of run_swarm rather than
     # being swallowed by the try/except below and misreported as an
-    # "unreadable workbook" data error. split_workbook still builds its own
+    # "unreadable workbook" data error. analyze_workbook still builds its own
     # analyzers internally; this call is purely for validation.
     build_analyzers(config.analyzers)
     try:
@@ -50,6 +50,9 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
         sheets.append(sa.sheet)
         wb_findings.extend(sa.findings)
         sheet_src = sa.view or source
+
+        if not sa.handles:
+            continue  # zero-handle winner (e.g. all-diagram sheet): findings already recorded
 
         if len(sa.handles) > 1:
             # Multi-table interpretation from a lens: orchestrate each handle.

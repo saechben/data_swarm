@@ -31,7 +31,17 @@ def analyze_sheet(analyzers, grid: list[tuple], sheet: str) -> SheetAnalysis:
                 category="analyzer-error", severity="warning", scope="sheet",
                 message=f"analyzer {a.name!r} failed: {e}", source="static",
                 ref=f"{sheet}!A1"))
-    winner = assess(candidates) if candidates else _fallback_candidate(sheet)
+    if candidates:
+        try:
+            winner = assess(candidates)
+        except Exception as e:  # malformed candidate from a lens — degrade, don't crash
+            findings.append(Finding(
+                category="analyzer-error", severity="warning", scope="sheet",
+                message=f"assessment failed: {e}", source="static",
+                ref=f"{sheet}!A1"))
+            winner = _fallback_candidate(sheet)
+    else:
+        winner = _fallback_candidate(sheet)
     return SheetAnalysis(sheet=sheet, handles=winner.handles, view=winner.view,
                          method=winner.method,
                          findings=tuple(findings) + winner.findings)

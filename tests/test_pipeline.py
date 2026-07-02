@@ -60,3 +60,32 @@ def test_all_lenses_empty_falls_back_to_stub():
     stub = sa.handles[0]
     assert stub.ambiguous and stub.region == "A1:A1"
     assert stub.reason == "no analyzer produced a candidate"
+
+
+def test_run_swarm_zero_handle_winner_skips_sheet():
+    """A winning candidate with no handles must not crash the run (spec §5)."""
+    from mcg_swarm.analyzers.base import LayoutCandidate
+    from mcg_swarm.runner import run_swarm
+
+    class _NoHandles:
+        name = "nohandles"
+        def analyze(self, grid, sheet):
+            return [LayoutCandidate(method="nohandles", handles=(), coverage=1.0)]
+    register("nohandles", _NoHandles)
+
+    ex = run_swarm(_GridSource(_SHEETS), config=SwarmConfig(analyzers=("nohandles",)))
+    assert ex.tables == []          # sheets skipped, not crashed
+    assert ex.sheets == list(_SHEETS)
+
+
+def test_malformed_candidate_degrades_to_fallback():
+    class _Malformed:
+        name = "malformed"
+        def analyze(self, grid, sheet):
+            return ["not a candidate"]
+    register("malformed", _Malformed)
+
+    sa = analyze_sheet(build_analyzers(("malformed",)), _SHEETS["Sales"], "Sales")
+    assert sa.method == "fallback"
+    assert any(f.category == "analyzer-error" and "assessment failed" in f.message
+               for f in sa.findings)

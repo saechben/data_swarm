@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 import openpyxl
 from openpyxl.utils import get_column_letter, range_boundaries
 from mcg_swarm.schemas import ColumnSpec
-from mcg_swarm.source import WorkbookSource, as_source
 
 
 @dataclass
