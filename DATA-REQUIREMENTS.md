@@ -26,6 +26,16 @@ _Last updated: 2026-06-25 (opt-in ReAct subagent verified live — adds two-leve
 | A7 | **Tables are independent** (no cross-table/cross-sheet references in the canonical model). | v2 emits independent canonical tables by design (spec §2, §13). | Cross-table formulas are out of scope; not modeled. |
 | A8 | **Header is at most 2 rows.** A single header row, or a group-row + leaf-row pair, is supported (composite naming). | Column names derive from the header span. | Headers spanning **3+ rows** fall back to placeholder names for the unlabeled cells (degraded — see §3). |
 
+> **A1/A3 become soft with the `"agentic"` lens.** With `SwarmConfig(analyzers=(...,
+> "agentic"))` and a runner injected, an agent proposes the sheet's layout with no
+> structural assumptions — it can find and verify **multiple tables per tab** (softens
+> A1) and **transposed orientation** (softens A3); each proposal is deterministically
+> re-materialized and re-scored, and only wins a sheet if it clears the deterministic
+> ensemble floor (see `how_to_use.md` § "Enabling the pure-agentic layout lens"). The
+> A-series above still describes what the **default config** (`analyzers=("vertical",)`,
+> no agentic lens) guarantees — A1 and A3 are only relaxed when the agentic lens is
+> explicitly enabled and a runner is injected.
+
 ---
 
 ## 2. Supported (works deterministically, no LLM)
@@ -71,6 +81,17 @@ _Last updated: 2026-06-25 (opt-in ReAct subagent verified live — adds two-leve
 - A tab that can't be resolved to one clean table is returned as a `CanonicalTable` **stub with `errors` populated** and is **not marked passing** — and the other tabs in the file still process (one bad tab never fails the whole file).
 - The swarm **never raises** out of orchestration; unresolvable inputs become `errors`, not crashes.
 - A table that fails the in-loop test gate (coverage / round-trip / column-or-row integrity / computed) is returned **with `errors` and no extraction index** — downstream `query()` for it returns `None`.
+
+**Gate hardening (this phase):** the in-loop gate now fails loud on cases that used to
+pass silently with data loss. `duplicate_row_keys` recorded at index build (key, shadowed
+row, winning row) now fails the gate with `row-key collision: key {key!r} at row
+{shadowed} is shadowed by ...` — **a workbook with genuinely duplicate row keys (violates
+A4) now FAILS the gate instead of silently losing the shadowed row to last-wins overwrite**
+(the prior behavior). The gate also now catches `blank row key: data row {r} has an empty
+key cell`, `empty index: zero row keys resolved`, and `column-coverage: live header
+{name!r} in region not declared` (a header present in the region but dropped from the
+declared columns). All four are new hard-fail findings, not new assumptions — they close
+gaps where a malformed table previously produced a wrong-but-passing index.
 
 ---
 

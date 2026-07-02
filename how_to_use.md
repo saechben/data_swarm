@@ -235,4 +235,95 @@ for contrast.
 - [ ] Results are trustworthy by construction: every repair goes through
       verify-before-accept + live re-validation, so a hallucinated re-cut is a no-op
       (`rejected`), never corruption.
+
+---
+
+## Enabling the pure-agentic layout lens
+
+Beyond the deterministic `"vertical"` lens (Phase-1 detection) and the ReAct band/table
+repair described above (all §3 machinery), the swarm has a third, independent capability:
+an **agentic layout lens** with no structural assumptions at all. It reads a sheet's
+actual cells and proposes the complete table layout — region, header row, header span,
+and orientation (vertical or transposed) for every table it finds, including sheets with
+several tables or a transposed reading. It competes in the same layout ensemble as the
+deterministic lens; it never gets to write values directly.
+
+### Turning it on
+
+```python
+from mcg_swarm.config import SwarmConfig
+from mcg_swarm.runner import run_swarm
+
+# Run BOTH lenses — agentic proposals compete with (and can dedup against) the
+# deterministic vertical lens; this is the recommended setting.
+ext = run_swarm(WB, runner=runner,
+                config=SwarmConfig(analyzers=("vertical", "agentic")))
+
+# Agent-only analysis is also supported (no deterministic lens at all):
+ext = run_swarm(WB, runner=runner, config=SwarmConfig(analyzers=("agentic",)))
+```
+
+Like the ReAct band/table repair, the agentic lens is **gated on `runner is not None`**
+(`AgenticLayoutLens.needs_runner = True`) — the registry builds it only when a runner is
+injected; without one it degrades to no candidates from that lens.
+
+### The live runner for this lens
+
+The layout agent does substantially more exploration per call than the band verifier (it
+inspects a whole sheet, iterates candidate layouts via the `try_layout` sandbox tool, and
+only then finalizes) — give it a **higher turn budget**:
+
+```python
+from agent_runtime import ClaudeSDKAgentRunner
+
+runner = ClaudeSDKAgentRunner(
+    model="claude-haiku-4-5-20251001",
+    max_turns=24,                      # higher than the band verifier's ~8: more to explore
+    host_tools=("Bash", "Read"),       # optional: let it investigate the source file directly
+    permission_mode="acceptEdits",     # or whatever SDK mode fits host_tools above
+)
+```
+
+`host_tools` and `permission_mode` are optional — the lens's own read-only sheet-probe
+tools (`dimensions`, `peek_rows`, `try_layout`, …) are usually sufficient. If you do grant
+`host_tools`, **sandboxing them (e.g. confining `Bash` to a single scratch folder) is
+configured at the SDK/application permission layer — `mcg_swarm` does not enforce it.**
+The swarm's own guarantees are structural, not sandbox-based:
+
+- **Finalize-only output** — the agent can only *propose* a layout (`SheetLayoutPatch`);
+  it never touches a value cell. Every proposed handle is re-materialized deterministically
+  from the real grid.
+- **Deterministic re-extraction** — proposed regions are re-read through the existing
+  `handle_from_region` / `TransposedView` machinery, the same code path the deterministic
+  lens uses.
+- **Quality gate** — the re-materialized table goes through the same in-loop coverage/
+  round-trip/column-integrity gate as every other table; a hallucinated region fails the
+  gate, not the extraction.
+- **Ensemble floor + live re-validation** — the agentic candidate only wins a sheet if it
+  scores at or above the deterministic baseline (or the sheet has no deterministic
+  candidate at all); it is not trusted on say-so.
+
+### Policy caps
+
+`AgenticLayoutLens` takes an optional `AgenticLensPolicy` (`mcg_swarm/analyzers/agentic.py`)
+bounding the loop regardless of agent behavior:
+
+```python
+from mcg_swarm.analyzers.agentic import AgenticLensPolicy
+
+policy = AgenticLensPolicy(max_tables=12, max_probe_iterations=20)  # defaults shown
+```
+
+`max_tables` caps how many tables one proposal may contain (extras are dropped, with a
+`agentic-lens` finding); `max_probe_iterations` caps `try_layout` calls per sheet before
+the tool starts telling the agent to finalize with its best answer so far.
+
+### "Agreed by both approaches"
+
+The agentic lens reports a fixed `confidence=0.7`, below the deterministic vertical lens's
+`1.0`. When both lenses independently produce the same interpretation of a sheet, Stage-0
+dedup keeps the (higher-confidence) vertical label as a single candidate — no arbiter
+consult, no `contested-layout`/`arbiter-choice` finding, and extraction identical to a
+deterministic-only run. This is the built-in "agreed by both approaches" signal: agreement
+is silent and cheap; only genuine disagreement escalates to the Stage-2 arbiter.
 ```
