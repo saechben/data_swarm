@@ -63,8 +63,13 @@ def rank_candidates(candidates: list[LayoutCandidate], *, source, grid,
     from mcg_swarm.subagent.structural import score_handles
 
     deduped = _dedup(candidates)
-    scored = [(c, score_handles(source, grid, list(c.handles), sheet))
-              for c in deduped]
+    scored = []
+    for c in deduped:
+        # A viewed candidate's handles live in view coordinates: score them
+        # against the view's source and grid, not the raw sheet (spec §4.3).
+        c_src = c.view if c.view is not None else source
+        c_grid = c.view.read_region(sheet) if c.view is not None else grid
+        scored.append((c, score_handles(c_src, c_grid, list(c.handles), sheet)))
     scored.sort(key=lambda cs: (-cs[1][0], cs[1][1], cs[1][2], -cs[0].confidence))
     return scored
 

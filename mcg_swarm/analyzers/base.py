@@ -50,5 +50,5 @@ class SheetAnalysis:
 class SheetAnalyzer(Protocol):
     name: str
 
-    def analyze(self, grid: list[tuple], sheet: str) -> list[LayoutCandidate]:
+    def analyze(self, grid: list[tuple], sheet: str, source=None) -> list[LayoutCandidate]:
         ...

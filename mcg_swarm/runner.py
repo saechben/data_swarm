@@ -10,6 +10,7 @@ from mcg_swarm.config import SwarmConfig
 from mcg_swarm.extraction import build_index
 from mcg_swarm.source import as_source
 from mcg_swarm.coverage import scan_handle
+from mcg_swarm.views import TransposedView
 
 GENERATOR_VERSION = "mcg-swarm-v2.0.0"
 
@@ -50,6 +51,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
         sheets.append(sa.sheet)
         wb_findings.extend(sa.findings)
         sheet_src = sa.view or source
+        orient = "transposed" if isinstance(sa.view, TransposedView) else "vertical"
 
         if not sa.handles:
             continue  # zero-handle winner (e.g. all-diagram sheet): findings already recorded
@@ -62,7 +64,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
                 tables.append(orchestrate_table(
                     sheet_src, sh, table_id=f"{sa.sheet}__{i}_{j}", llm=llm,
                     subagent=subagent, table_validator=table_validator,
-                    detect_findings=[]))
+                    detect_findings=[], orientation=orient))
             continue
 
         h = sa.handles[0]
@@ -91,13 +93,14 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
                 cand_tables = [orchestrate_table(
                         sheet_src, sh, table_id=f"{sa.sheet}__{i}_{j}", llm=llm,
                         subagent=subagent, table_validator=table_validator,
-                        detect_findings=tf)
+                        detect_findings=tf, orientation=orient)
                     for j, (sh, tf) in enumerate(
                         zip(review.handles, review.detect_findings))]
                 base_table = orchestrate_table(
                     sheet_src, h, table_id=f"{sa.sheet}__{i}", llm=llm,
                     subagent=subagent, table_validator=table_validator,
-                    detect_findings=[f for f in scan if f.scope != "sheet"])
+                    detect_findings=[f for f in scan if f.scope != "sheet"],
+                    orientation=orient)
                 cand_err = sum(len(t.errors) for t in cand_tables)
                 base_err = len(base_table.errors)
             except Exception:
@@ -112,7 +115,8 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
                 tables.append(base_table if base_table is not None else orchestrate_table(
                     sheet_src, h, table_id=f"{sa.sheet}__{i}", llm=llm,
                     subagent=subagent, table_validator=table_validator,
-                    detect_findings=[f for f in scan if f.scope != "sheet"]))
+                    detect_findings=[f for f in scan if f.scope != "sheet"],
+                    orientation=orient))
                 note = "re-cut raised live-pipeline errors; kept deterministic baseline"
                 wb_findings.extend(
                     f.model_copy(update={"resolution": "rejected", "agent_action": note})
@@ -134,7 +138,7 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
             tables.append(orchestrate_table(
                 sheet_src, sh, table_id=table_id, llm=llm,
                 subagent=subagent, table_validator=table_validator,
-                detect_findings=tf))
+                detect_findings=tf, orientation=orient))
     return WorkbookExtraction(
         workbook=name,
         sheets=sheets,
@@ -144,10 +148,12 @@ def run_swarm(workbooks, *, llm=None, runner=None, config: SwarmConfig = SwarmCo
     )
 
 
-def build_indices(path: str, extraction: WorkbookExtraction) -> dict:
+def build_indices(path, extraction: WorkbookExtraction) -> dict:
     """Rebuild ExtractionIndex objects deterministically for the adapter.
 
     Skips tables that have errors (failed tables have no valid index).
+    Transposed tables (extracted through a TransposedView) are rebuilt through
+    the same view kind so their view-coordinate regions resolve correctly.
     """
     out = {}
     for t in extraction.tables:
@@ -160,5 +166,8 @@ def build_indices(path: str, extraction: WorkbookExtraction) -> dict:
             columns=t.columns,
             header_span=getattr(t, "header_span", 1),
         )
-        out[t.table_id] = build_index(path, handle, row_key=t.extraction.row_key)
+        src = as_source(path)
+        if t.orientation == "transposed":
+            src = TransposedView(src)
+        out[t.table_id] = build_index(src, handle, row_key=t.extraction.row_key)
     return out

@@ -75,7 +75,7 @@ def test_run_swarm_emits_pipeline_findings():
 
     class _Boom:
         name = "boom2"
-        def analyze(self, grid, sheet):
+        def analyze(self, grid, sheet, source=None):
             raise RuntimeError("lens exploded")
     register("boom2", _Boom)
 
@@ -101,7 +101,7 @@ def test_run_swarm_multi_handle_sheet_orchestrates_all():
 
     class _Pair:
         name = "pair"
-        def analyze(self, grid, sheet):
+        def analyze(self, grid, sheet, source=None):
             top = handle_from_region(grid, sheet, "A1:B3", 1)
             bottom = handle_from_region(grid, sheet, "A5:B7", 5)
             return [LayoutCandidate(method="pair", handles=(top, bottom),

@@ -20,7 +20,7 @@ from mcg_swarm.header_llm import resolve_messy_tab
 from eval.util import range_box
 
 
-def _stub(handle, table_id: str, findings: list) -> CanonicalTable:
+def _stub(handle, table_id: str, findings: list, orientation: str = "vertical") -> CanonicalTable:
     """Return a minimal CanonicalTable stub carrying the given findings."""
     return CanonicalTable(
         table_id=table_id,
@@ -31,6 +31,7 @@ def _stub(handle, table_id: str, findings: list) -> CanonicalTable:
         description="",
         extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=[]),
         findings=list(findings),
+        orientation=orientation,
     )
 
 
@@ -42,6 +43,7 @@ def _orchestrate_core(
     subagent=None,
     max_repairs: int = 2,
     detect_findings: list | None = None,
+    orientation: str = "vertical",
 ) -> CanonicalTable:
     """
     Orchestrate full analysis of a single table handle.
@@ -71,7 +73,8 @@ def _orchestrate_core(
     if handle.ambiguous:
         return _stub(handle, table_id, detect_findings + [Finding(
             category="messy-tab", severity="error", scope="table", source="static",
-            message=f"messy tab: {handle.reason or 'ambiguous header'}")])
+            message=f"messy tab: {handle.reason or 'ambiguous header'}")],
+            orientation=orientation)
 
     if subagent is None:
         subagent = StaticSubagent(llm)
@@ -107,7 +110,8 @@ def _orchestrate_core(
         if merged.conflicts:
             return _stub(handle, table_id, detect_findings + [Finding(
                 category="merge-conflict", severity="error", scope="table",
-                source="static", message=f"merge conflict: {c}") for c in merged.conflicts])
+                source="static", message=f"merge conflict: {c}") for c in merged.conflicts],
+                orientation=orientation)
 
         # §4  Choose row_key and build ExtractionIndex
         key_cols = [c.name for c in merged.columns if c.role == "key"]
@@ -138,6 +142,7 @@ def _orchestrate_core(
             findings=[Finding(category="anomaly", severity="info", scope="table",
                               source="static", message=n) for n in all_notes],
             extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=row_key),
+            orientation=orientation,
         )
 
         # §6  Run quality gate
@@ -159,12 +164,14 @@ def _orchestrate_core(
             description=merged.description,
             extraction=ExtractionRef(script_name=f"idx_{table_id}", row_key=row_key),
             findings=detect_findings + anomaly_findings + gate_findings,
+            orientation=orientation,
         )
 
     except Exception as exc:  # never let a subagent failure escape
         return _stub(handle, table_id, detect_findings + [Finding(
             category="orchestration-error", severity="error", scope="table",
-            source="static", message=f"orchestration error: {exc}")])
+            source="static", message=f"orchestration error: {exc}")],
+            orientation=orientation)
 
 
 def orchestrate_table(
@@ -176,6 +183,7 @@ def orchestrate_table(
     table_validator=None,
     max_repairs: int = 2,
     detect_findings: list | None = None,
+    orientation: str = "vertical",
 ) -> CanonicalTable:
     """Static orchestration, then an optional table-level agent validation/recovery pass.
 
@@ -190,7 +198,7 @@ def orchestrate_table(
     """
     table = _orchestrate_core(
         source, handle, table_id, llm=llm, subagent=subagent, max_repairs=max_repairs,
-        detect_findings=detect_findings)
+        detect_findings=detect_findings, orientation=orientation)
     if table_validator is not None:
         table = table_validator.review(source, handle, table)
     return table

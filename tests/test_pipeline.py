@@ -31,13 +31,13 @@ def test_split_workbook_shim_still_flat_handles():
 
 class _RaisingLens:
     name = "raising"
-    def analyze(self, grid, sheet):
+    def analyze(self, grid, sheet, source=None):
         raise RuntimeError("boom")
 
 
 class _EmptyLens:
     name = "empty"
-    def analyze(self, grid, sheet):
+    def analyze(self, grid, sheet, source=None):
         return []
 
 
@@ -69,7 +69,7 @@ def test_run_swarm_zero_handle_winner_skips_sheet():
 
     class _NoHandles:
         name = "nohandles"
-        def analyze(self, grid, sheet):
+        def analyze(self, grid, sheet, source=None):
             return [LayoutCandidate(method="nohandles", handles=(), coverage=1.0)]
     register("nohandles", _NoHandles)
 
@@ -81,7 +81,7 @@ def test_run_swarm_zero_handle_winner_skips_sheet():
 def test_malformed_candidate_degrades_to_fallback():
     class _Malformed:
         name = "malformed"
-        def analyze(self, grid, sheet):
+        def analyze(self, grid, sheet, source=None):
             return ["not a candidate"]
     register("malformed", _Malformed)
 
@@ -89,3 +89,73 @@ def test_malformed_candidate_degrades_to_fallback():
     assert sa.method == "fallback"
     assert any(f.category == "analyzer-error" and "assessment failed" in f.message
                for f in sa.findings)
+
+
+def test_lens_receives_source():
+    """#4: the pipeline hands each lens the WorkbookSource so it can build views."""
+    seen = {}
+
+    class _SourceSpy:
+        name = "sourcespy"
+        def analyze(self, grid, sheet, source=None):
+            seen["source"] = source
+            return []
+    register("sourcespy", _SourceSpy)
+
+    src = _GridSource(_SHEETS)
+    analyze_workbook(src, config=SwarmConfig(analyzers=("sourcespy",)))
+    assert seen["source"] is src
+
+
+def test_lens_can_construct_view_over_source():
+    """A lens can wrap the source in a TransposedView and attach it to a candidate."""
+    from mcg_swarm.analyzers.base import LayoutCandidate
+    from mcg_swarm.splitter import detect_table
+    from mcg_swarm.views import TransposedView
+
+    class _ViewLens:
+        name = "viewlens"
+        def analyze(self, grid, sheet, source=None):
+            view = TransposedView(source)
+            vgrid = view.read_region(sheet)
+            handle = detect_table(vgrid, sheet)
+            return [LayoutCandidate(method="viewlens", handles=(handle,),
+                                    coverage=1.0, view=view)]
+    register("viewlens", _ViewLens)
+
+    horizontal = {"S": [("Region", "North", "South"), ("Sales", 10, 20)]}
+    out = analyze_workbook(_GridSource(horizontal),
+                           config=SwarmConfig(analyzers=("viewlens",)))
+    sa = out[0]
+    assert type(sa.view).__name__ == "TransposedView"
+    assert sa.handles[0].region == "A1:B3"      # view coordinates (3 rows after transpose)
+
+
+def test_pipeline_uses_rich_ranking_for_multi_candidate():
+    """#5: with competing lenses, the pipeline picks by score_handles, not raw
+    coverage. pairlens hardcodes a LOW coverage (0.1) — below vertical's
+    computed ~0.5 — so raw-coverage ranking (plain assess()) would pick
+    vertical. Only rich ranking (assess_sheet's score_handles, which counts
+    actual covered cells: pairlens covers all 12 non-empty cells vs
+    vertical's 6) picks pairlens. This makes the test discriminate the two
+    wirings instead of passing under both."""
+    from mcg_swarm.splitter import handle_from_region
+    from mcg_swarm.analyzers.base import LayoutCandidate
+
+    two = [("Region", "Sales"), ("North", 10), ("South", 20),
+           (None, None),
+           ("Dept", "Cost"), ("Eng", 100), ("Ops", 50)]
+
+    class _PairLens:
+        name = "pairlens"
+        def analyze(self, grid, sheet, source=None):
+            top = handle_from_region(grid, sheet, "A1:B3", 1)
+            bottom = handle_from_region(grid, sheet, "A5:B7", 5)
+            return [LayoutCandidate(method="pairlens", handles=(top, bottom),
+                                    coverage=0.1)]
+    register("pairlens", _PairLens)
+
+    sa = analyze_sheet(build_analyzers(("vertical", "pairlens")), two, "S",
+                       source=_GridSource({"S": two}))
+    assert sa.method == "pairlens"        # 12-cell coverage beats vertical's 6
+    assert len(sa.handles) == 2
